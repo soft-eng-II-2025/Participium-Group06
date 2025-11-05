@@ -1,12 +1,14 @@
-//import "./App.css";
+import "./App.css";
+import {ThemeProvider} from "@mui/material";
+import theme from "./theme";
 import 'leaflet/dist/leaflet.css';
 import {BrowserRouter, Routes, Route, Navigate} from "react-router-dom";
-import Map from "../src/pages/Map";
+import Map from "./pages/Map";
 
 
 function App() {
     return (
-
+        <ThemeProvider theme={theme}>
             <BrowserRouter>
                 <Routes>
                     {/* Always start from the map page to try this one out*/}
@@ -18,6 +20,7 @@ function App() {
                     <Route path="*" element={<Navigate to="/map" replace/>}/>
                 </Routes>
             </BrowserRouter>
+        </ThemeProvider>
     );
 }
 

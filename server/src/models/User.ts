@@ -1,5 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
-import { Role } from './Role';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Report } from './Report';
 
 @Entity()
@@ -21,10 +20,6 @@ export class User {
 
   @Column()
   last_name!: string;
-
-  @ManyToOne(() => Role, (role) => role.users)
-  @JoinColumn({ name: 'roleId' })
-  role!: Role;
 
   @OneToMany(() => Report, (report) => report.user)
   reports!: Report[];

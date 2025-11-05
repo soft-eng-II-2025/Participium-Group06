@@ -5,5 +5,6 @@ export class ReportDto {
     description!: string;
     userId!: number;
     categoryId!: number;
+    photos!: string[];
   }
   

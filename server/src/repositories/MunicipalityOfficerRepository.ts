@@ -19,4 +19,7 @@ export class MunicipalityOfficerRepository {
     async add(municipalityOfficer: MunicipalityOfficer): Promise<MunicipalityOfficer> {
         return this.ormRepository.save(municipalityOfficer);
     }
+    async update(municipalityOfficer: MunicipalityOfficer): Promise<MunicipalityOfficer> {
+        return this.ormRepository.save(municipalityOfficer);
+    }
 }

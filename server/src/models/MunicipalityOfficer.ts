@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Unique} from 'typeorm';
 import { Role } from './Role';
 
 @Entity()
@@ -6,10 +6,10 @@ export class MunicipalityOfficer {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column()
+  @Column({unique: true})
   username!: string;
 
-  @Column()
+  @Column({unique: true})
   email!: string;
 
   @Column()

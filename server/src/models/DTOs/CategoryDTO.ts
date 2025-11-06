@@ -1,6 +1,8 @@
-import { ReportDto } from "./ReportDTO";
+import { IsNotEmpty } from "class-validator";
+import {ReportDTO} from "./ReportDTO";
 
-export class CategoryDto {
+export class CategoryDTO {
+    @IsNotEmpty()
     name!: string;
-    reports!: ReportDto[];
-  }
+    reports!: ReportDTO[];
+}

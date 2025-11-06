@@ -1,8 +1,8 @@
-import type { CategoryDto } from "../models/DTOs/CategoryDTO";
-import type { MunicipalityOfficerDto } from "../models/DTOs/MunicipalityOfficerDTO";
-import type { ReportDto } from "../models/DTOs/ReportDTO";
-import type { RoleDto } from "../models/DTOs/RoleDTO";
-import type { UserDto } from "../models/DTOs/UserDTO";
+import type { CategoryDTO } from "../models/DTOs/CategoryDTO";
+import type { MunicipalityOfficerDTO } from "../models/DTOs/MunicipalityOfficerDTO";
+import type { ReportDTO } from "../models/DTOs/ReportDTO";
+import type { RoleDTO } from "../models/DTOs/RoleDTO";
+import type { UserDTO } from "../models/DTOs/UserDTO";
 
 import { Category } from "../models/Category";
 import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
@@ -32,9 +32,9 @@ function removeNullAttributes<T extends Record<string, any>>(dto: T): Partial<T>
 
 export function createCategoryDTO(
   name?: string,
-  reports?: ReportDto[]
-): CategoryDto {
-  return removeNullAttributes({ name, reports }) as CategoryDto;
+  reports?: ReportDTO[]
+): CategoryDTO {
+  return removeNullAttributes({ name, reports }) as CategoryDTO;
 }
 
 export function createMunicipalityOfficerDTO(
@@ -43,8 +43,8 @@ export function createMunicipalityOfficerDTO(
   password?: string,
   first_name?: string,
   last_name?: string,
-  role?: RoleDto
-): MunicipalityOfficerDto {
+  role?: RoleDTO
+): MunicipalityOfficerDTO {
   return removeNullAttributes({
     username,
     email,
@@ -52,7 +52,7 @@ export function createMunicipalityOfficerDTO(
     first_name,
     last_name,
     role,
-  }) as MunicipalityOfficerDto;
+  }) as MunicipalityOfficerDTO;
 }
 
 export function createReportDTO(
@@ -63,7 +63,7 @@ export function createReportDTO(
   userId?: number,
   categoryId?: number,
   photos?: string[]
-): ReportDto {
+): ReportDTO {
   return removeNullAttributes({
     longitude,
     latitude,
@@ -72,14 +72,14 @@ export function createReportDTO(
     userId,
     categoryId,
     photos,
-  }) as ReportDto;
+  }) as ReportDTO;
 }
 
 export function createRoleDTO(
   title?: string,
-  officers?: MunicipalityOfficerDto[]
-): RoleDto {
-  return removeNullAttributes({ title, officers }) as RoleDto;
+  officers?: MunicipalityOfficerDTO[]
+): RoleDTO {
+  return removeNullAttributes({ title, officers }) as RoleDTO;
 }
 
 export function createUserDTO(
@@ -88,8 +88,8 @@ export function createUserDTO(
   password?: string,
   first_name?: string,
   last_name?: string,
-  reports?: ReportDto[]
-): UserDto {
+  reports?: ReportDTO[]
+): UserDTO {
   return removeNullAttributes({
     username,
     email,
@@ -97,21 +97,21 @@ export function createUserDTO(
     first_name,
     last_name,
     reports,
-  }) as UserDto;
+  }) as UserDTO;
 }
 
 /* -------------------------------------------------------------------------- */
 /*                             DAO → DTO Mappers                              */
 /* -------------------------------------------------------------------------- */
 
-export function mapCategoryDAOToDTO(categoryDAO: Category): CategoryDto {
+export function mapCategoryDAOToDTO(categoryDAO: Category): CategoryDTO {
   return createCategoryDTO(
     categoryDAO.name,
     categoryDAO.reports?.map((r: Report) => mapReportDAOToDTO(r))
   );
 }
 
-export function mapMunicipalityOfficerDAOToDTO(officerDAO: MunicipalityOfficer): MunicipalityOfficerDto {
+export function mapMunicipalityOfficerDAOToDTO(officerDAO: MunicipalityOfficer): MunicipalityOfficerDTO {
   return createMunicipalityOfficerDTO(
     officerDAO.username,
     officerDAO.email,
@@ -122,7 +122,7 @@ export function mapMunicipalityOfficerDAOToDTO(officerDAO: MunicipalityOfficer):
   );
 }
 
-export function mapReportDAOToDTO(reportDAO: Report): ReportDto {
+export function mapReportDAOToDTO(reportDAO: Report): ReportDTO {
   return createReportDTO(
     reportDAO.longitude,
     reportDAO.latitude,
@@ -134,14 +134,14 @@ export function mapReportDAOToDTO(reportDAO: Report): ReportDto {
   );
 }
 
-export function mapRoleDAOToDTO(roleDAO: Role): RoleDto {
+export function mapRoleDAOToDTO(roleDAO: Role): RoleDTO {
   return createRoleDTO(
     roleDAO.title,
     roleDAO.municipalityOfficer?.map((o: MunicipalityOfficer) => mapMunicipalityOfficerDAOToDTO(o))
   );
 }
 
-export function mapUserDAOToDTO(userDAO: User): UserDto {
+export function mapUserDAOToDTO(userDAO: User): UserDTO {
   return createUserDTO(
     userDAO.username,
     userDAO.email,
@@ -156,16 +156,16 @@ export function mapUserDAOToDTO(userDAO: User): UserDto {
 /*                             DTO → DAO Mappers                              */
 /* -------------------------------------------------------------------------- */
 
-export function mapCategoryDTOToDAO(dto: CategoryDto): Category {
+export function mapCategoryDTOToDAO(dto: CategoryDTO): Category {
   const dao = new Category();
   if (dto.name !== undefined) dao.name = dto.name;
   if (dto.reports && dto.reports.length > 0) {
-    dao.reports = dto.reports.map((r: ReportDto) => mapReportDTOToDAO(r));
+    dao.reports = dto.reports.map((r: ReportDTO) => mapReportDTOToDAO(r));
   }
   return dao;
 }
 
-export function mapMunicipalityOfficerDTOToDAO(dto: MunicipalityOfficerDto): MunicipalityOfficer {
+export function mapMunicipalityOfficerDTOToDAO(dto: MunicipalityOfficerDTO): MunicipalityOfficer {
   const dao = new MunicipalityOfficer();
   if (dto.username !== undefined) dao.username = dto.username;
   if (dto.email !== undefined) dao.email = dto.email;
@@ -178,15 +178,15 @@ export function mapMunicipalityOfficerDTOToDAO(dto: MunicipalityOfficerDto): Mun
   return dao;
 }
 
-export function mapReportDTOToDAO(dto: ReportDto): Report {
+export function mapReportDTOToDAO(dto: ReportDTO): Report {
   const dao = new Report();
   if (dto.longitude !== undefined) dao.longitude = dto.longitude;
   if (dto.latitude !== undefined) dao.latitude = dto.latitude;
   if (dto.title !== undefined) dao.title = dto.title;
   if (dto.description !== undefined) dao.description = dto.description;
-  if (dto.userId !== undefined) {
+  if (dto.user !== undefined) {
     dao.user = new User();
-    dao.user.id = dto.userId;
+    dao.user.id = dto.user.userId;
   }
   if (dto.categoryId !== undefined) {
     dao.category = new Category();
@@ -196,18 +196,18 @@ export function mapReportDTOToDAO(dto: ReportDto): Report {
   return dao;
 }
 
-export function mapRoleDTOToDAO(dto: RoleDto): Role {
+export function mapRoleDTOToDAO(dto: RoleDTO): Role {
   const dao = new Role();
   if (dto.title !== undefined) dao.title = dto.title;
   if (dto.officers && dto.officers.length > 0) {
-    dao.municipalityOfficer = dto.officers.map((o: MunicipalityOfficerDto) =>
+    dao.municipalityOfficer = dto.officers.map((o: MunicipalityOfficerDTO) =>
       mapMunicipalityOfficerDTOToDAO(o)
     );
   }
   return dao;
 }
 
-export function mapUserDTOToDAO(dto: UserDto): User {
+export function mapUserDTOToDAO(dto: UserDTO): User {
   const dao = new User();
   if (dto.username !== undefined) dao.username = dto.username;
   if (dto.email !== undefined) dao.email = dto.email;
@@ -215,7 +215,7 @@ export function mapUserDTOToDAO(dto: UserDto): User {
   if (dto.first_name !== undefined) dao.first_name = dto.first_name;
   if (dto.last_name !== undefined) dao.last_name = dto.last_name;
   if (dto.reports && dto.reports.length > 0) {
-    dao.reports = dto.reports.map((r: ReportDto) => mapReportDTOToDAO(r));
+    dao.reports = dto.reports.map((r: ReportDTO) => mapReportDTOToDAO(r));
   }
   return dao;
 }

@@ -1,7 +1,8 @@
-import { MunicipalityOfficerDto } from "./MunicipalityOfficerDTO";
+import { IsEmail, IsNotEmpty, MinLength } from "class-validator";
+import {MunicipalityOfficerDTO} from "./MunicipalityOfficerDTO";
 
-export class RoleDto {
+export class RoleDTO {
+    @IsNotEmpty()
     title!: string;
-    officers!: MunicipalityOfficerDto[]
-  }
-  
+    officers!: MunicipalityOfficerDTO[];
+}

@@ -1,6 +1,6 @@
 import {Router, Response} from 'express';
 import {validateDto} from "../middlewares/validationMiddleware";
-import {MunicipalityOfficerDTO} from "../DTOs/MunicipalityOfficerDTO";
+import {MunicipalityOfficerDTO} from "../models/DTOs/MunicipalityOfficerDTO";
 
 
 export const router = Router();

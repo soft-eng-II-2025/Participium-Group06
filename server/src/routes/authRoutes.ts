@@ -1,7 +1,7 @@
 import {Router, Response} from 'express';
 import {validateDto} from "../middlewares/validationMiddleware";
-import {UserDTO} from "../DTOs/UserDTO";
-import {LoginDTO} from "../DTOs/LoginDTO";
+import {UserDTO} from "../models/DTOs/UserDTO";
+import {LoginDTO} from "../models/DTOs/LoginDTO";
 // TODO: add import userController
 // TODO: authController
 

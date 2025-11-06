@@ -13,7 +13,7 @@ const Map: React.FC = () => {
   };
 
   return (
-    <div style={{ height: "100vh", width: "100vw", border: "3px solid red" }}>
+    <div style={{ height: "100vw", width: "100vw", paddingTop: "64px" }}>
   <MapSelector onSelect={handleSelect} />
   </div>
   );

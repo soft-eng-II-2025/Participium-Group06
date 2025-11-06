@@ -1,7 +1,6 @@
 import React from "react";
 import Header from "./Header";
 import { Container, Box, Stack } from "@mui/material";
-import "./Layout.css";
 
 type LayoutProps = {
     children?: React.ReactNode;

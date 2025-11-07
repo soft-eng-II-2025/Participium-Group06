@@ -1,11 +1,88 @@
-###
+@baseUrl = http://localhost:3000
+
+### 0. Register a Regular User
 POST http://localhost:3000/api/register
 Content-Type: application/json
 
 {
-  "username": "username_test",
-  "email": "test@test.it",
+  "username": "prova",
+  "email": "prova@test.it",
   "password": "testtest",
   "first_name": "test_name",
   "last_name": "last_name_test"
+}
+
+### 1. Register a Municipality Officer
+# Test: Register a new municipality officer
+POST {{baseUrl}}/api/admin/accounts/register
+Content-Type: application/json
+
+{
+  "username": "officer_alpha",
+  "email": "alpha@municipality.it",
+  "password": "securepassword",
+  "first_name": "Mario",
+  "last_name": "Rossi"
+}
+
+### 2. Register a Second Officer (for LIST test)
+# Test: Register another municipality officer
+POST {{baseUrl}}/api/admin/accounts/register
+Content-Type: application/json
+
+{
+  "username": "officer_beta",
+  "email": "beta@municipality.it",
+  "password": "anothersecure",
+  "first_name": "Laura",
+  "last_name": "Verdi"
+}
+
+### 3. Retrieve All Officers (GET /accounts/list)
+# Test: Fetch all registered municipality officers
+GET {{baseUrl}}/api/admin/accounts/list
+Accept: application/json
+
+### 4. Assign a Role for an Officer (PUT /accounts/assign)
+# Test: Update officer_alpha to have role "Test"
+## ATTENTION: the role must exist in the role table
+PUT {{baseUrl}}/api/admin/accounts/assign
+Content-Type: application/json
+
+{
+  "username": "officer_alpha",
+  "email": "alpha@municipality.it",
+  "password": "securepassword",
+  "first_name": "Mario",
+  "last_name": "Rossi",
+  "role": {
+    "title": "Test"
+  }
+}
+
+### 5. Submit a New Report (POST /users/:id/reports)
+# Assumes the user with ID 1 exists in the database.
+# Make sure 'user' in ReportDTO is correctly mapped in the controller,
+# and that the specified 'categoryId' exists in the DB.
+POST {{baseUrl}}/api/users/1/reports
+Content-Type: application/json
+
+{
+  "longitude": 12.4964,
+  "latitude": 41.9028,
+  "title": "Buco stradale urgente",
+  "description": "Grossa buca vicino al semaforo di Via Roma.",
+  "categoryId": 1,
+  "photos": [
+    "photo1_url.jpg",
+    "photo2_url.jpg"
+  ],
+  "user": {
+    "userId": 1,
+    "username": "prova",
+    "email": "prova@test.it",
+    "password": "testtest",
+    "first_name": "test_name",
+    "last_name": "last_name_test"
+   }
 }

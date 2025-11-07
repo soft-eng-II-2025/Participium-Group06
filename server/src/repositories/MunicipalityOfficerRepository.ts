@@ -11,9 +11,22 @@ export class MunicipalityOfficerRepository {
     async findAll(): Promise<MunicipalityOfficer[]> {
         return this.ormRepository.find();
     }
-    async findByusername(username: string): Promise<MunicipalityOfficer | null> {
+    /*async findByusername(username: string): Promise<MunicipalityOfficer | null> {
         return this.ormRepository.findOneBy({ username });
     }
+
+     */
+    /**
+     * NOTA: findOneBy non fa il join con le relazioni !!
+     * segui l'esempio sotto con "relations" per specificare i join
+     */
+    async findByusername(username: string): Promise<MunicipalityOfficer | null> {
+        return this.ormRepository.findOne({
+            where: { username },
+            relations: ['role'],
+        });
+    }
+
     async findByEmail(email: string): Promise<MunicipalityOfficer | null> {
         return this.ormRepository.findOneBy({ email });
     }

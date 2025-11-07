@@ -18,10 +18,11 @@ export async function getAllMunicipalityOfficer(): Promise<MunicipalityOfficerDT
 
 export async function updateMunicipalityOfficer(officerData: MunicipalityOfficerDTO): Promise<MunicipalityOfficerDTO> {
     const existingOfficer = await municipalityOfficerRepository.findByusername(officerData.username);
+    console.log(`updateMunicipalityOfficer: existingOfficer =>role:${existingOfficer?.role} id: ${existingOfficer?.role?.id}`);
     if (!existingOfficer) {
         throw new Error("Municipality OfficerDTO doesn't exist");
     }
-    if (existingOfficer.role?.id != null) {
+    if (existingOfficer.role != null ) {
         throw new Error("Municipality Officer already has a role assigned");
     }
     const officerDao = mapMunicipalityOfficerDTOToDAO(officerData)

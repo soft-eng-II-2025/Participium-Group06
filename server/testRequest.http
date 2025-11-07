@@ -56,7 +56,7 @@ Content-Type: application/json
   "first_name": "Mario",
   "last_name": "Rossi",
   "role": {
-    "title": "Test"
+    "title": "Test1"
   }
 }
 

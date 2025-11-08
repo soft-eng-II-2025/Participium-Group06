@@ -11,8 +11,8 @@ export class UserDTO {
     @IsEmail()
     email!: string;
 
-    @MinLength(6)
-    password!: string;
+    // password should not be validated here (output DTO). make it optional/null.
+    password?: string | null;
 
     @IsNotEmpty()
     first_name!: string;

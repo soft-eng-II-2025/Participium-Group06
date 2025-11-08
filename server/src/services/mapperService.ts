@@ -40,7 +40,7 @@ export function createCategoryDTO(
 export function createMunicipalityOfficerDTO(
   username?: string,
   email?: string,
-  password?: string,
+  password?: string | null,
   first_name?: string,
   last_name?: string,
   role?: RoleDTO
@@ -85,7 +85,7 @@ export function createRoleDTO(
 export function createUserDTO(
   username?: string,
   email?: string,
-  password?: string,
+  password?: string | null,
   first_name?: string,
   last_name?: string,
   reports?: ReportDTO[]
@@ -115,7 +115,7 @@ export function mapMunicipalityOfficerDAOToDTO(officerDAO: MunicipalityOfficer):
   return createMunicipalityOfficerDTO(
     officerDAO.username,
     officerDAO.email,
-    officerDAO.password,
+    null, // do not expose password
     officerDAO.first_name,
     officerDAO.last_name,
     officerDAO.role ? mapRoleDAOToDTO(officerDAO.role) : undefined
@@ -145,7 +145,7 @@ export function mapUserDAOToDTO(userDAO: User): UserDTO {
   return createUserDTO(
     userDAO.username,
     userDAO.email,
-    userDAO.password,
+    null, // do not expose password
     userDAO.first_name,
     userDAO.last_name,
     userDAO.reports?.map((r: Report) => mapReportDAOToDTO(r))
@@ -169,7 +169,7 @@ export function mapMunicipalityOfficerDTOToDAO(dto: MunicipalityOfficerDTO): Mun
   const dao = new MunicipalityOfficer();
   if (dto.username !== undefined) dao.username = dto.username;
   if (dto.email !== undefined) dao.email = dto.email;
-  if (dto.password !== undefined) dao.password = dto.password;
+  if (dto.password !== null && dto.password != undefined) dao.password = dto.password;
   if (dto.first_name !== undefined) dao.first_name = dto.first_name;
   if (dto.last_name !== undefined) dao.last_name = dto.last_name;
   if (dto.role !== undefined) {
@@ -211,7 +211,7 @@ export function mapUserDTOToDAO(dto: UserDTO): User {
   const dao = new User();
   if (dto.username !== undefined) dao.username = dto.username;
   if (dto.email !== undefined) dao.email = dto.email;
-  if (dto.password !== undefined) dao.password = dto.password;
+  if (dto.password !== null && dto.password !== undefined) dao.password = dto.password;
   if (dto.first_name !== undefined) dao.first_name = dto.first_name;
   if (dto.last_name !== undefined) dao.last_name = dto.last_name;
   if (dto.reports && dto.reports.length > 0) {

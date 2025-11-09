@@ -20,7 +20,7 @@ docker compose up -d
   - Success: Returns the logged-in user object.
   - Error: Returns an error.
 
-- POST `/api/users/:id/reports`
+- POST `/api/users/reports`
   - Description: Adds a new report to the database.
   - Success: Returns the newly created report object.
   - Error: Returns an error response.
@@ -32,12 +32,17 @@ docker compose up -d
   - Error: Returns an error response.
 
 - GET `/api/admin/accounts/list`
-  - Description: Retrieves a list of all municipality officer currently in the database.
+  - Description: Retrieves a list of all municipality officers currently in the database.
   - Success: Returns an array of municipality user objects.
 
 - PUT `/api/admin/accounts/assign`
   - Description: Assigns a specific role to a municipality officer.
   - Success: Returns the user object with the updated role information.
+  - Error: Returns an error response.
+
+- GET `/api/admin/roles/list`
+  - Description: Retrieves a list of all available roles that can be assigned to municipality officers.
+  - Success: Returns an array of role objects.
   - Error: Returns an error response.
 
 
@@ -54,7 +59,7 @@ import {LoginDTO} from "./LoginDTO";
 
 function registerUser(user: UserDTO);    // POST /api/register  registers a new user account into the system
 function login(credentials: LoginDTO);   // POST /api/login                       
-function addReport(report: ReportDTO);   // POST /api/users/:id/reports
+function addReport(report: ReportDTO);   // POST /api/users/reports
 ```
 
 **Admin API**
@@ -62,7 +67,8 @@ function addReport(report: ReportDTO);   // POST /api/users/:id/reports
 ```ts
 import {MunicipalityOfficerDTO} from "./MunicipalityOfficerDTO";
 
-function registerMunicipalityOfficer(municipalityOfficer: MunicipalityOfficerDTO);  // POST /api/admin/accounts/register  registers a new municipality officer account into the system
-function getAllMunicipalityUsers(): MunicipalityOfficerDTO[];                       // GET /api/admin/accounts/list       retrieves all municipality users in the system
-function setRole(municipalityOfficer: MunicipalityOfficerDTO);                      // PUT /admin/accounts/assign assigns a role to a specific municipality user
+function registerMunicipalityOfficer(body: MunicipalityOfficerDTO);  // POST /api/admin/accounts/register  registers a new municipality officer account into the system
+function getAllMunicipalityUsers(): Promise<MunicipalityOfficerDTO[]>;                       // GET /api/admin/accounts/list       retrieves all municipality users in the system
+function setRole(body: MunicipalityOfficerDTO);                      // PUT /api/admin/accounts/assign     assigns a role to a specific municipality user
+function getRoles(): Promise<RoleDTO[]>;                                              // GET /api/admin/roles/list   retrieves all available roles in the system
 ```

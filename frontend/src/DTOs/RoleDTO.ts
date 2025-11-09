@@ -1,6 +1,4 @@
-import {MunicipalityOfficerDTO} from "./MunicipalityOfficerDTO";
-
 export interface RoleDTO {
+    id?: number;
     title: string;
-    officers: MunicipalityOfficerDTO[];
 }

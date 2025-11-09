@@ -9,7 +9,9 @@ export class MunicipalityOfficerRepository {
         this.ormRepository = AppDataSource.getRepository(MunicipalityOfficer);
     }
     async findAll(): Promise<MunicipalityOfficer[]> {
-        return this.ormRepository.find();
+        return this.ormRepository.find({
+            relations: ['role']
+        });
     }
     /*async findByusername(username: string): Promise<MunicipalityOfficer | null> {
         return this.ormRepository.findOneBy({ username });

@@ -13,11 +13,12 @@ export function useRegisterMunicipalityOfficer(){
 }
 
 export function useGetAllMunicipalityUsers(){
-    return useQuery({
+    return useQuery<MunicipalityOfficerDTO[]>({
         queryKey: ["/list"],
-        queryFn: () => adminApi.getAllMunicipalityUsers().then(r => r.data),
+        queryFn: () => adminApi.getAllMunicipalityUsers().then(r => r.data ?? []),
     })
 }
+
 
 export function useSetRole(){
     return useMutation({

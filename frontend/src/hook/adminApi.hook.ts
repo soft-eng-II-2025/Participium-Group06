@@ -14,13 +14,13 @@ export function useRegisterMunicipalityOfficer() {
     });
 }
 
-export function useGetAllMunicipalityUsers(){
-    return useQuery<MunicipalityOfficerDTO[]>({
-        queryKey: ["/list"],
-        queryFn: () => adminApi.getAllMunicipalityUsers().then(r => r.data ?? []),
-    })
+export function useGetAllMunicipalityUsers() {
+    return useQuery({
+        queryKey: ["officers"],
+        queryFn: () => adminApi.getAllMunicipalityUsers().then(r => r.data),
+        staleTime: 5 * 60 * 1000,
+    });
 }
-
 
 export function useSetRole() {
     const qc = useQueryClient();
@@ -31,10 +31,12 @@ export function useSetRole() {
     });
 }
 
+// NEW: roles from DB (filter out ADMIN)
 export function useGetRoles() {
     return useQuery<RoleDTO[]>({
         queryKey: ["roles"],
         queryFn: () => adminApi.getRoles().then(r => r.data),
+        select: (roles) => roles.filter(r => r.title !== "ADMIN"),
         staleTime: 5 * 60 * 1000,
     });
 }

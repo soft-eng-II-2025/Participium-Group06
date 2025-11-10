@@ -11,7 +11,7 @@ export class AdminApi {
     }
 
     async getAllMunicipalityUsers() {
-        return axios.get <MunicipalityOfficerDTO[]>(`${BASE_URL}/list`);
+        return axios.get <MunicipalityOfficerDTO[]>(`${ACCOUNTS_BASE}/list`);
     }
 
     async setRole(params: MunicipalityOfficerDTO) {

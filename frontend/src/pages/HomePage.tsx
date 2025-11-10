@@ -1,3 +1,4 @@
+// @ts-ignore
 import homepage_image from "../assets/foto_homepage.png"
 import { Box, Container, Grid, Typography, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";

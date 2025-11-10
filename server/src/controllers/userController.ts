@@ -21,9 +21,9 @@ export async function addReport(reportData: ReportDTO): Promise<ReportDTO> {
 
 export async function createUser(userData: UserDTO): Promise<UserDTO> {
   // hash incoming plain password
-  const hashed: string = "";
+  let hashed: string = "";
   if (userData.password != null && userData.password != undefined) {
-  const hashed = await hashPassword(userData.password);
+    hashed = await hashPassword(userData.password);
   } else { 
     throw new Error("Password is required");
   }

@@ -14,6 +14,8 @@ import {
   Link,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { useLogin } from "../hook/authApi.hook";
+import "./LoginPage.css";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -21,6 +23,7 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const loginUser = useLogin();
 
   const validate = () => {
     if (!username || !password) {
@@ -37,11 +40,16 @@ const LoginPage: React.FC = () => {
 
     setLoading(true);
     try {
-      // TODO: replace with login function
-      await new Promise((r) => setTimeout(r, 900));
+      const response = await loginUser.mutateAsync({
+        username,
+        password,
+      });
 
-      navigate("/progetti");
+      console.log("Login successful:", response);
+
+      navigate("/map");
     } catch (err) {
+      console.error(err);
       setError("An error occured during login. Try again.");
     } finally {
       setLoading(false);
@@ -50,14 +58,9 @@ const LoginPage: React.FC = () => {
 
   return (
     <Box
-      sx={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100vw"}}>
-      <Paper
-        elevation={3}
-        sx={{ width: "100%", maxWidth: 420, borderRadius: "20px", textAlign: "center" }}>
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
-          sx={{ p: 4 }}>
+      sx={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100vw" }}>
+      <Paper elevation={3} sx={{ width: "100%", maxWidth: 520, borderRadius: "12px", textAlign: "center" }}>
+        <Box component="form" onSubmit={handleSubmit} sx={{ p: 4 }}>
           <Typography
             variant="h4"
             component="h1"
@@ -95,9 +98,8 @@ const LoginPage: React.FC = () => {
             color="secondary"
             className="partecipation-button"
             disabled={loading}
-            onClick={() => navigate("/map")}
             sx={{ mt: 3, py: 1.5, fontWeight: 600, px: 8, alignItems: "center" }}>
-            {loading ? "Loggin in..." : "Log in"}
+            {loading ? "Logging in..." : "Log in"}
           </Button>
 
           <Box sx={{ mt: 2, textAlign: "center" }}>

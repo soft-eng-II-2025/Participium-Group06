@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Paper, Box, Typography, TextField, Button, Alert } from "@mui/material";
-import { UserDTO } from "../types/user.types";
+import { UserDTO } from "../DTOs/UserDTO";
 
 type Props = {
   onSubmit: (payload: UserDTO) => Promise<void> | void;
@@ -32,10 +32,6 @@ const RegistrationForm: React.FC<Props> = ({ onSubmit, loading = false, serverEr
       setLocalError("Please enter a valid email address.");
       return false;
     }
-    if (password.length < 6) {
-      setLocalError("Password must be at least 6 characters.");
-      return false;
-    }
     if (password !== confirmPassword) {
       setLocalError("Passwords do not match.");
       return false;
@@ -48,7 +44,7 @@ const RegistrationForm: React.FC<Props> = ({ onSubmit, loading = false, serverEr
     setLocalError(null);
     if (!validate()) return;
 
-    const payload: RegistrationPayload = {
+    const payload: UserDTO = {
       username,
       email,
       first_name: firstName,
@@ -139,7 +135,6 @@ const RegistrationForm: React.FC<Props> = ({ onSubmit, loading = false, serverEr
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
-            helperText="Minimum 6 characters"
           />
 
           <TextField

@@ -3,7 +3,7 @@ import {validateDto} from "../middlewares/validationMiddleware";
 import {UserDTO} from "../models/DTOs/UserDTO";
 import {LoginDTO} from "../models/DTOs/LoginDTO";
 import * as userController from "../controllers/userController";
-import * as authController from "../controllers/authController";
+//import * as authController from "../controllers/authController";
 
 export const router = Router();
 
@@ -19,10 +19,10 @@ router.post('/register', validateDto(UserDTO), async (req, res: Response, next) 
 
 router.post('/login', validateDto(LoginDTO), async (req, res: Response, next) => {
 
-    // TODO: remove comment
-    /*
-    const loggedUser = await authController.login(req.body); Still needs to be implemented
-    res.status(201).json(loggedUser);
-
-     */
+    try {
+        const loggedUser = await userController.login(req.body);
+        res.status(200).json(loggedUser);
+    } catch (err) {
+        next(err);
+    }
 })

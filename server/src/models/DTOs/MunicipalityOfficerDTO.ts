@@ -9,8 +9,7 @@ export class MunicipalityOfficerDTO {
     @IsEmail()
     email!: string;
 
-    @MinLength(6)
-    password!: string;
+    password?: string | null;
 
     @IsNotEmpty()
     first_name!: string;

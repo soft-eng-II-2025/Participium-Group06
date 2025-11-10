@@ -1,28 +1,29 @@
-import {Router, Response} from 'express';
-import {validateDto} from "../middlewares/validationMiddleware";
-import {UserDTO} from "../models/DTOs/UserDTO";
-import {LoginDTO} from "../models/DTOs/LoginDTO";
+import { Router, Response } from 'express';
+import { validateDto } from "../middlewares/validationMiddleware";
+import { CreateUserRequestDTO } from "../models/DTOs/CreateUserRequestDTO";
+import { LoginRequestDTO } from "../models/DTOs/LoginRequestDTO";
 import * as userController from "../controllers/userController";
-//import * as authController from "../controllers/authController";
+import * as adminController from "../controllers/adminController";
 
 export const router = Router();
 
 // POST /api/register
-router.post('/register', validateDto(UserDTO), async (req, res: Response, next) => {
-
-    
-    const newUser = await userController.createUser(req.body);
+router.post('/register', validateDto(CreateUserRequestDTO), async (req, res: Response) => {
+    const newUser = await userController.createUser(req.body); // CreateUserRequest -> UserResponse
     res.status(201).json(newUser);
-     
-
 });
 
-router.post('/login', validateDto(LoginDTO), async (req, res: Response, next) => {
-
+router.post('/login', validateDto(LoginRequestDTO), async (req, res: Response) => {
     try {
-        const loggedUser = await userController.login(req.body);
-        res.status(200).json(loggedUser);
-    } catch (err) {
-        next(err);
+        const user = await userController.loginUser(req.body);
+        return res.status(200).json(user);
+    } catch {
+        try {
+            const officer = await adminController.loginOfficer(req.body);
+            return res.status(200).json(officer);
+        } catch {
+            // errore unico per evitare enumeration
+            return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
+        }
     }
-})
+});

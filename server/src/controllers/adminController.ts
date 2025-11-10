@@ -4,15 +4,19 @@ import { MunicipalityOfficerRepository } from "../repositories/MunicipalityOffic
 import {mapMunicipalityOfficerDAOToDTO, mapMunicipalityOfficerDTOToDAO} from "../services/mapperService";
 import {RoleRepository} from "../repositories/RoleRepository";
 import { LoginDTO } from "../models/DTOs/LoginDTO";
-import { verifyPassword } from "../services/passwordService";
+import { verifyPassword,hashPassword } from "../services/passwordService";
 
 const municipalityOfficerRepository = new MunicipalityOfficerRepository(); // Placeholder for the actual repository
 const roleRepository = new RoleRepository();
 
 export async function addMunicipalityOfficer(officerData: MunicipalityOfficerDTO): Promise<MunicipalityOfficerDTO> {
+    if (officerData.password == null || officerData.password == undefined) {
+        throw new Error("Password is required");
+    }
+    else{officerData.password = await hashPassword(officerData.password);
     const officerAdded = await municipalityOfficerRepository.add(mapMunicipalityOfficerDTOToDAO(officerData));
     return mapMunicipalityOfficerDAOToDTO(officerAdded);
-}
+}}
 
 export async function getAllMunicipalityOfficer(): Promise<MunicipalityOfficerDTO[]> {
     const allOfficerDao = await municipalityOfficerRepository.findAll();
@@ -49,16 +53,23 @@ export async function login(loginData: LoginDTO): Promise<MunicipalityOfficerDTO
   const MunicipalityOfficerDAO = (await municipalityOfficerRepository.findByusername(loginData.username));
 
   if (!MunicipalityOfficerDAO) { 
-    throw new Error("Invalid credentials");
+    const e = new Error("Officer not found");
+    e.name = "OFFICER_NOT_FOUND";
+    throw e;
   }
+
   if (loginData.password == null || loginData.password == undefined) {
-    throw new Error("Password is required");
+    const e = new Error("Password is required");
+    e.name = "PASSWORD_REQUIRED";
+    throw e;
   }
-  else{
+
   const ok = await verifyPassword(MunicipalityOfficerDAO.password, loginData.password);
   if (!ok) {
-    throw new Error("Invalid credentials");
-  }}
+    const e = new Error("Wrong password");
+    e.name = "WRONG_PASSWORD";
+    throw e;
+  }
 
   return mapMunicipalityOfficerDAOToDTO(MunicipalityOfficerDAO); // safe: mapper will not expose the hash
- }
+}

@@ -44,16 +44,23 @@ export async function login(loginData: LoginDTO): Promise<UserDTO> {
   const userDao = (await userRepository.findByUsername(loginData.username));
 
   if (!userDao) { 
-    throw new Error("Invalid credentials");
+    const e = new Error("User not found");
+    e.name = "USER_NOT_FOUND";
+    throw e;
   }
+
   if (loginData.password == null || loginData.password == undefined) {
-    throw new Error("Password is required");
+    const e = new Error("Password is required");
+    e.name = "PASSWORD_REQUIRED";
+    throw e;
   }
-  else{
+
   const ok = await verifyPassword(userDao.password, loginData.password);
   if (!ok) {
-    throw new Error("Invalid credentials");
-  }}
+    const e = new Error("Wrong password");
+    e.name = "WRONG_PASSWORD";
+    throw e;
+  }
 
   return mapUserDAOToDTO(userDao); // safe: mapper will not expose the hash
 }

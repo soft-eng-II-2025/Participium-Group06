@@ -4,6 +4,23 @@
 ```
 docker compose up -d 
 ```
+## To stop Docker - Postgres
+```
+docker compose down
+```
+
+## To start backend
+```
+cd server
+npm run dev
+```
+
+## To start frontend
+```
+cd frontend
+npm install
+npm start
+```
 
 
 

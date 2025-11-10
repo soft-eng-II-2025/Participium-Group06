@@ -6,5 +6,5 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: participium
     ports:
-      - 5432:5432
+      - 5434:5432
     restart: unless-stopped

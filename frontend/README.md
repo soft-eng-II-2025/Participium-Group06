@@ -44,3 +44,18 @@ You don’t have to ever use `eject`. The curated feature set is suitable for sm
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
 To learn React, check out the [React documentation](https://reactjs.org/).
+
+
+# UseQuery
+The result object contains a few very important states you'll need to be aware of to be productive. A query can only be in one of the following states at any given moment:
+
+- isPending or status === 'pending' - The query has no data yet
+- isError or status === 'error' - The query encountered an error
+- isSuccess or status === 'success' - The query was successful and data is available
+
+Beyond those primary states, more information is available depending on the state of the query:
+- error - If the query is in an isError state, the error is available via the error property.
+- data - If the query is in an isSuccess state, the data is available via the data property.
+- isFetching - In any state, if the query is fetching at any time (including background refetching) isFetching will be true.
+
+To more info: https://tanstack.com/query/v5/docs/framework/react/guides/queries

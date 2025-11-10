@@ -51,7 +51,6 @@ docker compose up -d
 ```ts
 import {UserDTO} from "./UserDTO";
 import {LoginDTO} from "./LoginDTO";
-import {ReportDTO} from "./ReportDTO";
 
 function registerUser(user: UserDTO);    // POST /api/register  registers a new user account into the system
 function login(credentials: LoginDTO);   // POST /api/login                       

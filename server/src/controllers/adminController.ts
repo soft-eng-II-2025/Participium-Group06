@@ -1,75 +1,75 @@
-import { map } from "zod";
-import { MunicipalityOfficerDTO } from "../models/DTOs/MunicipalityOfficerDTO";
+import { MunicipalityOfficerResponseDTO } from "../models/DTOs/MunicipalityOfficerResponseDTO";
 import { MunicipalityOfficerRepository } from "../repositories/MunicipalityOfficerRepository";
-import {mapMunicipalityOfficerDAOToDTO, mapMunicipalityOfficerDTOToDAO} from "../services/mapperService";
-import {RoleRepository} from "../repositories/RoleRepository";
-import { LoginDTO } from "../models/DTOs/LoginDTO";
-import { verifyPassword,hashPassword } from "../services/passwordService";
+import { RoleRepository } from "../repositories/RoleRepository";
+import { LoginRequestDTO } from "../models/DTOs/LoginRequestDTO";
+import { verifyPassword, hashPassword } from "../services/passwordService";
+import { mapMunicipalityOfficerDAOToDTO as mapMunicipalityOfficerDAOToResponse } from "../services/mapperService";
+import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
 
-const municipalityOfficerRepository = new MunicipalityOfficerRepository(); // Placeholder for the actual repository
+const municipalityOfficerRepository = new MunicipalityOfficerRepository();
 const roleRepository = new RoleRepository();
 
-export async function addMunicipalityOfficer(officerData: MunicipalityOfficerDTO): Promise<MunicipalityOfficerDTO> {
-    if (officerData.password == null || officerData.password == undefined) {
-        throw new Error("Password is required");
-    }
-    else{officerData.password = await hashPassword(officerData.password);
-    const officerAdded = await municipalityOfficerRepository.add(mapMunicipalityOfficerDTOToDAO(officerData));
-    return mapMunicipalityOfficerDAOToDTO(officerAdded);
-}}
+function appErr(code: string, status = 400) { const e: any = new Error(code); e.status = status; return e; }
 
-export async function getAllMunicipalityOfficer(): Promise<MunicipalityOfficerDTO[]> {
+export async function addMunicipalityOfficer(officerData: {
+    username: string;
+    email: string;
+    password: string;
+    first_name: string;
+    last_name: string;
+    role?: { title: string };
+}): Promise<MunicipalityOfficerResponseDTO> {
+    if (!officerData.password?.trim()) throw appErr("PASSWORD_REQUIRED", 400);
+
+    // costruiamo il DAO manualmente (niente mapper DTO->DAO qui)
+    const dao = new MunicipalityOfficer();
+    dao.username = officerData.username.trim().toLowerCase();
+    dao.email = officerData.email.trim().toLowerCase();
+    dao.password = await hashPassword(officerData.password);
+    dao.first_name = officerData.first_name;
+    dao.last_name = officerData.last_name;
+
+    // se vuoi permettere la creazione con ruolo già assegnato (opzionale)
+    if (officerData.role?.title) {
+        const role = await roleRepository.findByTitle(officerData.role.title.trim());
+        if (!role) throw appErr("ROLE_NOT_FOUND", 404);
+        dao.role = role;
+    }
+
+    const officerAdded = await municipalityOfficerRepository.add(dao);
+    return mapMunicipalityOfficerDAOToResponse(officerAdded);
+}
+
+export async function getAllMunicipalityOfficer(): Promise<MunicipalityOfficerResponseDTO[]> {
     const allOfficerDao = await municipalityOfficerRepository.findAll();
-    const allOfficerDto = allOfficerDao.map(mapMunicipalityOfficerDAOToDTO);
-    return allOfficerDto;
+    return allOfficerDao.map(mapMunicipalityOfficerDAOToResponse);
 }
 
-export async function updateMunicipalityOfficer(officerData: MunicipalityOfficerDTO): Promise<MunicipalityOfficerDTO> {
-    const existingOfficer = await municipalityOfficerRepository.findByusername(officerData.username);
-    console.log(`updateMunicipalityOfficer: existingOfficer =>role:${existingOfficer?.role} id: ${existingOfficer?.role?.id}`);
-    if (!existingOfficer) {
-        throw new Error("Municipality OfficerDTO doesn't exist");
-    }
-    if (existingOfficer.role != null ) {
-        throw new Error("Municipality Officer already has a role assigned");
-    }
-    const officerDao = mapMunicipalityOfficerDTOToDAO(officerData)
-    officerDao.id = existingOfficer.id;
+// usata dall'endpoint /accounts/assign (retro-compat con adapter)
+export async function updateMunicipalityOfficer(officerData: { username: string; role?: { title: string } }): Promise<MunicipalityOfficerResponseDTO> {
+    const existingOfficer = await municipalityOfficerRepository.findByUsername(officerData.username.trim().toLowerCase());
+    if (!existingOfficer) throw appErr("OFFICER_NOT_FOUND", 404);
+    if (existingOfficer.role != null) throw appErr("ROLE_ALREADY_ASSIGNED", 409);
 
+    if (!officerData.role?.title) throw appErr("ROLE_TITLE_REQUIRED", 400);
+    const role = await roleRepository.findByTitle(officerData.role.title.trim());
+    if (!role) throw appErr("ROLE_NOT_FOUND", 404);
 
-    if (officerData.role) {
-        const role = await roleRepository.findByTitle(officerData.role.title);
-        if (!role) throw new Error("Role not found");
-        officerDao.role = role;
-    } else {
-        throw new Error("The role cannot be null");
-    }
-    const updatedOfficer =  await municipalityOfficerRepository.update(officerDao);
-    return mapMunicipalityOfficerDAOToDTO(updatedOfficer);
+    existingOfficer.role = role;
+    const updatedOfficer = await municipalityOfficerRepository.update(existingOfficer);
+    return mapMunicipalityOfficerDAOToResponse(updatedOfficer);
 }
 
-export async function login(loginData: LoginDTO): Promise<MunicipalityOfficerDTO> {
-  // Adjust lookup method names to your repository (by email or username)
-  const MunicipalityOfficerDAO = (await municipalityOfficerRepository.findByusername(loginData.username));
+export async function loginOfficer(loginData: LoginRequestDTO) {
+    const username = loginData.username?.trim().toLowerCase();
+    const password = loginData.password ?? "";
 
-  if (!MunicipalityOfficerDAO) { 
-    const e = new Error("Officer not found");
-    e.name = "OFFICER_NOT_FOUND";
-    throw e;
-  }
+    if (!username || !password) throw appErr("MISSING_CREDENTIALS", 400);
 
-  if (loginData.password == null || loginData.password == undefined) {
-    const e = new Error("Password is required");
-    e.name = "PASSWORD_REQUIRED";
-    throw e;
-  }
+    const officer = await municipalityOfficerRepository.findByUsername(username);
+    const ok = officer && await verifyPassword(officer.password, password);
 
-  const ok = await verifyPassword(MunicipalityOfficerDAO.password, loginData.password);
-  if (!ok) {
-    const e = new Error("Wrong password");
-    e.name = "WRONG_PASSWORD";
-    throw e;
-  }
+    if (!ok) throw appErr("INVALID_CREDENTIALS", 401);
 
-  return mapMunicipalityOfficerDAOToDTO(MunicipalityOfficerDAO); // safe: mapper will not expose the hash
+    return mapMunicipalityOfficerDAOToResponse(officer);
 }

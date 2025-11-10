@@ -25,7 +25,7 @@ const AdminHomePage = () => {
         console.log(`Apri modale per utente: ${username}`);
     };
     const handleAddAccount = () => {
-        console.log(`Add account`);
+        navigate("/admin/register")
     };
 
 
@@ -34,7 +34,7 @@ const AdminHomePage = () => {
             maxWidth="xl"
             sx={{
                 minHeight: "100vh",
-                pt: { xs: 12, sm: 14 },
+                pt: { xs: 2, sm: 4 },
                 pb: 5,
             }}
         >

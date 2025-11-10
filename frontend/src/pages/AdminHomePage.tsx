@@ -27,15 +27,16 @@ const AdminHomePage = () => {
     };
 
     const handleAddAccount = () => {
-        console.log(`Add account`);
+        navigate("/admin/register")
     };
 
     return (
-        <Container maxWidth="xl" sx={{ minHeight: "100vh", pt: { xs: 12, sm: 14 }, pb: 5 }}>
+        <Container maxWidth="xl" sx={{ minHeight: "100vh", pt: { xs: 2, sm: 4 }, pb: 5 }}>
             <Box sx={{ width: "100%", display: "flex", justifyContent: "flex-start", alignItems: "center", mb: 4, gap: 4 }}>
                 <Typography variant="h4" component="h1" color="primary" sx={{fontWeight: 800}}>
                     Manage Account
                 </Typography>
+
                 <Button
                     variant="contained"
                     startIcon={<AddIcon/>}

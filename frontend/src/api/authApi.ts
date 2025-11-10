@@ -1,6 +1,7 @@
 import axios from "axios";
 import {UserDTO} from "../DTOs/UserDTO";
 import {LoginDTO} from "../DTOs/LoginDTO";
+import {MunicipalityOfficerDTO} from "../DTOs/MunicipalityOfficerDTO";
 
 
 const BASE_URL = "/api";
@@ -12,7 +13,7 @@ export class AuthApi {
     }
 
     async login(params: LoginDTO) {
-        return axios.post <UserDTO>(`${BASE_URL}/login`, params);
+        return axios.post <UserDTO|MunicipalityOfficerDTO>(`${BASE_URL}/login`, params);
     }
 
 }

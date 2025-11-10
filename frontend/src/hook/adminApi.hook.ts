@@ -14,8 +14,9 @@ export function useRegisterMunicipalityOfficer() {
     });
 }
 
+
 export function useGetAllMunicipalityUsers() {
-    return useQuery({
+    return useQuery<MunicipalityOfficerDTO[]>({
         queryKey: ["officers"],
         queryFn: () => adminApi.getAllMunicipalityUsers().then(r => r.data),
         staleTime: 5 * 60 * 1000,

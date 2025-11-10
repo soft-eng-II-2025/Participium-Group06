@@ -25,7 +25,7 @@ router.post('/login', validateDto(LoginDTO), async (req, res: Response, next) =>
         return res.status(200).json(loggedUser);
     } catch (errUser: any) {
         // If the user exists but password is wrong -> return immediately with 401
-        if (errUser?.name === 'WRONG_PASSWORD') {
+        if (errUser?.name === 'WRONG_PASSWORD') { //In practice this should never happen here
             return res.status(401).json({ error: "wrong password" });
         }
         if (errUser?.name === 'PASSWORD_REQUIRED') {
@@ -41,7 +41,7 @@ router.post('/login', validateDto(LoginDTO), async (req, res: Response, next) =>
                 if (errOfficer?.name === 'WRONG_PASSWORD') {
                     return res.status(401).json({ error: "wrong password" });
                 }
-                if (errOfficer?.name === 'PASSWORD_REQUIRED') {
+                if (errOfficer?.name === 'PASSWORD_REQUIRED') { //In practice this should never happen here
                     return res.status(400).json({ error: "Password is required" });
                 }
                 if (errOfficer?.name === 'OFFICER_NOT_FOUND') {

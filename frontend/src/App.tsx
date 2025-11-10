@@ -11,6 +11,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
 import AdminHomePage from "./pages/AdminHomePage";
+import AdminRegisterPage from "./pages/AdminRegisterPage";
 
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ function App() {
                             <Route path="/register" element={<RegisterPage/>}/>
                             <Route path="/map" element={<Map/>}/>
                             <Route path="/admin/home" element={<AdminHomePage/>} />
+                            <Route path="/admin/register" element={<AdminRegisterPage/>}/>
                         </Routes>
                     </Layout>
                 </BrowserRouter>

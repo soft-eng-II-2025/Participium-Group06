@@ -79,7 +79,7 @@ export class SeedInitialData1710000000000 implements MigrationInterface {
         ("id","username","email","password","first_name","last_name","role")
       VALUES
         (1,'admin','admin@participium.local',
-         '$2b$10$EDqRX1haoOwvvqQQJViUQevO5qlNAbMtBDioGsxiGM0RPBFX7NBPy',
+         '$argon2id$v=19$m=65536,t=3,p=1$6FOS86yBc3WowYzkpdqonQ$fuBmKGHx8IRs15LrImF8/baI15mxyfvGnTkUNyVDd6g',
          'System','Admin',1)
       ON CONFLICT ("id") DO NOTHING;
     `);

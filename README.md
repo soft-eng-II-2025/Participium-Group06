@@ -16,25 +16,21 @@ The project is composed of:
 ## 1) 🐳 Docker Setup
 
 ```bash
+# Stop all containers
+docker compose down
+
 # Start the environment (Postgres + Migration)
 docker compose up --build migrator
 
 This command both initializes the schema and seeds the database with roles, categories, and an admin user.
 Once completed, the migrator container will stop automatically.
 
-# Start only the database
-docker compose up -d postgres
 
-# Stop all containers
-docker compose down
 ```
 
 Builds and starts the Postgres container on port 5434.
 
 Automatically runs the TypeORM migrations to create and seed the database (roles, categories, admin user).
-
-Once you see ✅ Migrations completed, the backend is ready to run.
-
 
 
 ## 2) Backend Setup 

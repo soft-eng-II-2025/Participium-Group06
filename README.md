@@ -1,5 +1,9 @@
 # Participium-Group06
 
+## Team members:
+Francesco Servente s328852
+
+
 Participium is a civic reporting platform that connects citizens and municipalities for efficient issue management and resolution.  
 The project is composed of:
 - **Backend** (`server/`): Node.js + TypeORM + PostgreSQL

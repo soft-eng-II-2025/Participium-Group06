@@ -3,7 +3,7 @@ import type { UserDTO } from '../DTOs/UserDTO';
 import type { LoginDTO } from '../DTOs/LoginDTO';
 
 // Wrapper hooks that expose a small react-query-like surface but delegate to AuthContext.
-// This keeps component usage unchanged while centralizing auth logic in the provider.
+// This keeps component usage unchanged while centralizing auth logic in the provider
 
 export function useRegisterUser() {
     const { register } = useAuth();
@@ -11,7 +11,6 @@ export function useRegisterUser() {
         mutateAsync: async (payload: UserDTO) => {
             return await register(payload);
         },
-        // convenience: compatible signature for callers that call mutate
         mutate: (payload: UserDTO) => { void register(payload); },
     };
 }

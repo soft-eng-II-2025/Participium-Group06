@@ -1,12 +1,14 @@
 // @ts-ignore
 import homepage_image from "../assets/foto_homepage.png"
 import { Box, Grid, Typography, Button } from "@mui/material";
+import { useAuth } from "../contexts/AuthContext";
 
 import { useNavigate } from "react-router-dom";
 import "./HomePage.css";
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, loading } = useAuth();
 
   return (
     <Box
@@ -28,6 +30,7 @@ const HomePage = () => {
               Work together to make your neighborhood a better place!
             </Typography>
 
+            { !isAuthenticated && (
             <Button
               color="secondary"
               variant="contained"
@@ -37,6 +40,7 @@ const HomePage = () => {
             >
               JOIN US NOW
             </Button>
+            )}
           </Box>
         </Grid>
 

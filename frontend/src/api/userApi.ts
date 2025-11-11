@@ -1,14 +1,12 @@
-import axios from "axios";
+import api from "./api";
 import {ReportDTO} from "../DTOs/ReportDTO";
 
-
-const BASE_URL = "/api/users";
+const BASE_URL = "users";
 
 export class UserApi {
 
     async addReport(params: ReportDTO) {
-        console.log(`addReport ${params} parte la richiesta`)
-        return axios.post <ReportDTO>(`${BASE_URL}/reports`, params);
+        return api.post<ReportDTO>(`${BASE_URL}/reports`, params);
     }
 
 }

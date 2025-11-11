@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import { AppDataSource } from './data-source';
+import {AppDataSource} from './data-source';
 import {errorHandler} from "./middlewares/errorMiddleware";
 import {router} from "./routes/routes";
 

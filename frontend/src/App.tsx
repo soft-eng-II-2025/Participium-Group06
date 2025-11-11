@@ -38,16 +38,18 @@ function App() {
                                 <Route path="/register" element={<RegisterPage />} />
                                 <Route path="/map" element={
                                     <ProtectedRoute>
-                                        <Map />
+                                        <RequireRole role="USER">
+                                            <Map />
+                                        </RequireRole>
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/admin/home" element={
-                                    <RequireRole role="admin">
+                                    <RequireRole role="ADMIN">
                                         <AdminHomePage />
                                     </RequireRole>
                                 } />
                                 <Route path="/admin/register" element={
-                                    <RequireRole role="admin">
+                                    <RequireRole role="ADMIN">
                                         <AdminRegisterPage />
                                     </RequireRole>
                                 } />

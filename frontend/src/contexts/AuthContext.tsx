@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user: user ?? null,
     loading: isLoading,
     isAuthenticated: !!user,
-    role: user ? ((user as MunicipalityOfficerDTO)?.role?.title ?? 'user') : null,
+    role: user ? ((user as MunicipalityOfficerDTO)?.role?.title ?? 'USER') : null,
     login,
     register,
     logout,

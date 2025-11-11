@@ -105,3 +105,9 @@ export async function getAllRoles(): Promise<RoleListItem[]> {
     const roles = await roleRepository.findAssignable(); // <-- esclude admin/super admin
     return roles.map((r) => ({ id: r.id, title: r.title }));
 }
+
+export async function getMunicipalityOfficerByUsername(username: string): Promise<MunicipalityOfficerResponseDTO> {
+    const officer = await municipalityOfficerRepository.findByUsername(username);
+    if (!officer) throw appErr("OFFICER_NOT_FOUND", 404);
+    return mapMunicipalityOfficerDAOToResponse(officer);
+}

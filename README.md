@@ -13,11 +13,14 @@ The project is composed of:
 
 ---
 
-## 🐳 Docker Setup
+## 1) 🐳 Docker Setup
 
 ```bash
 # Start the environment (Postgres + Migration)
 docker compose up --build migrator
+
+This command both initializes the schema and seeds the database with roles, categories, and an admin user.
+Once completed, the migrator container will stop automatically.
 
 # Start only the database
 docker compose up -d postgres
@@ -34,36 +37,27 @@ Once you see ✅ Migrations completed, the backend is ready to run.
 
 
 
-## Manual Backend Setup (without Docker)
+## 2) Backend Setup 
 ```
-# Make sure PostgreSQL is running on port 5434 with:
-# user: postgres
-# password: postgres
-# database: participium
-
 # Install backend dependencies
 cd server
 npm install
 
-# Run migrations manually
-npm run migration:run
-# or
-npx typeorm-ts-node-commonjs migration:run -d src/data-source.ts
-
 # Start the backend
 npm run dev
-
-
-The backend will run on http://localhost:8080
 ```
 
+The backend will run on http://localhost:3000
 
-## Default Admin Credentials
+
+
+## 3) Frontend Setup
 ```
 cd frontend
 npm install
 npm start
 ```
+The frontend will run on http://localhost:8080
 
 
 ### **Municipality Officer Admin credentials:**
@@ -74,10 +68,10 @@ npm start
 
 ## Ports Configuration
 | Service     | Host Port | Container Port | Description    |
-| ----------- | --------- | -------------- | -------------- |
+| ----------- |-----------|----------------| -------------- |
 | PostgreSQL  | 5434      | 5432           | Database       |
-| Backend API | 8080      | 8080           | Node.js server |
-| Frontend    | 3000      | 3000           | React app      |
+| Backend API | 3000      | 3000           | Node.js server |
+| Frontend    | 8080      | 8080           | React app      |
 
 
 

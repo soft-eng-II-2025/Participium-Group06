@@ -1,6 +1,6 @@
 import { Report } from "../models/Report";
 import { Repository }  from "typeorm";
-import { AppDataSource } from "../data-source";
+import  AppDataSource from "../data-source";
 import { ReportPhoto } from "../models/ReportPhoto";
 
 export class ReportRepository {

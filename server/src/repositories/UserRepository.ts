@@ -1,6 +1,6 @@
 import { User } from "../models/User";
 import {Repository} from "typeorm";
-import { AppDataSource } from "../data-source";
+import AppDataSource from "../data-source";
 
 export class UserRepository {
     protected ormRepository: Repository<User>;

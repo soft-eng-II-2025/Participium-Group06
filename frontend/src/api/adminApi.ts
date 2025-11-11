@@ -1,5 +1,4 @@
 import api from "./api";
-import {ReportDTO} from "../DTOs/ReportDTO";
 import {MunicipalityOfficerDTO} from "../DTOs/MunicipalityOfficerDTO";
 import { RoleDTO } from "../DTOs/RoleDTO";
 

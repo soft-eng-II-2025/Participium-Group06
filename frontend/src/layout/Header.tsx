@@ -13,11 +13,8 @@ import { useAuth } from "../contexts/AuthContext";
 import HomeIcon from "@mui/icons-material/Home"
 import MapIcon from "@mui/icons-material/Map"
 import ListIcon from "@mui/icons-material/List"
-import Icon from "@mui/material/Icon";
 import Avatar from '@mui/material/Avatar';
 import Stack from '@mui/material/Stack';
-import { icon } from "leaflet";
-// import LetteredAvatar from 'react-lettered-avatar';
 
 export default function Header() {
   const navigate = useNavigate();

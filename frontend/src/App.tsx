@@ -2,7 +2,7 @@
 import 'leaflet/dist/leaflet.css';
 import { GlobalStyles } from "@mui/material";
 import { ThemeProvider } from '@mui/material';
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Map from "../src/pages/Map";
 import Layout from './layout/Layout';
 import theme from "./theme/index";

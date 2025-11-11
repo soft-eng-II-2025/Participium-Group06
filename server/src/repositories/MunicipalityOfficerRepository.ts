@@ -1,13 +1,13 @@
 // src/repositories/MunicipalityOfficerRepository.ts
 import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
-import { Repository } from "typeorm";
-import AppDataSource from "../data-source";
+import { DataSource, Repository} from "typeorm";
+import {AppDataSource} from "../data-source";
 
 export class MunicipalityOfficerRepository {
     protected ormRepository: Repository<MunicipalityOfficer>;
 
-    constructor() {
-        this.ormRepository = AppDataSource.getRepository(MunicipalityOfficer);
+    constructor(dataSource: DataSource = AppDataSource) {
+        this.ormRepository = dataSource.getRepository(MunicipalityOfficer);
     }
 
     // elenco completo (con join ruolo)
@@ -15,6 +15,14 @@ export class MunicipalityOfficerRepository {
         return this.ormRepository.find({
             relations: ["role"],
         });
+    }
+    async findByusername(user: string): Promise<MunicipalityOfficer | null> {
+        return this.ormRepository.findOne(
+            {
+                where: {username: user},
+                relations: ['role'],
+            }
+        );
     }
 
     // elenco "visibile" per UI assegnazione: esclude l'utente admin

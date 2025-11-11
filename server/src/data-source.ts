@@ -8,7 +8,7 @@ import { Report } from './models/Report';
 import { ReportPhoto } from './models/ReportPhoto';
 import { MunicipalityOfficer } from './models/MunicipalityOfficer';
 
-export default new DataSource({
+export const AppDataSource= new DataSource({
     type: 'postgres',
     host: process.env.DB_HOST ?? 'localhost',
     port: Number(process.env.DB_PORT ?? 5434),

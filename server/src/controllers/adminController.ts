@@ -6,6 +6,7 @@ import { LoginRequestDTO } from "../models/DTOs/LoginRequestDTO";
 import { verifyPassword, hashPassword } from "../services/passwordService";
 import { mapMunicipalityOfficerDAOToDTO as mapMunicipalityOfficerDAOToResponse } from "../services/mapperService";
 import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
+import { AppDataSource } from "../data-source";
 
 const municipalityOfficerRepository = new MunicipalityOfficerRepository();
 const roleRepository = new RoleRepository();
@@ -27,7 +28,7 @@ export async function addMunicipalityOfficer(officerData: {
     first_name: string;
     last_name: string;
     role?: { title: string };
-}): Promise<MunicipalityOfficerResponseDTO> {
+}, dataSource = AppDataSource): Promise<MunicipalityOfficerResponseDTO> {
     if (!officerData.password?.trim()) throw appErr("PASSWORD_REQUIRED", 400);
 
     // costruzione DAO manuale

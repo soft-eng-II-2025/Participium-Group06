@@ -1,6 +1,6 @@
 import { Category } from "../models/Category";
 import {Repository} from "typeorm";
-import AppDataSource from "../data-source";
+import {AppDataSource} from "../data-source";
 import e from "express";
 
 export class CategoryRepository {

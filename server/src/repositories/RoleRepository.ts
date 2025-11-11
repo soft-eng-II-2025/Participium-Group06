@@ -1,10 +1,10 @@
 import { Role } from "../models/Role";
-import {Repository} from "typeorm";
-import { AppDataSource } from "../data-source";
+import {Repository, DataSource} from "typeorm";
+//import { AppDataSource } from "../data-source";
 export class RoleRepository {
     protected ormRepository: Repository<Role>;
-    constructor() {
-        this.ormRepository = AppDataSource.getRepository(Role);
+    constructor(dataSource: DataSource) {
+        this.ormRepository = dataSource.getRepository(Role);
     }
     findAll(): Promise<Role[]> {
         return this.ormRepository.find();

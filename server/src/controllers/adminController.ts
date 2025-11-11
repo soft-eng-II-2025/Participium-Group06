@@ -5,9 +5,10 @@ import { LoginRequestDTO } from "../models/DTOs/LoginRequestDTO";
 import { verifyPassword, hashPassword } from "../services/passwordService";
 import { mapMunicipalityOfficerDAOToDTO as mapMunicipalityOfficerDAOToResponse } from "../services/mapperService";
 import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
+import { AppDataSource } from "../data-source";
 
-const municipalityOfficerRepository = new MunicipalityOfficerRepository();
-const roleRepository = new RoleRepository();
+const municipalityOfficerRepository = new MunicipalityOfficerRepository(AppDataSource);
+const roleRepository = new RoleRepository(AppDataSource);
 
 function appErr(code: string, status = 400) { const e: any = new Error(code); e.status = status; return e; }
 

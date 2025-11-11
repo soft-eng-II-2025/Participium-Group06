@@ -1,12 +1,12 @@
 import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
-import { Repository} from "typeorm";
-import { AppDataSource } from "../data-source";
+import { Repository, DataSource} from "typeorm";
+//import { AppDataSource } from "../data-source";
 import {mapMunicipalityOfficerDAOToDTO} from "../services/mapperService";
 
 export class MunicipalityOfficerRepository {
     protected ormRepository: Repository<MunicipalityOfficer>;
-    constructor() {
-        this.ormRepository = AppDataSource.getRepository(MunicipalityOfficer);
+    constructor(dataSource: DataSource) {
+        this.ormRepository = dataSource.getRepository(MunicipalityOfficer);
     }
     async findAll(): Promise<MunicipalityOfficer[]> {
         return this.ormRepository.find({

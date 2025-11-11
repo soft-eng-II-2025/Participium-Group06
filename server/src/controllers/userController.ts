@@ -5,12 +5,13 @@ import { CreateUserRequestDTO } from "../models/DTOs/CreateUserRequestDTO";
 import { LoginRequestDTO } from "../models/DTOs/LoginRequestDTO";
 import { ReportRepository } from "../repositories/ReportRepository";
 import { UserRepository } from "../repositories/UserRepository";
+import { AppDataSource } from "../data-source";
 import { mapReportDAOToDTO as mapReportDAOToResponse, mapCreateReportRequestToDAO, mapUserDAOToDTO as mapUserDAOToResponse } from "../services/mapperService";
 import { hashPassword, verifyPassword } from "../services/passwordService";
 import { User } from "../models/User";
 
-const userRepository: UserRepository = new UserRepository();
-const reportRepository: ReportRepository = new ReportRepository();
+const userRepository: UserRepository = new UserRepository(AppDataSource);
+const reportRepository: ReportRepository = new ReportRepository(AppDataSource);
 
 function appErr(code: string, status = 400) { const e: any = new Error(code); e.status = status; return e; }
 

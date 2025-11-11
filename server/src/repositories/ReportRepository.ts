@@ -1,15 +1,15 @@
 import { Report } from "../models/Report";
-import { Repository }  from "typeorm";
-import { AppDataSource } from "../data-source";
+import { Repository, DataSource }  from "typeorm";
+//import { AppDataSource } from "../data-source";
 import { ReportPhoto } from "../models/ReportPhoto";
 
 export class ReportRepository {
     protected ormRepository: Repository<Report>;
     protected photoRepository: Repository<ReportPhoto>;
 
-    constructor() {
-        this.ormRepository = AppDataSource.getRepository(Report);
-        this.photoRepository = AppDataSource.getRepository(ReportPhoto);
+    constructor(dataSource: DataSource) {
+        this.ormRepository = dataSource.getRepository(Report);
+        this.photoRepository = dataSource.getRepository(ReportPhoto);
     }
     async findAll(): Promise<Report[]> {
         return this.ormRepository.find({ relations: ['category', 'photos'] });

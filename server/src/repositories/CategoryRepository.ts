@@ -1,13 +1,13 @@
 import { Category } from "../models/Category";
-import {Repository} from "typeorm";
-import { AppDataSource } from "../data-source";
+import {Repository, DataSource} from "typeorm";
+//import { AppDataSource } from "../data-source";
 import e from "express";
 
 export class CategoryRepository {
     protected ormRepository: Repository<Category>;
 
-    constructor() {
-        this.ormRepository = AppDataSource.getRepository(Category);
+    constructor(dataSource: DataSource) {
+        this.ormRepository = dataSource.getRepository(Category);
     }
 
     async findAll(): Promise<Category[]> {

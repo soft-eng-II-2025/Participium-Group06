@@ -66,8 +66,8 @@ The frontend will run on http://localhost:8080
 | Service     | Host Port | Container Port | Description    |
 | ----------- |-----------|----------------| -------------- |
 | PostgreSQL  | 5434      | 5432           | Database       |
-| Backend API | 3000      | 3000           | Node.js server |
-| Frontend    | 8080      | 8080           | React app      |
+| Backend API | 3000      | -              | Node.js server |
+| Frontend    | 8080      | -              | React app      |
 
 
 

@@ -2,7 +2,10 @@ import 'reflect-metadata';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import {AppDataSource} from './data-source';
+import session from 'express-session';
+import passport from 'passport';
+import './auth/passport';
+import { AppDataSource } from './data-source';
 import {errorHandler} from "./middlewares/errorMiddleware";
 import {router} from "./routes/routes";
 
@@ -11,9 +14,25 @@ const PORT = Number(process.env.PORT ?? 3000);
 export const app = express();
 
 
-app.use(cors());
+// allow credentials (cookies) and reflect origin
+app.use(cors({ origin: true, credentials: true }));
 app.use(morgan('dev'));
 app.use(express.json());
+// session + passport setup for authentication
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET ?? 'dev-secret',
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+        },
+    })
+);
+app.use(passport.initialize());
+app.use(passport.session());
 app.use("/api", router);
 app.use(errorHandler);
 

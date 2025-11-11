@@ -1,6 +1,5 @@
 // src/controllers/adminController.ts
 import { MunicipalityOfficerResponseDTO } from "../models/DTOs/MunicipalityOfficerResponseDTO";
-import { MunicipalityOfficerDTO } from "../models/DTOs/MunicipalityOfficerDTO";
 import { MunicipalityOfficerRepository } from "../repositories/MunicipalityOfficerRepository";
 import { RoleRepository } from "../repositories/RoleRepository";
 import { LoginRequestDTO } from "../models/DTOs/LoginRequestDTO";

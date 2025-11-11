@@ -47,7 +47,7 @@ export async function getAllMunicipalityOfficer(): Promise<MunicipalityOfficerRe
 
 // usata dall'endpoint /accounts/assign (retro-compat con adapter)
 export async function updateMunicipalityOfficer(officerData: { username: string; role?: { title: string } }): Promise<MunicipalityOfficerResponseDTO> {
-    const existingOfficer = await municipalityOfficerRepository.findByUsername(officerData.username.trim().toLowerCase());
+    const existingOfficer = await municipalityOfficerRepository.findByusername(officerData.username.trim().toLowerCase());
     if (!existingOfficer) throw appErr("OFFICER_NOT_FOUND", 404);
     if (existingOfficer.role != null) throw appErr("ROLE_ALREADY_ASSIGNED", 409);
 
@@ -66,7 +66,7 @@ export async function loginOfficer(loginData: LoginRequestDTO) {
 
     if (!username || !password) throw appErr("MISSING_CREDENTIALS", 400);
 
-    const officer = await municipalityOfficerRepository.findByUsername(username);
+    const officer = await municipalityOfficerRepository.findByusername(username);
     const ok = officer && await verifyPassword(officer.password, password);
 
     if (!ok) throw appErr("INVALID_CREDENTIALS", 401);

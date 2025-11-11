@@ -1,46 +1,51 @@
-import { AppDataSource } from '../../../data-source';
+import { TestDataSource } from '../../test-data-source';
 import { addMunicipalityOfficer } from '../../../controllers/adminController';
 import { Role } from '../../../models/Role';
-import { MunicipalityOfficer } from '../../../models/MunicipalityOfficer';
-import { RoleRepository } from '../../../repositories/RoleRepository';
 import { MunicipalityOfficerRepository } from '../../../repositories/MunicipalityOfficerRepository';
+import { RoleRepository } from '../../../repositories/RoleRepository';
 
 describe('addMunicipalityOfficer (integration)', () => {
   beforeAll(async () => {
-    if (!AppDataSource.isInitialized) {
-      await AppDataSource.initialize();
+    if (!TestDataSource.isInitialized) {
+      await TestDataSource.initialize();
     }
   });
 
   afterAll(async () => {
-    if (AppDataSource.isInitialized) {
-      await AppDataSource.destroy();
+    if (TestDataSource.isInitialized) {
+      await TestDataSource.destroy();
     }
   });
 
   beforeEach(async () => {
-    for (const entity of AppDataSource.entityMetadatas) {
-      const repository = AppDataSource.getRepository(entity.name);
+    // Clear all tables
+    for (const entity of TestDataSource.entityMetadatas) {
+      const repository = TestDataSource.getRepository(entity.name);
       await repository.query(`DELETE FROM "${entity.tableName}";`);
     }
   });
 
   it('creates a municipality officer successfully with an existing role', async () => {
-    const roleRepository = new RoleRepository(); 
-    const officerRepository = new MunicipalityOfficerRepository();
+    const roleRepository = new RoleRepository(TestDataSource);
+    const officerRepository = new MunicipalityOfficerRepository(TestDataSource);
 
+    // Create a role
     const newRole = new Role();
     newRole.title = 'Officer';
     const role = await roleRepository.add(newRole);
 
-    const result = await addMunicipalityOfficer({
-      username: 'TestUser',
-      email: 'Test@Example.com',
-      password: 'StrongPassword123!',
-      first_name: 'Test',
-      last_name: 'User',
-      role: { title: role.title },
-    });
+    // Pass TestDataSource explicitly
+    const result = await addMunicipalityOfficer(
+      {
+        username: 'TestUser',
+        email: 'Test@Example.com',
+        password: 'StrongPassword123!',
+        first_name: 'Test',
+        last_name: 'User',
+        role: { title: role.title },
+      },
+      TestDataSource
+    );
 
     const officer = await officerRepository.findByusername('testuser');
 
@@ -52,14 +57,17 @@ describe('addMunicipalityOfficer (integration)', () => {
 
   it('throws when the role does not exist', async () => {
     await expect(
-      addMunicipalityOfficer({
-        username: 'NoRoleUser',
-        email: 'norole@example.com',
-        password: '12345678',
-        first_name: 'No',
-        last_name: 'Role',
-        role: { title: 'MissingRole' },
-      })
+      addMunicipalityOfficer(
+        {
+          username: 'NoRoleUser',
+          email: 'norole@example.com',
+          password: '12345678',
+          first_name: 'No',
+          last_name: 'Role',
+          role: { title: 'MissingRole' },
+        },
+        TestDataSource
+      )
     ).rejects.toThrow('ROLE_NOT_FOUND');
   });
 });

@@ -16,7 +16,7 @@ export const AppDataSource= new DataSource({
     password: process.env.DB_PASSWORD ?? 'postgres',
     database: process.env.DB_NAME ?? 'participium',
     synchronize: false,
-    logging: true,
+    logging: false,
     entities: [User, Role, Category, Report, ReportPhoto, MunicipalityOfficer],
     migrations: ['src/migrations/*.ts'],
 });

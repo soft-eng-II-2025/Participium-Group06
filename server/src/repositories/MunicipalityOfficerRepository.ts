@@ -1,34 +1,21 @@
 import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
-import { Repository} from "typeorm";
+import { DataSource, Repository} from "typeorm";
 import { AppDataSource } from "../data-source";
-import {mapMunicipalityOfficerDAOToDTO} from "../services/mapperService";
 
 export class MunicipalityOfficerRepository {
     protected ormRepository: Repository<MunicipalityOfficer>;
-    constructor() {
-        this.ormRepository = AppDataSource.getRepository(MunicipalityOfficer);
-    }
+    constructor(dataSource: DataSource = AppDataSource) {
+            this.ormRepository = dataSource.getRepository(MunicipalityOfficer);
+        }
     async findAll(): Promise<MunicipalityOfficer[]> {
-        return this.ormRepository.find({
-            relations: ['role']
-        });
+        return this.ormRepository.find();
     }
-    /*async FfindByusername(username: string): Promise<MunicipalityOfficer | null> {
-        return this.ormRepository.findOneBy({ username });
+    async findByusername(user: string): Promise<MunicipalityOfficer | null> {
+        return this.ormRepository.findOne(
+            { where: { username: user },
+            relations: ['role'], }
+        );
     }
-
-     */
-    /**
-     * NOTA: findOneBy non fa il join con le relazioni !!
-     * segui l'esempio sotto con "relations" per specificare i join
-     */
-    async findByUsername(username: string): Promise<MunicipalityOfficer | null> {
-        return this.ormRepository.findOne({
-            where: { username },
-            relations: ['role'],
-        });
-    }
-
     async findByEmail(email: string): Promise<MunicipalityOfficer | null> {
         return this.ormRepository.findOneBy({ email });
     }

@@ -155,10 +155,9 @@ export default function NewReportPage() {
       setSuccessDialogOpen(true);
       setTimeout(() => {
         setSuccessDialogOpen(false);
-        navigate("/map");
+        navigate("/");
       }, 1200);
 
-      //navigate("/map");
     } catch (err: any) {
       setError(err.message ?? "Failed to create report or upload images");
     }
@@ -174,7 +173,7 @@ export default function NewReportPage() {
   };
 
   return (
-    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", width: "100vw" }}>
+    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "calc(100vh - 72px)", width: "100%" }}>
       <Paper elevation={3} sx={{ width: "100%", maxWidth: 520, borderRadius: "12px", textAlign: "center", p: 4 }}>
         <Typography variant="h4" gutterBottom sx={{ fontWeight: 800, color: 'secondary.main', pb: 4 }}>
           Create a New Report

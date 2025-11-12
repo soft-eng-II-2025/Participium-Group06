@@ -40,9 +40,9 @@ export default function Header() {
   const navItems = [
     { icon: <HomeIcon sx={{ mr: 0.8, fontSize: 20 }} />, label: "Home", to: "/" },
     // Map only for users (strict check). adjust isUser condition if you want fallbacks.
-    ...((role === 'USER') ? [{ icon: <MapIcon sx={{ mr: 0.8, fontSize: 20 }} />, label: "Map", to: "/map" }] : []),
-    // Account List only for admins
-    ...((role === 'ADMIN') ? [{ icon: <ListIcon sx={{ mr: 0.8, fontSize: 20 }} />, label: "Account List", to: "/admin/home" }] : []),
+    // ...((role === 'USER') ? [{ icon: <MapIcon sx={{ mr: 0.8, fontSize: 20 }} />, label: "Map", to: "/map" }] : []),
+    // // Account List only for admins
+    // ...((role === 'ADMIN') ? [{ icon: <ListIcon sx={{ mr: 0.8, fontSize: 20 }} />, label: "Account List", to: "/admin/home" }] : []),
   ];
 
   return (

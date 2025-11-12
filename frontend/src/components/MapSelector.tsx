@@ -20,6 +20,7 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 // @ts-ignore
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import { Button } from "@mui/material";
 
 // Fix default Leaflet marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -70,7 +71,18 @@ const ClickHandler: React.FC<{
 
 
   React.useEffect(() => {
-    if (position && markerRef.current) markerRef.current.openPopup();
+    if (!position) return;
+
+    const tryOpen = () => {
+      try {
+        markerRef.current?.openPopup?.();
+      } catch (e) {
+      }
+    };
+
+    tryOpen();
+    const id = window.setTimeout(tryOpen, 0);
+    return () => clearTimeout(id);
   }, [position]);
 
   const handleCreateReport = () => {
@@ -80,36 +92,26 @@ const ClickHandler: React.FC<{
     }
   };
 
-  if (!position) return null;
-
-  return (
-    <Marker position={position} ref={markerRef}>
+  return position ? (
+    <Marker position={position} ref={markerRef} >
       <Popup>
         <div style={{ textAlign: "center" }}>
-          <p>Hai selezionato le coordinate:</p>
-          <p>
-            Lat: {Array.isArray(position) ? position[0].toFixed(4) : ""}, Lng:{" "}
-            {Array.isArray(position) ? position[1].toFixed(4) : ""}
-          </p>
-          <button
-            onClick={handleCreateReport}
-            style={{
-              padding: "8px 16px",
-              backgroundColor: "#1976d2",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "14px",
-            }}
-          >
-            Crea Report
-          </button>
+          <p><strong>Do you want to report an issue here?</strong></p>
+          <p>Latitude: {Array.isArray(position) ? position[0].toFixed(4) : ''}</p>
+          <p>Longitude: {Array.isArray(position) ? position[1].toFixed(4) : ''}</p>
+          
+          <Button 
+            color="primary" variant="contained"
+            className="partecipation-button"
+            size="small" onClick={handleCreateReport}
+            sx={{marginTop:'8px',  mr:'8px',px: 2}}>
+            Add Report
+          </Button>
         </div>
       </Popup>
     </Marker>
-  );
-};
+  ) : null;
+}
 
 const MapSelector: React.FC<MapSelectorProps> = ({ onSelect }) => {
   const [geoData, setGeoData] = useState<any | null>(null);

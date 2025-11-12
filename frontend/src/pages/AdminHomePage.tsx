@@ -1,27 +1,28 @@
 import {useNavigate} from "react-router-dom";
 import {Box, Typography, Grid, Container} from "@mui/material";
 import React, { useState } from "react";
-import {MunicipalityOfficerDTO} from "../DTOs/MunicipalityOfficerDTO";
+import {MunicipalityOfficerResponseDTO} from "../DTOs/MunicipalityOfficerResponseDTO";
 import {UserCard} from "../components/MunicipalityOfficerCard";
 import Button from "@mui/material/Button";
 import AddIcon from '@mui/icons-material/Add';
 import {useGetAllMunicipalityUsers} from "../hook/adminApi.hook";
 import AssignRoleDialog from "../components/AssignRoleDialog";
+import {AssignRoleRequestDTO} from "../DTOs/AssignRoleRequestDTO";
 
 const AdminHomePage = () => {
     const navigate = useNavigate();
     const { data: users = [], isLoading, isError } = useGetAllMunicipalityUsers();
 
     const [open, setOpen] = useState(false);
-    const [selectedUser, setSelectedUser] = useState<MunicipalityOfficerDTO | null>(null);
+    const [selectedUser, setSelectedUser] = useState<MunicipalityOfficerResponseDTO | null>(null);
 
     if (isLoading) return <Typography>Loading users...</Typography>;
     if (isError)   return <Typography color="error">Errore nel caricamento degli utenti.</Typography>;
 
     const handleEditRole = (username: string) => {
-        const u = (users || []).find((x: MunicipalityOfficerDTO) => x.username === username) || null;
+        const u = (users || []).find((x: MunicipalityOfficerResponseDTO) => x.username === username) || null;
         if (!u) return;
-        if (u.role) return; // già assegnato
+        if (u.role) return; 
         setSelectedUser(u);
         setOpen(true);
     };
@@ -62,7 +63,7 @@ const AdminHomePage = () => {
 
             <AssignRoleDialog
                 open={open}
-                user={selectedUser}
+                user={{username: selectedUser?.username ?? '', roleTitle: null } as AssignRoleRequestDTO}
                 onClose={() => { setOpen(false); setSelectedUser(null); }}
             />
         </Container>

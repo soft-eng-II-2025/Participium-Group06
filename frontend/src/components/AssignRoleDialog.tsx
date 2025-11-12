@@ -14,14 +14,13 @@ import {
     Select,
     Typography,
 } from "@mui/material";
-import { MunicipalityOfficerDTO } from "../DTOs/MunicipalityOfficerDTO";
-import { RoleDTO } from "../DTOs/RoleDTO";
 import { useGetRoles, useSetRole } from "../hook/adminApi.hook";
 import { useQueryClient } from "@tanstack/react-query";
+import {AssignRoleRequestDTO} from "../DTOs/AssignRoleRequestDTO";
 
 type Props = {
     open: boolean;
-    user: MunicipalityOfficerDTO | null;
+    user: AssignRoleRequestDTO | null;
     onClose: () => void;
 };
 
@@ -31,12 +30,12 @@ export default function AssignRoleDialog({ open, user, onClose }: Props) {
     const setRoleMut = useSetRole();
     const qc = useQueryClient();
 
-    const currentTitle = user?.role?.title ?? "";
+    const currentTitle = user?.roleTitle ?? "";
     const [selectedTitle, setSelectedTitle] = useState<string>(currentTitle);
     const [confirmStep, setConfirmStep] = useState(false);
 
     useEffect(() => {
-        setSelectedTitle(user?.role?.title ?? "");
+        setSelectedTitle(user?.roleTitle ?? "");
         setConfirmStep(false);
     }, [open, user]);
 
@@ -58,9 +57,9 @@ export default function AssignRoleDialog({ open, user, onClose }: Props) {
             setConfirmStep(true);
             return;
         }
-        const payload: MunicipalityOfficerDTO = {
-            ...user,
-            role: { title: selectedTitle } as RoleDTO,
+        const payload: AssignRoleRequestDTO = {
+            username: user.username,
+            roleTitle: selectedTitle,
         };
         setRoleMut.mutate(payload, {
             onSuccess: () => {

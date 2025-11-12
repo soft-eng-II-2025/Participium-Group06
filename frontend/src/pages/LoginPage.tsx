@@ -12,8 +12,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import "./LoginPage.css";
 import { useAuth } from "../contexts/AuthContext";
-import { MunicipalityOfficerDTO } from "../DTOs/MunicipalityOfficerDTO";
-import { UserDTO } from "../DTOs/UserDTO";
+import { MunicipalityOfficerResponseDTO } from "../DTOs/MunicipalityOfficerResponseDTO";
+import { UserResponseDTO } from "../DTOs/UserResponseDTO";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();

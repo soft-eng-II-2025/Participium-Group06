@@ -99,7 +99,7 @@ describe('adminController (Integration Tests - DB in Memory)', () => {
       expect(newOfficerDTO).toBeDefined();
       expect(newOfficerDTO.username).toBe('new.officer');
       expect(newOfficerDTO.email).toBe('new@example.com');
-      expect(newOfficerDTO.role?.title).toBe(officerRole.title);
+      expect(newOfficerDTO.role).toBe(officerRole.title);
 
       const savedOfficer = await typeOrmOfficerRepository.findOne({ where: { username: 'new.officer' }, relations: ['role'] }); // Usa il repository TypeORM diretto
       expect(savedOfficer).toBeDefined();
@@ -201,7 +201,7 @@ describe('adminController (Integration Tests - DB in Memory)', () => {
       expect(officers).toBeDefined();
       expect(officers.length).toBe(1); // Solo regularOfficer
       expect(officers[0].username).toBe(regularOfficer.username);
-      expect(officers[0].role?.title).toBe(officerRole.title);
+      expect(officers[0].role).toBe(officerRole.title);
       expect(officers.some(o => o.username === 'admin')).toBe(false); // L'admin è escluso
     });
 
@@ -230,7 +230,7 @@ describe('adminController (Integration Tests - DB in Memory)', () => {
     it('dovrebbe lanciare un errore se username è mancante', async () => {
       const updateData = {
         username: '', // Mancante
-        role: { title: officerRole.title },
+        roleTitle: officerRole.title ,
       };
       await expect(adminController.updateMunicipalityOfficer(updateData)).rejects.toThrow('USERNAME_REQUIRED');
     });
@@ -238,7 +238,7 @@ describe('adminController (Integration Tests - DB in Memory)', () => {
     it('dovrebbe lanciare un errore se l\'ufficiale non esiste', async () => {
       const updateData = {
         username: 'nonexistent.officer',
-        role: { title: officerRole.title },
+        roleTitle: officerRole.title ,
       };
       await expect(adminController.updateMunicipalityOfficer(updateData)).rejects.toThrow('OFFICER_NOT_FOUND');
     });
@@ -246,7 +246,7 @@ describe('adminController (Integration Tests - DB in Memory)', () => {
     it('dovrebbe lanciare un errore se il ruolo è già assegnato', async () => {
       const updateData = {
         username: regularOfficer.username, // Ha già un ruolo
-        role: { title: officerRole.title },
+        roleTitle: officerRole.title ,
       };
       // Simula il caso in cui il ruolo è già assegnato e si tenta di riassegnarlo
       await expect(adminController.updateMunicipalityOfficer(updateData)).rejects.toThrow('ROLE_ALREADY_ASSIGNED');
@@ -265,7 +265,7 @@ describe('adminController (Integration Tests - DB in Memory)', () => {
 
       const updateData = {
         username: 'admin', // Username 'admin'
-        role: { title: officerRole.title },
+          roleTitle: officerRole.title,
       };
       await expect(adminController.updateMunicipalityOfficer(updateData)).rejects.toThrow('FORBIDDEN_ADMIN_ACCOUNT');
     });
@@ -281,7 +281,6 @@ describe('adminController (Integration Tests - DB in Memory)', () => {
       const loggedInOfficerDTO = await adminController.loginOfficer(loginData);
       expect(loggedInOfficerDTO).toBeDefined();
       expect(loggedInOfficerDTO.username).toBe(regularOfficer.username);
-      expect(loggedInOfficerDTO.password).toBeUndefined();
     });
 
     it('dovrebbe lanciare un errore con credenziali non valide per ufficiale', async () => {
@@ -316,7 +315,7 @@ describe('adminController (Integration Tests - DB in Memory)', () => {
       const officerDTO = await adminController.getMunicipalityOfficerByUsername(regularOfficer.username);
       expect(officerDTO).toBeDefined();
       expect(officerDTO.username).toBe(regularOfficer.username);
-      expect(officerDTO.role?.title).toBe(officerRole.title);
+      expect(officerDTO.role).toBe(officerRole.title);
     });
 
     it('dovrebbe lanciare un errore se l\'ufficiale non è stato trovato', async () => {

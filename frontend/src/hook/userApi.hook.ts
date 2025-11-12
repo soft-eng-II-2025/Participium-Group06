@@ -1,10 +1,8 @@
-// src/hooks/useReport.ts
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ReportDTO, CreateReportRequestDTO } from "../DTOs/ReportDTO";
-import { UserApi } from "../api/userApi";
 import { CategoryResponseDTO } from "../DTOs/CategoryResponseDTO";
-import { useQuery } from "@tanstack/react-query";
+import {UserApi} from "../api/userApi";
+import {CreateReportRequestDTO} from "../DTOs/CreateReportRequestDTO";
 
 const userApi = new UserApi();
 

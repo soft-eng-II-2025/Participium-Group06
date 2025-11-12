@@ -1,14 +1,16 @@
 import { AdminApi } from "../api/adminApi";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MunicipalityOfficerDTO } from "../DTOs/MunicipalityOfficerDTO";
-import { RoleDTO } from "../DTOs/RoleDTO";
+import { MunicipalityOfficerResponseDTO } from "../DTOs/MunicipalityOfficerResponseDTO";
+import { RoleResponseDTO } from "../DTOs/RoleResponseDTO";
+import {CreateUserRequestDTO} from "../DTOs/CreateUserRequestDTO";
+import {AssignRoleRequestDTO} from "../DTOs/AssignRoleRequestDTO";
 
 const adminApi = new AdminApi();
 
 export function useRegisterMunicipalityOfficer() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (newOfficer: MunicipalityOfficerDTO) =>
+        mutationFn: (newOfficer: CreateUserRequestDTO) =>
             adminApi.registerMunicipalityOfficer(newOfficer),
         onSuccess: () => qc.invalidateQueries({ queryKey: ["officers"] }),
     });
@@ -16,7 +18,7 @@ export function useRegisterMunicipalityOfficer() {
 
 
 export function useGetAllMunicipalityUsers() {
-    return useQuery<MunicipalityOfficerDTO[]>({
+    return useQuery<MunicipalityOfficerResponseDTO[]>({
         queryKey: ["officers"],
         queryFn: () => adminApi.getAllMunicipalityUsers().then(r => r.data),
         staleTime: 5 * 60 * 1000,
@@ -26,7 +28,7 @@ export function useGetAllMunicipalityUsers() {
 export function useSetRole() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (updateOfficer: MunicipalityOfficerDTO) =>
+        mutationFn: (updateOfficer: AssignRoleRequestDTO) =>
             adminApi.setRole(updateOfficer),
         onSuccess: () => qc.invalidateQueries({ queryKey: ["officers"] }),
     });
@@ -34,7 +36,7 @@ export function useSetRole() {
 
 // NEW: roles from DB (filter out ADMIN)
 export function useGetRoles() {
-    return useQuery<RoleDTO[]>({
+    return useQuery<RoleResponseDTO[]>({
         queryKey: ["roles"],
         queryFn: () => adminApi.getRoles().then(r => r.data),
         select: (roles) => roles.filter(r => r.title !== "ADMIN"),

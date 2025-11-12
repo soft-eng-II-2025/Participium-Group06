@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Paper, Box, Typography, TextField, Button, Alert } from "@mui/material";
-import { UserDTO } from "../DTOs/UserDTO";
+import {CreateUserRequestDTO} from "../DTOs/CreateUserRequestDTO";
 
 type Props = {
-    onSubmit: (payload: UserDTO) => Promise<void> | void;
+    onSubmit: (payload: CreateUserRequestDTO) => Promise<void> | void;
     loading?: boolean;
     serverError?: string | null;
     title?: string;
@@ -27,22 +27,34 @@ const RegistrationForm: React.FC<Props> = ({
 
     const isLoading = loading || localLoading;
 
+    const isPasswordTooShort = password.length > 0 && password.length < 8;
+
     const validate = () => {
-        const u = username.trim();
-        const e = email.trim();
+        const u = username;
+        const e = email;
+
         if (!u || !e || !password || !confirmPassword) {
             setLocalError("Please fill in all required fields.");
             return false;
         }
+
+        // lunghezza minima password
+        if (password.length < 8) {
+            setLocalError("Password must be at least 8 characters long.");
+            return false;
+        }
+
         const emailRe = /^\S+@\S+\.\S+$/;
         if (!emailRe.test(e)) {
             setLocalError("Please enter a valid email address.");
             return false;
         }
+
         if (password !== confirmPassword) {
             setLocalError("Passwords do not match.");
             return false;
         }
+
         return true;
     };
 
@@ -51,12 +63,12 @@ const RegistrationForm: React.FC<Props> = ({
         setLocalError(null);
         if (!validate()) return;
 
-        const payload: UserDTO = {
-            username: username.trim(),
-            email: email.trim(),
+        const payload: CreateUserRequestDTO = {
+            username: username,
+            email: email,
+            password: password,
             first_name: firstName.trim(),
             last_name: lastName.trim(),
-            password,
         };
 
         try {
@@ -75,7 +87,7 @@ const RegistrationForm: React.FC<Props> = ({
             sx={{
                 width: "100%",
                 maxWidth: 520,
-                mx: "auto",        // centra orizzontalmente dentro il Container
+                mx: "auto",
                 borderRadius: 2,
                 textAlign: "center",
             }}
@@ -149,6 +161,9 @@ const RegistrationForm: React.FC<Props> = ({
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="new-password"
+                    inputProps={{ minLength: 8 }}
+                    error={isPasswordTooShort}
+                    helperText={isPasswordTooShort ? "At least 8 characters." : undefined}
                 />
 
                 <TextField
@@ -160,6 +175,7 @@ const RegistrationForm: React.FC<Props> = ({
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     autoComplete="new-password"
+                    inputProps={{ minLength: 8 }}
                 />
 
                 <Button

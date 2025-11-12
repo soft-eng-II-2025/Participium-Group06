@@ -1,8 +1,8 @@
 import React from 'react';
 import { Card, Typography, Avatar, Button, Box, Chip } from '@mui/material';
-import { MunicipalityOfficerDTO } from "../DTOs/MunicipalityOfficerDTO";
+import { MunicipalityOfficerResponseDTO } from "../DTOs/MunicipalityOfficerResponseDTO";
 
-type UserCardProps = { user: MunicipalityOfficerDTO; onEditRole: (username: string) => void; };
+type UserCardProps = { user: MunicipalityOfficerResponseDTO; onEditRole: (username: string) => void; };
 
 function getInitials(name: string) {
     const p = name.trim().split(/\s+/).filter(Boolean);
@@ -14,7 +14,7 @@ function getInitials(name: string) {
 export const UserCard: React.FC<UserCardProps> = ({ user, onEditRole }) => {
     const display = `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.username;
     const initials = getInitials(display);
-    const hasRole = !!user.role?.title;
+    const hasRole = user.role !== null && user.role !== undefined;
 
     return (
         <Card
@@ -45,7 +45,7 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onEditRole }) => {
 
                 {hasRole ? (
                     <Chip
-                        label={user.role!.title as string}
+                        label={user.role! as string}
                         size="small"
                         sx={{ mt: 0.5, maxWidth: '100%' }}
                         color="primary"

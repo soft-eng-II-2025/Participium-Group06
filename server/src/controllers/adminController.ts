@@ -7,6 +7,8 @@ import { verifyPassword, hashPassword } from "../services/passwordService";
 import { mapMunicipalityOfficerDAOToDTO as mapMunicipalityOfficerDAOToResponse } from "../services/mapperService";
 import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
 import { AppDataSource } from "../data-source";
+import {AssignRoleRequestDTO} from "../models/DTOs/AssignRoleRequestDTO";
+import {CreateUserRequestDTO} from "../models/DTOs/CreateUserRequestDTO";
 import { DataSource } from "typeorm";
 
 /*const municipalityOfficerRepository = new MunicipalityOfficerRepository(AppDataSource);
@@ -30,31 +32,17 @@ function appErr(code: string, status = 400) {
 const isAdminRole = (t?: string) => !!t && /^(admin|super\s*admin)$/i.test(t.trim());
 const isAdminUser = (u?: string) => !!u && /^admin$/i.test(u.trim());
 
-export async function addMunicipalityOfficer(officerData: {
-    username: string;
-    email: string;
-    password: string;
-    first_name: string;
-    last_name: string;
-    role?: { title: string };
-}): Promise<MunicipalityOfficerResponseDTO> {
+export async function addMunicipalityOfficer(officerData: CreateUserRequestDTO, dataSource = AppDataSource): Promise<MunicipalityOfficerResponseDTO> {
     if (!officerData.password?.trim()) throw appErr("PASSWORD_REQUIRED", 400);
 
     // costruzione DAO manuale
     const dao = new MunicipalityOfficer();
-    dao.username = officerData.username.trim().toLowerCase();
-    dao.email = officerData.email.trim().toLowerCase();
+    dao.username = officerData.username;
+    dao.email = officerData.email.toLowerCase();
     dao.password = await hashPassword(officerData.password);
     dao.first_name = officerData.first_name;
     dao.last_name = officerData.last_name;
 
-    // eventuale ruolo in creazione: blocca admin/super admin
-    if (officerData.role?.title) {
-        if (isAdminRole(officerData.role.title)) throw appErr("ROLE_NOT_ASSIGNABLE", 403);
-        const role = await roleRepository.findByTitle(officerData.role.title.trim());
-        if (!role) throw appErr("ROLE_NOT_FOUND", 404);
-        dao.role = role;
-    }
 
     const officerAdded = await municipalityOfficerRepository.add(dao);
     return mapMunicipalityOfficerDAOToResponse(officerAdded);
@@ -67,11 +55,8 @@ export async function getAllMunicipalityOfficer(): Promise<MunicipalityOfficerRe
 }
 
 // usata dall'endpoint /accounts/assign (retro-compat con adapter)
-export async function updateMunicipalityOfficer(officerData: {
-    username: string;
-    role?: { title: string };
-}): Promise<MunicipalityOfficerResponseDTO> {
-    const username = officerData.username?.trim().toLowerCase();
+export async function updateMunicipalityOfficer(officerData: AssignRoleRequestDTO): Promise<MunicipalityOfficerResponseDTO> {
+    const username = officerData.username?.trim();
     if (!username) throw appErr("USERNAME_REQUIRED", 400);
 
     // non toccare l'utente admin
@@ -81,8 +66,8 @@ export async function updateMunicipalityOfficer(officerData: {
     if (!existingOfficer) throw appErr("OFFICER_NOT_FOUND", 404);
     if (existingOfficer.role != null) throw appErr("ROLE_ALREADY_ASSIGNED", 409);
 
-    if (!officerData.role?.title) throw appErr("ROLE_TITLE_REQUIRED", 400);
-    const roleTitle = officerData.role.title.trim();
+    if (!officerData.roleTitle) throw appErr("ROLE_TITLE_REQUIRED", 400);
+    const roleTitle = officerData.roleTitle;
     if (isAdminRole(roleTitle)) throw appErr("ROLE_NOT_ASSIGNABLE", 403);
 
     const role = await roleRepository.findByTitle(roleTitle);
@@ -94,8 +79,8 @@ export async function updateMunicipalityOfficer(officerData: {
 }
 
 export async function loginOfficer(loginData: LoginRequestDTO) {
-    const username = loginData.username?.trim().toLowerCase();
-    const password = loginData.password ?? "";
+    const username = loginData.username;
+    const password = loginData.password;
 
     if (!username || !password) throw appErr("MISSING_CREDENTIALS", 400);
 

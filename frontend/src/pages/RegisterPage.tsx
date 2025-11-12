@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRegisterUser } from "../hook/authApi.hook";
 import RegistrationForm from "../components/RegistrationForm";
-import { UserDTO } from "../DTOs/UserDTO";
 import { Container, Box } from "@mui/material";
+import {CreateUserRequestDTO} from "../DTOs/CreateUserRequestDTO";
 
 const RegisterPage: React.FC = () => {
     const navigate = useNavigate();
@@ -11,7 +11,7 @@ const RegisterPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const handleRegister = async (payload: UserDTO) => {
+    const handleRegister = async (payload: CreateUserRequestDTO) => {
         setError(null);
         setLoading(true);
         try {

@@ -1,7 +1,8 @@
 
+
 export class CategoryResponseDTO {
     id!: number;
     name!: string;
-    //reports?: ReportResponseDTO[];   // opzionale
+    //reports?: ReportDTO[];   // opzionale
     //reportsCount?: number;
 }

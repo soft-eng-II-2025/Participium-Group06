@@ -1,17 +1,24 @@
+import {AuthApi} from "../api/authApi";
 import { useAuth } from '../contexts/AuthContext';
-import type { UserDTO } from '../DTOs/UserDTO';
-import type { LoginDTO } from '../DTOs/LoginDTO';
+import {useMutation} from "@tanstack/react-query";
+import {UserResponseDTO} from "../DTOs/UserResponseDTO";
+import {LoginDTO} from "../DTOs/LoginDTO";
+import {CreateUserRequestDTO} from "../DTOs/CreateUserRequestDTO";
+
 
 // Wrapper hooks that expose a small react-query-like surface but delegate to AuthContext.
 // This keeps component usage unchanged while centralizing auth logic in the provider
 
+
+const authApi = new AuthApi();
+
 export function useRegisterUser() {
     const { register } = useAuth();
     return {
-        mutateAsync: async (payload: UserDTO) => {
+        mutateAsync: async (payload: CreateUserRequestDTO) => {
             return await register(payload);
         },
-        mutate: (payload: UserDTO) => { void register(payload); },
+        mutate: (payload: CreateUserRequestDTO) => { void register(payload); },
     };
 }
 

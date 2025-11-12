@@ -1,0 +1,279 @@
+// src/tests/integration/userController.test.ts
+import { TestDataSource } from '../../test-data-source';
+import { DataSource, Repository } from 'typeorm'; // AGGIUNTO Repository qui
+
+// Importa userController e la sua funzione di inizializzazione
+import * as userController from '../../../controllers/userController';
+import { UserRepository } from '../../../repositories/UserRepository'; // Usato solo per typings, non per istanziare
+import { ReportRepository } from '../../../repositories/ReportRepository'; // Usato solo per typings, non per istanziare
+import { CategoryRepository } from '../../../repositories/CategoryRepository'; // Usato solo per typings, non per istanziare
+import { CreateUserRequestDTO } from '../../../models/DTOs/CreateUserRequestDTO';
+import { LoginRequestDTO } from '../../../models/DTOs/LoginRequestDTO';
+import { CreateReportRequestDTO } from '../../../models/DTOs/CreateReportRequestDTO';
+import { User } from '../../../models/User';
+import { Category } from '../../../models/Category';
+import { ReportPhoto } from '../../../models/ReportPhoto'; // AGGIUNTO ReportPhoto
+import { hashPassword } from '../../../services/passwordService';
+
+
+// Importa tutte le entità per la pulizia del database (anche se TestDataSource.initialize() le gestisce)
+import { Report } from '../../../models/Report';
+import { Role } from '../../../models/Role';
+import { MunicipalityOfficer } from '../../../models/MunicipalityOfficer';
+
+
+describe('userController (Integration Tests - DB in Memory)', () => {
+  // Queste variabili ora saranno le istanze di Repository<Entity> ottenute direttamente dal TestDataSource
+  let userRepository: Repository<User>;
+  let reportRepository: Repository<Report>;
+  let categoryRepository: Repository<Category>;
+  let reportPhotoRepository: Repository<ReportPhoto>; // Per accedere direttamente alle foto
+
+  let testUser: User;
+  let testCategory: Category;
+
+  // beforeEach viene eseguito prima di OGNI singolo test
+  beforeEach(async () => {
+    // Distrugge e reinizializza il DataSource per ogni test
+    if (TestDataSource.isInitialized) {
+      await TestDataSource.destroy();
+    }
+    await TestDataSource.initialize();
+
+    // *** Inizializza i repository del controller con il TestDataSource ***
+    userController.initializeUserRepositories(TestDataSource);
+
+    // Istanzia i repository direttamente con TestDataSource per uso nei test (per pre-popolazione e verifica)
+    userRepository = TestDataSource.getRepository(User);
+    reportRepository = TestDataSource.getRepository(Report);
+    categoryRepository = TestDataSource.getRepository(Category);
+    reportPhotoRepository = TestDataSource.getRepository(ReportPhoto); // Ottieni anche il repository delle foto
+
+
+    // Prepara dati di base per i test
+    const user = new User();
+    user.username = 'existinguser';
+    user.email = 'existing@example.com';
+    user.password = await hashPassword('password123'); // Hasha la password
+    user.first_name = 'Existing';
+    user.last_name = 'User';
+    testUser = await userRepository.save(user); // Usa .save() dal repository diretto
+
+    const category = new Category();
+    category.name = 'Incidente';
+    testCategory = await categoryRepository.save(category); // Usa .save() dal repository diretto
+  });
+
+  // --- Test per createUser ---
+  describe('createUser', () => {
+    it('dovrebbe creare un nuovo utente con successo', async () => {
+      const userData: CreateUserRequestDTO = {
+        username: 'newuser',
+        email: 'new@example.com',
+        password: 'securepassword',
+        first_name: 'New',
+        last_name: 'User',
+      };
+
+      const newUserDTO = await userController.createUser(userData);
+
+      expect(newUserDTO).toBeDefined();
+      expect(newUserDTO.username).toBe('newuser');
+      expect(newUserDTO.email).toBe('new@example.com');
+      expect(newUserDTO.password).toBeUndefined();
+
+      const savedUser = await userRepository.findOneBy({ username: 'newuser' }); // Usa findOneBy dal repository diretto
+      expect(savedUser).toBeDefined();
+      expect(savedUser?.email).toBe('new@example.com');
+      // Verifichiamo che la password salvata sia corretta usando il login
+      const loginCheckDTO = await userController.loginUser({ username: savedUser?.username || '', password: 'securepassword' });
+      expect(loginCheckDTO).toBeDefined();
+      expect(loginCheckDTO.username).toBe('newuser');
+    });
+
+    it('dovrebbe lanciare un errore se la password è vuota', async () => {
+      const userData: CreateUserRequestDTO = {
+        username: 'failuser',
+        email: 'fail@example.com',
+        password: '', // Password vuota
+        first_name: 'Fail',
+        last_name: 'User',
+      };
+      await expect(userController.createUser(userData)).rejects.toThrow('PASSWORD_REQUIRED');
+    });
+
+    it('dovrebbe lanciare un errore se lo username è già stato preso', async () => {
+      const userData: CreateUserRequestDTO = {
+        username: 'existinguser', // Username già presente dal beforeEach
+        email: 'another@example.com',
+        password: 'securepassword',
+        first_name: 'Another',
+        last_name: 'User',
+      };
+      await expect(userController.createUser(userData)).rejects.toThrow('USERNAME_TAKEN');
+    });
+
+    it('dovrebbe lanciare un errore se l\'email è già stata presa', async () => {
+      const userData: CreateUserRequestDTO = {
+        username: 'anotheruser',
+        email: 'existing@example.com', // Email già presente dal beforeEach
+        password: 'securepassword',
+        first_name: 'Another',
+        last_name: 'User',
+      };
+      await expect(userController.createUser(userData)).rejects.toThrow('EMAIL_TAKEN');
+    });
+  });
+
+  // --- Test per loginUser ---
+  describe('loginUser', () => {
+    it('dovrebbe effettuare il login con successo con credenziali valide', async () => {
+      const loginData: LoginRequestDTO = {
+        username: 'existinguser',
+        password: 'password123',
+      };
+
+      const loggedInUserDTO = await userController.loginUser(loginData);
+
+      expect(loggedInUserDTO).toBeDefined();
+      expect(loggedInUserDTO.username).toBe('existinguser');
+      expect(loggedInUserDTO.password).toBeUndefined();
+    });
+
+    it('dovrebbe lanciare un errore con username o password mancanti', async () => {
+      const loginDataMissingUsername: LoginRequestDTO = {
+        username: '', // Mancante
+        password: 'password123',
+      };
+      await expect(userController.loginUser(loginDataMissingUsername)).rejects.toThrow('MISSING_CREDENTIALS');
+
+      const loginDataMissingPassword: LoginRequestDTO = {
+        username: 'existinguser',
+        password: '', // Mancante
+      };
+      await expect(userController.loginUser(loginDataMissingPassword)).rejects.toThrow('MISSING_CREDENTIALS');
+    });
+
+    it('dovrebbe lanciare un errore con credenziali non valide', async () => {
+      const loginDataWrongPassword: LoginRequestDTO = {
+        username: 'existinguser',
+        password: 'wrongpassword', // Password errata
+      };
+      await expect(userController.loginUser(loginDataWrongPassword)).rejects.toThrow('INVALID_CREDENTIALS');
+
+      const loginDataNonExistentUser: LoginRequestDTO = {
+        username: 'nonexistent', // Utente inesistente
+        password: 'password123',
+      };
+      await expect(userController.loginUser(loginDataNonExistentUser)).rejects.toThrow('INVALID_CREDENTIALS');
+    });
+  });
+
+  // --- Test per addReport ---
+  describe('addReport', () => {
+    it('dovrebbe aggiungere un report con successo, inclusa la gestione delle foto', async () => {
+      const reportData: CreateReportRequestDTO = {
+        longitude: 10.1,
+        latitude: 20.2,
+        title: 'Nuovo Report',
+        description: 'Una descrizione dettagliata del nuovo report',
+        userId: testUser.id,
+        categoryId: testCategory.id,
+        photos: ['url1.jpg', 'url2.jpg'],
+      };
+
+      const newReportDTO = await userController.addReport(reportData);
+
+      expect(newReportDTO).toBeDefined();
+      expect(newReportDTO.title).toBe('Nuovo Report');
+      expect(newReportDTO.userId).toBe(testUser.id);
+      expect(newReportDTO.categoryId).toBe(testCategory.id);
+      expect(newReportDTO.photos).toEqual(['url1.jpg', 'url2.jpg']); // Verifica che gli URL delle foto siano nel DTO
+
+      // Verifica che il report sia stato salvato nel DB con le sue foto associate
+      const savedReport = await reportRepository.findOne({
+        where: { title: 'Nuovo Report' },
+        relations: ['photos']
+      });
+      expect(savedReport).toBeDefined();
+      expect(savedReport?.photos).toHaveLength(2);
+      expect(savedReport?.photos[0].photo).toBe('url1.jpg');
+      expect(savedReport?.photos[1].photo).toBe('url2.jpg');
+    });
+
+    it('dovrebbe lanciare un errore se user non esiste durante l\'aggiunta di un report', async () => {
+      const reportData: CreateReportRequestDTO = {
+        longitude: 10.1,
+        latitude: 20.2,
+        title: 'Report Utente Inesistente',
+        description: 'Descrizione',
+        userId: 99999, // ID utente inesistente
+        categoryId: testCategory.id,
+        photos: [],
+      };
+      await expect(userController.addReport(reportData)).rejects.toThrow('User not found for report creation.');
+    });
+
+    it('dovrebbe lanciare un errore se category non esiste durante l\'aggiunta di un report', async () => {
+      const reportData: CreateReportRequestDTO = {
+        longitude: 10.1,
+        latitude: 20.2,
+        title: 'Report Categoria Inesistente',
+        description: 'Descrizione',
+        userId: testUser.id,
+        categoryId: 99999, // ID categoria inesistente
+        photos: [],
+      };
+      await expect(userController.addReport(reportData)).rejects.toThrow('Category not found for report creation.');
+    });
+  });
+
+  // --- Test per getUserByUsername ---
+  describe('getUserByUsername', () => {
+    it('dovrebbe restituire un utente con successo', async () => {
+      const userDTO = await userController.getUserByUsername('existinguser');
+      expect(userDTO).toBeDefined();
+      expect(userDTO.username).toBe('existinguser');
+    });
+
+    it('dovrebbe lanciare un errore se l\'utente non è stato trovato', async () => {
+      await expect(userController.getUserByUsername('nonexistent')).rejects.toThrow('USER_NOT_FOUND');
+    });
+  });
+
+  // --- Test per getUserIdByUsername ---
+  describe('getUserIdByUsername', () => {
+    it('dovrebbe restituire l\'ID dell\'utente con successo', async () => {
+      const userId = await userController.getUserIdByUsername('existinguser');
+      expect(userId).toBe(testUser.id);
+    });
+
+    it('dovrebbe lanciare un errore se l\'utente non è stato trovato', async () => {
+      await expect(userController.getUserIdByUsername('nonexistent')).rejects.toThrow('USER_NOT_FOUND');
+    });
+  });
+
+  // --- Test per getAllCategories ---
+  describe('getAllCategories', () => {
+    it('dovrebbe restituire tutte le categorie', async () => {
+      // Aggiungiamo un'altra categoria per avere più di una
+      const anotherCategory = new Category();
+      anotherCategory.name = 'Altra Categoria';
+      await categoryRepository.save(anotherCategory); // Usa .save() dal repository diretto
+
+      const categoriesDTOs = await userController.getAllCategories();
+      expect(categoriesDTOs).toBeDefined();
+      expect(categoriesDTOs.length).toBe(2); // testCategory e anotherCategory
+      expect(categoriesDTOs.some(c => c.name === 'Incidente')).toBe(true);
+      expect(categoriesDTOs.some(c => c.name === 'Altra Categoria')).toBe(true);
+    });
+
+    it('dovrebbe restituire un array vuoto se non ci sono categorie', async () => {
+      // Pulisci le categorie create nel beforeEach per questo test
+      await categoryRepository.clear(); // Usa .clear() dal repository diretto
+      const categoriesDTOs = await userController.getAllCategories();
+      expect(categoriesDTOs).toBeDefined();
+      expect(categoriesDTOs).toHaveLength(0);
+    });
+  });
+});

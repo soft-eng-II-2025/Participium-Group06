@@ -7,9 +7,18 @@ import { verifyPassword, hashPassword } from "../services/passwordService";
 import { mapMunicipalityOfficerDAOToDTO as mapMunicipalityOfficerDAOToResponse } from "../services/mapperService";
 import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
 import { AppDataSource } from "../data-source";
+import { DataSource } from "typeorm";
 
-const municipalityOfficerRepository = new MunicipalityOfficerRepository();
-const roleRepository = new RoleRepository();
+/*const municipalityOfficerRepository = new MunicipalityOfficerRepository(AppDataSource);
+const roleRepository = new RoleRepository(AppDataSource);*/
+
+let municipalityOfficerRepository: MunicipalityOfficerRepository;
+let roleRepository: RoleRepository;
+
+export function initializeAdminRepositories(dataSource: DataSource) {
+    municipalityOfficerRepository = new MunicipalityOfficerRepository(dataSource);
+    roleRepository = new RoleRepository(dataSource);
+}
 
 function appErr(code: string, status = 400) {
     const e: any = new Error(code);
@@ -28,7 +37,7 @@ export async function addMunicipalityOfficer(officerData: {
     first_name: string;
     last_name: string;
     role?: { title: string };
-}, dataSource = AppDataSource): Promise<MunicipalityOfficerResponseDTO> {
+}): Promise<MunicipalityOfficerResponseDTO> {
     if (!officerData.password?.trim()) throw appErr("PASSWORD_REQUIRED", 400);
 
     // costruzione DAO manuale

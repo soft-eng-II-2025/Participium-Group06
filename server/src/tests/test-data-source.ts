@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { User } from '../models/User';
 import { Role } from '../models/Role';
@@ -12,4 +13,6 @@ export const TestDataSource = new DataSource({
   database: ':memory:',
   synchronize: true,
   entities: [User, Role, Category, Report, ReportPhoto, MunicipalityOfficer],
+  dropSchema: true,
+  logging: false,
 });

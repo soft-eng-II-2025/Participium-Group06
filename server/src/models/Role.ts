@@ -6,7 +6,7 @@ export class Role {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column()
+  @Column({ unique: true })
   title!: string;
 
   @OneToMany(() => MunicipalityOfficer, (municipalityOfficer) => municipalityOfficer.role)

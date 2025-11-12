@@ -1,12 +1,11 @@
 import { User } from "../models/User";
-import {Repository} from "typeorm";
-import {AppDataSource} from "../data-source";
+import {Repository, DataSource} from "typeorm";
 
 export class UserRepository {
     protected ormRepository: Repository<User>;
 
-    constructor() {
-        this.ormRepository = AppDataSource.getRepository(User);
+    constructor(dataSource: DataSource) {
+        this.ormRepository = dataSource.getRepository(User);
     }
     async findAll(): Promise<User[]> {
         return this.ormRepository.find();

@@ -56,3 +56,9 @@ export async function loginUser(loginData: LoginRequestDTO) {
 
     return mapUserDAOToResponse(user);
 }
+
+export async function getUserByUsername(username: string): Promise<UserResponseDTO> {
+    const user = await userRepository.findByUsername(username);
+    if (!user) throw appErr("USER_NOT_FOUND", 404);
+    return mapUserDAOToResponse(user);
+}

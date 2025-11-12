@@ -26,6 +26,7 @@ function adaptAssignRoleBody(body: any): AssignRoleRequestDTO {
     return { username: String(body.username), roleTitle: String(body.roleTitle) };
 }
 
+
 router.put("/accounts/assign", async (req, res: Response, next) => {
     const adapted = adaptAssignRoleBody(req.body);
     req.body = adapted;
@@ -39,4 +40,10 @@ router.put("/accounts/assign", async (req, res: Response, next) => {
 
         res.status(200).json(updatedOfficer);
     });
+});
+
+// NEW: lista ruoli
+router.get("/roles/list", async (req, res) => {
+    const roles = await adminController.getAllRoles();
+    res.status(200).json(roles);
 });

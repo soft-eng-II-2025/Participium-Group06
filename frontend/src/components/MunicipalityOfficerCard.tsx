@@ -1,84 +1,53 @@
-// src/components/UserCard.tsx
 import React from 'react';
-import {Card, CardContent, Typography, Avatar, Button, Box, Chip} from '@mui/material';
-import {MunicipalityOfficerDTO} from "../DTOs/MunicipalityOfficerDTO";
+import { Card, Typography, Avatar, Button, Box, Chip } from '@mui/material';
+import { MunicipalityOfficerDTO } from "../DTOs/MunicipalityOfficerDTO";
 
-interface UserCardProps {
-    user: MunicipalityOfficerDTO;
-    onEditRole: (username: string) => void;
+type UserCardProps = { user: MunicipalityOfficerDTO; onEditRole: (username: string) => void; };
+
+function getInitials(name: string) {
+    const p = name.trim().split(/\s+/).filter(Boolean);
+    if (p.length >= 2) return (p[0][0] + p[1][0]).toUpperCase();
+    if (p.length === 1) return p[0].slice(0, 2).toUpperCase();
+    return 'US';
 }
 
-
-function stringAvatar(name: string) {
-    return {
-        children: `${name.split(' ')[0][0]}${name.split(' ')[1][0]}`,
-    };
-}
-
-export const UserCard: React.FC<UserCardProps> = ({user, onEditRole}) => {
+export const UserCard: React.FC<UserCardProps> = ({ user, onEditRole }) => {
+    const display = `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.username;
+    const initials = getInitials(display);
+    const hasRole = !!user.role?.title;
 
     return (
         <Card
             sx={{
                 width: '100%',
-                maxWidth: 400,
-                minHeight: 120,
+                // niente height: '100%' per evitare stretching verticale
+                minHeight: 120,          // <- era 150
                 display: 'flex',
                 flexDirection: 'row',
                 alignItems: 'center',
-                p: 2,
+                gap: 1.5,                 // <- più compatta
+                p: 1.5,                   // <- padding ridotto
                 borderRadius: 2,
                 boxShadow: 3,
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                '&:hover': {
-                    transform: 'translateY(-3px)',
-                    boxShadow: 6,
-                },
+                transition: 'transform .2s, box-shadow .2s',
+                '&:hover': { transform: 'translateY(-3px)', boxShadow: 6 },
+                overflow: 'hidden',
             }}
         >
-            {/* Avatar */}
-            <Avatar
-                sx={{
-                    bgcolor: "primary.main",
-                    width: 60,
-                    height: 60,
-                    fontSize: 24,
-                    mr: 2,
-                    flexShrink: 0,
-                }}
-                {...stringAvatar(`${user.first_name} ${user.last_name}`)}
-            />
+            <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48, fontSize: 18, flexShrink: 0 }}>
+                {initials}
+            </Avatar>
 
-            {/* Username + role/button */}
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    ml: 4,
-                    minWidth: 0,
-                }}
-            >
-                <Typography
-                    variant="subtitle1"
-                    sx={{ fontWeight: 600, mb: 1 }}
-                >
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1 }} noWrap>
                     {user.username}
                 </Typography>
 
-                {user.role ? (
+                {hasRole ? (
                     <Chip
-                        label={user.role.title}
-                        size="medium"
-                        sx={{
-                            width: 120,
-                            height: 32,
-                            borderRadius: 8,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '0.95rem',
-                        }}
+                        label={user.role!.title as string}
+                        size="small"
+                        sx={{ mt: 0.5, maxWidth: '100%' }}
                         color="primary"
                         variant="outlined"
                     />
@@ -87,7 +56,8 @@ export const UserCard: React.FC<UserCardProps> = ({user, onEditRole}) => {
                         variant="contained"
                         color="secondary"
                         onClick={() => onEditRole(user.username)}
-                        sx={{ mt: 1, width: 130 }}
+                        size="small"
+                        sx={{ mt: 0.5, alignSelf: 'flex-start' }}
                     >
                         Assign role
                     </Button>

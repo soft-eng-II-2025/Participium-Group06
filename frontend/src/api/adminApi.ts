@@ -1,20 +1,26 @@
-import axios from "axios";
-import {ReportDTO} from "../DTOs/ReportDTO";
+import api from "./api";
 import {MunicipalityOfficerDTO} from "../DTOs/MunicipalityOfficerDTO";
+import { RoleDTO } from "../DTOs/RoleDTO";
 
 
-const BASE_URL = "/api/admin/accounts";
+const BASE_URL = "admin";
+const ACCOUNT_URL = `${BASE_URL}/accounts`;
+
 
 export class AdminApi {
-
     async registerMunicipalityOfficer(params: MunicipalityOfficerDTO) {
-        return axios.post <MunicipalityOfficerDTO>(`${BASE_URL}/register`, params);
+        return api.post<MunicipalityOfficerDTO>(`${ACCOUNT_URL}/register`, params);
     }
+
     async getAllMunicipalityUsers() {
-        return axios.get <MunicipalityOfficerDTO[]>(`${BASE_URL}/list`);
+        return api.get<MunicipalityOfficerDTO[]>(`${ACCOUNT_URL}/list`);
     }
     async setRole(params: MunicipalityOfficerDTO){
-        return axios.put<MunicipalityOfficerDTO>(`${BASE_URL}/assign`, params)
+        return api.put<MunicipalityOfficerDTO>(`${ACCOUNT_URL}/assign`, params)
+    }
+
+    async getRoles() {
+        return api.get<RoleDTO[]>(`${BASE_URL}/roles/list`);
     }
 
 }

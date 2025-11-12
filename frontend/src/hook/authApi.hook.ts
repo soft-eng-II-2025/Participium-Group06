@@ -1,18 +1,45 @@
-import {AuthApi} from "../api/authApi";
-import {useMutation} from "@tanstack/react-query";
-import {UserDTO} from "../DTOs/UserDTO";
-import {LoginDTO} from "../DTOs/LoginDTO";
+import { useAuth } from '../contexts/AuthContext';
+import type { UserDTO } from '../DTOs/UserDTO';
+import type { LoginDTO } from '../DTOs/LoginDTO';
 
-const authApi = new AuthApi();
+// Wrapper hooks that expose a small react-query-like surface but delegate to AuthContext.
+// This keeps component usage unchanged while centralizing auth logic in the provider
 
-export function useRegisterUser(){
-    return useMutation({
-        mutationFn: (newUser: UserDTO) => authApi.registerUser(newUser)
-    })
+export function useRegisterUser() {
+    const { register } = useAuth();
+    return {
+        mutateAsync: async (payload: UserDTO) => {
+            return await register(payload);
+        },
+        mutate: (payload: UserDTO) => { void register(payload); },
+    };
 }
 
-export function useLogin(){
-    return useMutation({
-        mutationFn: (credentials: LoginDTO) => authApi.login(credentials)
-    })
+export function useLogin() {
+    const { login } = useAuth();
+    return {
+        mutateAsync: async (creds: LoginDTO) => {
+            return await login(creds);
+        },
+        mutate: (creds: LoginDTO) => { void login(creds); },
+    };
+}
+
+export function useGetSession() {
+    const { user, loading, isAuthenticated } = useAuth();
+    return {
+        data: user,
+        isLoading: loading,
+        isAuthenticated,
+    };
+}
+
+export function useLogout() {
+    const { logout } = useAuth();
+    return {
+        mutateAsync: async () => {
+            return await logout();
+        },
+        mutate: () => { void logout(); },
+    };
 }

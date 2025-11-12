@@ -2,6 +2,7 @@
 
 ## Team members:
 Francesco Servente s328852
+Alessandro Aldo Raoul Bonciani s345411
 
 
 Participium is a civic reporting platform that connects citizens and municipalities for efficient issue management and resolution.  

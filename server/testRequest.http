@@ -57,7 +57,7 @@ Content-Type: application/json
 
 ### 5. Submit a New Report (POST /users/:id/reports)
 # Assumes the user with ID 1 exists in the database.
-# Make sure 'user' in ReportDTO is correctly mapped in the controller,
+# Make sure 'user' in ReportResponseDTO is correctly mapped in the controller,
 # and that the specified 'categoryId' exists in the DB.
 POST {{baseUrl}}/api/users/reports
 Content-Type: application/json

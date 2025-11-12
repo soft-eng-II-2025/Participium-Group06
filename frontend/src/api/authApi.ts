@@ -1,19 +1,20 @@
 import axios from "axios";
-import {UserDTO} from "../DTOs/UserDTO";
+import {UserResponseDTO} from "../DTOs/UserResponseDTO";
 import {LoginDTO} from "../DTOs/LoginDTO";
-import {MunicipalityOfficerDTO} from "../DTOs/MunicipalityOfficerDTO";
+import {MunicipalityOfficerResponseDTO} from "../DTOs/MunicipalityOfficerResponseDTO";
+import {CreateUserRequestDTO} from "../DTOs/CreateUserRequestDTO";
 
 
 const BASE_URL = "/api";
 
 export class AuthApi {
 
-    async registerUser(params: UserDTO) {
-        return axios.post <UserDTO>(`${BASE_URL}/register`, params);
+    async registerUser(params: CreateUserRequestDTO) {
+        return axios.post <UserResponseDTO>(`${BASE_URL}/register`, params);
     }
 
     async login(params: LoginDTO) {
-        return axios.post <UserDTO|MunicipalityOfficerDTO>(`${BASE_URL}/login`, params);
+        return axios.post <UserResponseDTO|MunicipalityOfficerResponseDTO>(`${BASE_URL}/login`, params);
     }
 
 }

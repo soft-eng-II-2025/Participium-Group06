@@ -1,13 +1,13 @@
 import {AuthApi} from "../api/authApi";
 import {useMutation} from "@tanstack/react-query";
-import {UserDTO} from "../DTOs/UserDTO";
+import {UserResponseDTO} from "../DTOs/UserResponseDTO";
 import {LoginDTO} from "../DTOs/LoginDTO";
 
 const authApi = new AuthApi();
 
 export function useRegisterUser(){
     return useMutation({
-        mutationFn: (newUser: UserDTO) => authApi.registerUser(newUser)
+        mutationFn: (newUser: UserResponseDTO) => authApi.registerUser(newUser)
     })
 }
 

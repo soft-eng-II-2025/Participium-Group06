@@ -10,5 +10,5 @@ export class MunicipalityOfficerResponseDTO {
 
     @IsNotEmpty() last_name!: string;
 
-    role: RoleResponseDTO | null=null;
+    role: string | null = null;
 }

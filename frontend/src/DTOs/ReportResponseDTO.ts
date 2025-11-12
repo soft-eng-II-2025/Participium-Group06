@@ -1,11 +1,13 @@
-import {UserDTO} from "./UserDTO";
+import {UserResponseDTO} from "./UserResponseDTO";
 
-export interface ReportDTO {
+export interface ReportResponseDTO {
     longitude: number;
     latitude: number;
     title: string;
     description: string;
-    user: UserDTO;
+    userId: number;
     categoryId: number;
     photos: string[];
 }
+
+

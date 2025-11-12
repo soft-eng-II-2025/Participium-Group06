@@ -1,11 +1,11 @@
-import {ReportDTO} from "./ReportDTO";
+import {ReportResponseDTO} from "./ReportResponseDTO";
 
-export interface UserDTO {
+export interface UserResponseDTO {
     userId?: number;
     username: string;
     email: string;
     password: string;
     first_name: string;
     last_name: string;
-    reports?: ReportDTO[];
+    reports: ReportResponseDTO[];
 }

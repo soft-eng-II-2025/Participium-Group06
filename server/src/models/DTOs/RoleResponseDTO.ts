@@ -3,5 +3,5 @@ import { MunicipalityOfficerResponseDTO } from "./MunicipalityOfficerResponseDTO
 
 export class RoleResponseDTO {
     title?: string;
-    officers!: MunicipalityOfficerResponseDTO[];
+    /*officers!: MunicipalityOfficerResponseDTO[];*/
 }

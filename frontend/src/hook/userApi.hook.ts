@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ReportDTO } from "../DTOs/ReportDTO";
+import { ReportResponseDTO } from "../DTOs/ReportResponseDTO";
 import {UserApi} from "../api/userApi";
 
 const userApi = new UserApi();
@@ -8,6 +8,6 @@ const userApi = new UserApi();
  */
 export function useAddReport() {
     return useMutation({
-        mutationFn: (report: ReportDTO) => userApi.addReport(report),
+        mutationFn: (report: ReportResponseDTO) => userApi.addReport(report),
     });
 }

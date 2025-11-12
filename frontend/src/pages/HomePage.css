@@ -1,0 +1,36 @@
+.container {
+  width: 100%;
+}
+
+.subtitle {
+  margin-top: 12px;
+  margin-bottom: 24px;
+  color: #6b7280; /* secondary text color */
+  font-size: 1rem;
+}
+
+.partecipation-button {
+  border-radius: 999px !important;
+  text-transform: none;
+  padding: 12px 32px;
+  font-weight: 600;
+  min-width: 160px;
+  /* if MUI specificity overrides, add !important */
+}
+
+.partecipation-button:hover {
+    box-shadow: 0px 4px 15px rgba(124, 29, 35, 0.4) !important;
+    transform: translateY(-2px);
+}
+
+
+.right {
+  text-align: right;
+}
+
+
+.homeImage {
+  width: 100%;
+  height: auto;
+  display: block;
+}

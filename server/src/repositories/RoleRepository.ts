@@ -1,11 +1,10 @@
 // src/repositories/RoleRepository.ts
 import { Role } from "../models/Role";
-import {DataSource, Repository} from "typeorm";
-import {AppDataSource} from "../data-source";
-
+import {Repository, DataSource} from "typeorm";
+//import { AppDataSource } from "../data-source";
 export class RoleRepository {
-    private ormRepository: Repository<Role>;
-    constructor(dataSource: DataSource = AppDataSource) {
+    protected ormRepository: Repository<Role>;
+    constructor(dataSource: DataSource) {
         this.ormRepository = dataSource.getRepository(Role);
     }
 

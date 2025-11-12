@@ -9,9 +9,18 @@ import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
 import { AppDataSource } from "../data-source";
 import {AssignRoleRequestDTO} from "../models/DTOs/AssignRoleRequestDTO";
 import {CreateUserRequestDTO} from "../models/DTOs/CreateUserRequestDTO";
+import { DataSource } from "typeorm";
 
-const municipalityOfficerRepository = new MunicipalityOfficerRepository();
-const roleRepository = new RoleRepository();
+/*const municipalityOfficerRepository = new MunicipalityOfficerRepository(AppDataSource);
+const roleRepository = new RoleRepository(AppDataSource);*/
+
+let municipalityOfficerRepository: MunicipalityOfficerRepository;
+let roleRepository: RoleRepository;
+
+export function initializeAdminRepositories(dataSource: DataSource) {
+    municipalityOfficerRepository = new MunicipalityOfficerRepository(dataSource);
+    roleRepository = new RoleRepository(dataSource);
+}
 
 function appErr(code: string, status = 400) {
     const e: any = new Error(code);

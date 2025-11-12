@@ -98,10 +98,10 @@ export function mapCategoryDAOToDTO(categoryDAO: Category): CategoryResponseDTO 
     };
 
     // Se la relazione 'reports' è caricata, popola anche l'array e il conteggio
-    if (Array.isArray(categoryDAO.reports)) {
+    /*if (Array.isArray(categoryDAO.reports)) {
         dto.reports = categoryDAO.reports.map((r: Report) => mapReportDAOToDTO(r));
         dto.reportsCount = categoryDAO.reports.length; // opzionale
-    }
+    }*/
 
     return dto;
 }

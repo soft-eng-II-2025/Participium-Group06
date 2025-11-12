@@ -10,16 +10,18 @@ import {
     Link,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { useLogin } from "../hook/authApi.hook";
 import "./LoginPage.css";
+import { useAuth } from "../contexts/AuthContext";
+import { MunicipalityOfficerResponseDTO } from "../DTOs/MunicipalityOfficerResponseDTO";
+import { UserResponseDTO } from "../DTOs/UserResponseDTO";
 
 const LoginPage: React.FC = () => {
-    const navigate = useNavigate();
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const loginUser = useLogin();
+  const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { login } = useAuth();
 
     const validate = () => {
         if (!username || !password) {
@@ -34,18 +36,31 @@ const LoginPage: React.FC = () => {
         setError(null);
         if (!validate()) return;
 
-        setLoading(true);
-        try {
-            const response = await loginUser.mutateAsync({ username, password });
-            console.log("Login successful:", response);
-            navigate("/map");
-        } catch (err) {
-            console.error(err);
-            setError("An error occured during login. Try again.");
-        } finally {
-            setLoading(false);
-        }
-    };
+    setLoading(true);
+    try {
+    const user = await login({ username, password }) as UserResponseDTO | MunicipalityOfficerResponseDTO | null;
+
+    // prefer role from the returned user object, role from context might not be updated yet
+    const userRole = (user && (user as any).role) ? (user as any).role.title : 'USER';
+
+    switch (userRole) {
+      case "ADMIN":
+        navigate("/admin/home");
+        break;
+      case "USER":
+        navigate("/map");
+        break;
+      // additional roles can be handled here
+      default:
+        navigate("/map");
+    }
+    } catch (err) {
+      console.error(err);
+      setError("An error occured during login. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
     return (
         <Container maxWidth="sm">

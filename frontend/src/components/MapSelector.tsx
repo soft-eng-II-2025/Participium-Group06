@@ -1,7 +1,17 @@
-import React from "react";
-import { MapContainer, TileLayer, useMapEvents, Marker, Popup } from "react-leaflet";
+import React, { useEffect, useState } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  GeoJSON,
+  useMapEvents,
+} from "react-leaflet";
 import { LatLngExpression } from "leaflet";
 import L from "leaflet";
+import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
+import { point } from "@turf/helpers";
+
 import { useNavigate } from "react-router-dom"; // Importa useNavigate
 
 // @ts-ignore
@@ -22,6 +32,11 @@ interface MapSelectorProps {
   onSelect: (lat: number, lng: number) => void;
 }
 
+const ClickHandler: React.FC<{
+  onSelect: (lat: number, lng: number) => void;
+  geoData: any | null;
+}> = ({ onSelect, geoData }) => {
+  const [position, setPosition] = useState<LatLngExpression | null>(null);
 const ClickHandler: React.FC<{ onSelect: (lat: number, lng: number) => void }> = ({ onSelect }) => {
   const [position, setPosition] = React.useState<LatLngExpression | null>(null);
   const navigate = useNavigate(); // Inizializza useNavigate
@@ -29,8 +44,31 @@ const ClickHandler: React.FC<{ onSelect: (lat: number, lng: number) => void }> =
   useMapEvents({
     click(e) {
       const { lat, lng } = e.latlng;
-      setPosition([lat, lng]);
-      onSelect(lat, lng);
+      if (!geoData) return;
+
+      // 🧩 Safely extract the polygon geometry
+      const polygon =
+        geoData.type === "FeatureCollection"
+          ? geoData.features[0]?.geometry
+          : geoData.type === "Feature"
+          ? geoData.geometry
+          : null;
+
+      if (!polygon) {
+        console.error("Invalid GeoJSON format — no geometry found:", geoData);
+        alert("Boundary data not valid.");
+        return;
+      }
+
+      const pt = point([lng, lat]);
+      const inside = booleanPointInPolygon(pt, polygon);
+
+      if (inside) {
+        setPosition([lat, lng]);
+        onSelect(lat, lng);
+      } else {
+        alert("❌ You must select a point inside the boundary of Turin.");
+      }
     },
   });
 
@@ -75,17 +113,47 @@ const ClickHandler: React.FC<{ onSelect: (lat: number, lng: number) => void }> =
 };
 
 const MapSelector: React.FC<MapSelectorProps> = ({ onSelect }) => {
+  const [geoData, setGeoData] = useState<any>(null);
+
+  useEffect(() => {
+    fetch("/turin-boundary.geojson")
+      .then((res) => res.json())
+      .then((data) => {
+        // 💡 Normalize structure if it's an Overpass-style JSON
+        if (data.elements) {
+          console.warn(
+            "Overpass format detected — converting manually is required!"
+          );
+        }
+        setGeoData(data);
+      })
+      .catch((err) => console.error("Error loading GeoJSON:", err));
+  }, []);
+
   return (
     <MapContainer
-      center={[45.095, 7.70]} // Torino, come esempio di posizione iniziale
-      zoom={13}
-      style={{ height: "100%", width: "100%" }} // La mappa riempie tutto
+      center={[45.07, 7.68]}
+      zoom={12}
+      style={{ height: "100%", width: "100%" }}
     >
       <TileLayer
         attribution='&copy; OpenStreetMap contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <ClickHandler onSelect={onSelect} />
+
+      {geoData && geoData.features && (
+        <GeoJSON
+          data={geoData}
+          style={{
+            color: "blue",
+            weight: 2,
+            fillColor: "lightblue",
+            fillOpacity: 0.2,
+          }}
+        />
+      )}
+
+      <ClickHandler onSelect={onSelect} geoData={geoData} />
     </MapContainer>
   );
 };

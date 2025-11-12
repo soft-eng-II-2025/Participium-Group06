@@ -88,7 +88,7 @@ describe('addMunicipalityOfficer (unit)', () => {
         password: '123456',
         first_name: 'Test',
         last_name: 'User',
-        role: { title: 'FakeRole' },
+        //role: { title: 'FakeRole' },
       })
     ).rejects.toThrow('ROLE_NOT_FOUND');
 

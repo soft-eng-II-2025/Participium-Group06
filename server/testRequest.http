@@ -18,8 +18,8 @@ POST {{baseUrl}}/api/admin/accounts/register
 Content-Type: application/json
 
 {
-  "username": "officer_alpha",
-  "email": "alpha@municipality.it",
+  "username": "Torchiano_officer_alph",
+  "email": "torchiano@municipality.fr",
   "password": "securepassword",
   "first_name": "Mario",
   "last_name": "Rossi"
@@ -31,8 +31,8 @@ POST {{baseUrl}}/api/admin/accounts/register
 Content-Type: application/json
 
 {
-  "username": "officer_beta",
-  "email": "beta@municipality.it",
+  "username": "officerPOPO",
+  "email": "beta@municipality.com",
   "password": "anothersecure",
   "first_name": "Laura",
   "last_name": "Verdi"
@@ -50,14 +50,9 @@ PUT {{baseUrl}}/api/admin/accounts/assign
 Content-Type: application/json
 
 {
-  "username": "officer_alpha",
-  "email": "alpha@municipality.it",
-  "password": "securepassword",
-  "first_name": "Mario",
-  "last_name": "Rossi",
-  "role": {
-    "title": "Test1"
-  }
+  "username": "officerPOPO",
+
+  "roleTitle": "ORGANIZATION_OFFICER"
 }
 
 ### 5. Submit a New Report (POST /users/:id/reports)
@@ -73,16 +68,9 @@ Content-Type: application/json
   "title": "Buco stradale urgente",
   "description": "Grossa buca vicino al semaforo di Via Roma.",
   "categoryId": 1,
+  "userId": 1,
   "photos": [
     "photo1_url.jpg",
     "photo2_url.jpg"
-  ],
-  "user": {
-    "userId": 1,
-    "username": "prova",
-    "email": "prova@test.it",
-    "password": "testtest",
-    "first_name": "test_name",
-    "last_name": "last_name_test"
-   }
+  ]
 }

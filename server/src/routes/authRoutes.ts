@@ -7,13 +7,18 @@ import * as adminController from "../controllers/adminController";
 
 export const router = Router();
 
+
+
 // POST /api/register
-router.post('/register', validateDto(CreateUserRequestDTO), async (req, res: Response) => {
+router.post('/register', validateDto(CreateUserRequestDTO), async (req, res: Response, next) => {
     const newUser = await userController.createUser(req.body); // CreateUserRequest -> UserResponse
     res.status(201).json(newUser);
 });
 
-router.post('/login', validateDto(LoginRequestDTO), async (req, res: Response) => {
+
+
+
+router.post('/login', validateDto(LoginRequestDTO), async (req, res: Response, next) => {
     try {
         const user = await userController.loginUser(req.body);
         return res.status(200).json(user);

@@ -8,8 +8,6 @@ export class UserResponseDTO {
 
     @IsEmail() email!: string;
 
-    password?: string | null;// sempre nullo in output
-
     @IsNotEmpty() first_name!: string;
 
     @IsNotEmpty() last_name!: string;

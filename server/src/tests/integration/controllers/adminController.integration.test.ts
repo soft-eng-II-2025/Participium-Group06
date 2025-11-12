@@ -41,8 +41,7 @@ describe('addMunicipalityOfficer (integration)', () => {
         email: 'Test@Example.com',
         password: 'StrongPassword123!',
         first_name: 'Test',
-        last_name: 'User',
-        role: { title: role.title },
+        last_name: 'User'
       },
       TestDataSource
     );
@@ -64,7 +63,7 @@ describe('addMunicipalityOfficer (integration)', () => {
           password: '12345678',
           first_name: 'No',
           last_name: 'Role',
-          role: { title: 'MissingRole' },
+          //role: { title: 'MissingRole' },
         },
         TestDataSource
       )

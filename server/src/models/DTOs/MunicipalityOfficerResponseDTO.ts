@@ -6,11 +6,9 @@ export class MunicipalityOfficerResponseDTO {
 
     @IsEmail() email!: string;
 
-    password?: string | null;
-
     @IsNotEmpty() first_name!: string;
 
     @IsNotEmpty() last_name!: string;
 
-    role?: RoleResponseDTO;
+    role: RoleResponseDTO | null=null;
 }

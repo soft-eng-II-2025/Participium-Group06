@@ -37,7 +37,7 @@ export function createMunicipalityOfficerDTO(
     password?: string | null,
     first_name?: string,
     last_name?: string,
-    role?: RoleResponseDTO
+    role?: RoleResponseDTO | null
 ): MunicipalityOfficerResponseDTO {
     return removeNullAttributes({
         username,
@@ -45,7 +45,7 @@ export function createMunicipalityOfficerDTO(
         password,
         first_name,
         last_name,
-        role,
+        /*role,*/
     }) as MunicipalityOfficerResponseDTO;
 }
 
@@ -115,7 +115,7 @@ export function mapMunicipalityOfficerDAOToDTO(officerDAO: MunicipalityOfficer):
         null,
         officerDAO.first_name,
         officerDAO.last_name,
-        officerDAO.role ? mapRoleDAOToDTO(officerDAO.role) : undefined
+        officerDAO.role ? mapRoleDAOToDTO(officerDAO.role) : null
     );
 }
 

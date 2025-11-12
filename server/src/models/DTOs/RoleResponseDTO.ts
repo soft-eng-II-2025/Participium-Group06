@@ -2,6 +2,6 @@ import { IsNotEmpty } from "class-validator";
 import { MunicipalityOfficerResponseDTO } from "./MunicipalityOfficerResponseDTO";
 
 export class RoleResponseDTO {
-    @IsNotEmpty() title!: string;
+    title?: string;
     officers!: MunicipalityOfficerResponseDTO[];
 }

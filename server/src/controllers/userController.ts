@@ -15,8 +15,6 @@ import { User } from "../models/User";
 import { map } from "zod";
 import { ReportPhoto } from "../models/ReportPhoto";
 
-//const userRepository: UserRepository = new UserRepository(AppDataSource);
-//const reportRepository: ReportRepository = new ReportRepository(AppDataSource);
 const userRepository: UserRepository = new UserRepository(AppDataSource);
 const reportRepository: ReportRepository = new ReportRepository(AppDataSource);
 const categoryRepository: CategoryRepository = new CategoryRepository(AppDataSource);

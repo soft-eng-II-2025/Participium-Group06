@@ -1,4 +1,3 @@
-import {ReportResponseDTO} from "./ReportResponseDTO";
 
 export class CategoryResponseDTO {
     id!: number;

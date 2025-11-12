@@ -16,6 +16,7 @@ import AdminRegisterPage from "./pages/AdminRegisterPage";
 import RequireRole from './routes/RequireRole';
 import ProtectedRoute from './routes/ProtectedRoute';
 import GuestRoute from './routes/GuestRoute';
+import NewReportPage from './pages/NewReportPage';
 
 
 const queryClient = new QueryClient();
@@ -47,6 +48,13 @@ function App() {
                                     <RequireRole role="ADMIN">
                                         <AdminHomePage />
                                     </RequireRole>
+                                } />
+                                <Route path="/new-report" element={
+                                    <ProtectedRoute>
+                                    <RequireRole role="USER">
+                                        <NewReportPage />
+                                    </RequireRole>
+                                    </ProtectedRoute>
                                 } />
                                 <Route path="/admin/register" element={
                                     <RequireRole role="ADMIN">

@@ -1,4 +1,3 @@
-// src/tests/setup-e2e.ts
 import { TestDataSource } from './test-data-source';
 import { initializeApp } from '../index';
 

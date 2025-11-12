@@ -1,4 +1,3 @@
-// src/index.ts (VERSIONE CORRETTA PER AMBIENTE TEST)
 import 'reflect-metadata';
 import express from 'express';
 import cors from 'cors';
@@ -35,16 +34,13 @@ app.use(passport.session());
 app.use("/api", router);
 app.use(errorHandler);
 
-// Esporta la funzione di inizializzazione per i test E2E
 export async function initializeApp(dataSource: any = AppDataSource) {
     await dataSource.initialize();
     console.log('Database connesso');
     initializeUserRepositories(dataSource);
     initializeAdminRepositories(dataSource);
-    // app.listen non deve essere chiamato qui, sarà chiamato da main()
 }
 
-// La funzione main originale ora chiama initializeApp E app.listen
 async function main() {
     await initializeApp(AppDataSource); // Usa AppDataSource di default
     app.listen(PORT, () => {
@@ -52,13 +48,9 @@ async function main() {
     });
 }
 
-// <---------- MODIFICA CRUCIALE QUI ---------->
-// Esegui main() SOLO se il file è il punto di ingresso principale
-// (cioè, non è importato come modulo da un altro file come un test).
 if (require.main === module) {
     main().catch((error) => {
         console.error("[FATAL]", error);
         process.exit(1);
     });
 }
-// <---------- FINE MODIFICA CRUCIALE ---------->

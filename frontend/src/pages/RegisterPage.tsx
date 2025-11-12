@@ -16,7 +16,7 @@ const RegisterPage: React.FC = () => {
         setLoading(true);
         try {
             await registerUser.mutateAsync(payload as any);
-            navigate("/map");
+            navigate("/");
         } catch (err) {
             setError("Registration failed. Please try again.");
             throw err;

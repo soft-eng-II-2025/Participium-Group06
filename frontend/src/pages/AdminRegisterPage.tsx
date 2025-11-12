@@ -16,7 +16,7 @@ const AdminRegisterPage: React.FC = () => {
     const handleAdminRegister = async (payload: MunicipalityOfficerDTO) => {
         const res = await registerMunicipalityOfficer(payload);
         // Se il tuo hook non restituisce 'status', ti basta navigare su successo:
-        if (!res || res.status === 201) navigate("/admin/home");
+        if (!res || res.status === 201) navigate("/");
     };
 
     return (

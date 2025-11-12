@@ -14,10 +14,21 @@ import { hashPassword, verifyPassword } from "../services/passwordService";
 import { User } from "../models/User";
 import { map } from "zod";
 import { ReportPhoto } from "../models/ReportPhoto";
+import { DataSource } from "typeorm";
 
-const userRepository: UserRepository = new UserRepository(AppDataSource);
+/*const userRepository: UserRepository = new UserRepository(AppDataSource);
 const reportRepository: ReportRepository = new ReportRepository(AppDataSource);
-const categoryRepository: CategoryRepository = new CategoryRepository(AppDataSource);
+const categoryRepository: CategoryRepository = new CategoryRepository(AppDataSource);*/
+
+let userRepository: UserRepository;
+let reportRepository: ReportRepository;
+let categoryRepository: CategoryRepository;
+
+export function initializeUserRepositories(dataSource: DataSource) {
+  userRepository = new UserRepository(dataSource);
+  reportRepository = new ReportRepository(dataSource);
+  categoryRepository = new CategoryRepository(dataSource);
+}
 
 function appErr(code: string, status = 400) { const e: any = new Error(code); e.status = status; return e; }
 

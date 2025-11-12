@@ -8,6 +8,8 @@ import './auth/passport';
 import { AppDataSource } from './data-source';
 import {errorHandler} from "./middlewares/errorMiddleware";
 import {router} from "./routes/routes";
+import { initializeUserRepositories } from './controllers/userController';
+import { initializeAdminRepositories } from './controllers/adminController';
 
 
 const PORT = Number(process.env.PORT ?? 3000);
@@ -40,6 +42,8 @@ async function main() {
     await AppDataSource.initialize()
     .then(() => {
         console.log('Database connesso');
+        initializeUserRepositories(AppDataSource);
+        initializeAdminRepositories(AppDataSource);
 
         app.listen(PORT, () => {
             console.log(`Server started on http://localhost:${PORT}`);

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { Box, Button, TextField, Grid, Typography, Paper, Select, MenuItem, IconButton, FormHelperText, CircularProgress, Snackbar, Alert } from "@mui/material";
+import { Box, Button, TextField, Grid, Typography, Paper, Select, MenuItem, IconButton, FormHelperText, CircularProgress, Snackbar, Alert, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAddReport, useUploadReportImages, useReportCategories } from "../hook/userApi.hook";
 import { ReportDTO } from "../DTOs/ReportDTO";
@@ -44,6 +45,8 @@ export default function NewReportPage() {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("")
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
 
   useEffect(() => {
     const urls = photos.map((f) => URL.createObjectURL(f));
@@ -148,21 +151,12 @@ export default function NewReportPage() {
 
       await addReportMutation.mutateAsync(reportData);
 
-      setSnackbarMessage("Report created successfully!");
-      setSnackbarSeverity('success');
-      setSnackbarOpen(true);
-
-      setForm({
-        longitude: null,
-        latitude: null,
-        title: "",
-        description: "",
-        categoryId: "",
-      });
-
-      setPhotos([]);
-      setPreviews([]);
-      setTimeout(() => navigate("/map"), 2000);
+      // show modal dialog for success, then redirect
+      setSuccessDialogOpen(true);
+      setTimeout(() => {
+        setSuccessDialogOpen(false);
+        navigate("/map");
+      }, 1200);
 
       //navigate("/map");
     } catch (err: any) {
@@ -365,6 +359,22 @@ export default function NewReportPage() {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+
+      <Dialog
+        open={successDialogOpen}
+        disableEscapeKeyDown
+        PaperProps={{ sx: { borderRadius: 3, p: 2, minWidth: 360, boxShadow: 6, padding: 4 } }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 2, pt: 1 }}>
+          <Box sx={{ width: 56, height: 56, borderRadius: '50%', bgcolor: 'success.main', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 3 }}>
+            <CheckCircleIcon sx={{ color: 'white', fontSize: 32 }} />
+          </Box>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>Report created</Typography>
+            <Typography variant="body2" color="text.secondary">Your report was uploaded successfully. Redirecting to the map...</Typography>
+          </Box>
+        </Box>
+      </Dialog>
     </Box>
   );
 }

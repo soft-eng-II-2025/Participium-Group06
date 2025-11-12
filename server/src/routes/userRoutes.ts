@@ -8,6 +8,7 @@ import multer from 'multer';
 import path from 'path'; // Importa path
 import { Request } from 'express';
 import express from 'express';
+import { requireAuth } from '../middlewares/authMiddleware';
 
 export const router = Router();
 
@@ -33,8 +34,8 @@ const upload = multer({ storage: storage });
 // --- FINE CONFIGURAZIONE MULTER ---
 
 // Adapter: accetta anche il vecchio formato { user: { userId }, category: { id } } (rimane invariato)
-function adaptCreateReportBody(body: any): CreateReportRequestDTO {
-    const userId = body?.userId ?? body?.user?.userId ?? body?.user?.id;
+async function adaptCreateReportBody(body: any): Promise<CreateReportRequestDTO> {
+    const userId = await userController.getUserIdByUsername(body.user?.username);
     const categoryId = body?.categoryId ?? body?.category?.id;
     return {
         longitude: Number(body.longitude),
@@ -48,8 +49,11 @@ function adaptCreateReportBody(body: any): CreateReportRequestDTO {
 }
 
 // Rotta per la creazione di un report (invariata)
-router.post('/reports', async (req, res: Response) => {
-    const adapted = adaptCreateReportBody(req.body);
+router.post('/reports', async (req: Request, res: Response) => {
+
+    const requestBodyWithUserId = { ...req.body };
+
+    const adapted = await adaptCreateReportBody(requestBodyWithUserId);
     req.body = adapted;
     return validateDto(CreateReportRequestDTO)(req, res, async () => {
         const newReport = await userController.addReport(req.body);

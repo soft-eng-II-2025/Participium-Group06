@@ -23,7 +23,7 @@ export async function addReport(reportData: CreateReportRequestDTO): Promise<Rep
     // In un sistema autenticato, l'ID dell'utente dovrebbe venire dal token/sessione.
     // Per ora, assumiamo che reportData.userId sia valido.
     const reportDAO = mapCreateReportRequestToDAO(reportData);
-    const addedReport = await reportRepository.add(reportDAO); // Salva il report base
+    const addedReport = await reportRepository.add(reportDAO);
     // Ora, aggiungiamo le foto al report aggiunto
     if (reportData.photos && reportData.photos.length > 0) {
         const photoDAOs = reportData.photos.map(photoUrl => {
@@ -79,6 +79,12 @@ export async function getUserByUsername(username: string): Promise<UserResponseD
     const user = await userRepository.findByUsername(username);
     if (!user) throw appErr("USER_NOT_FOUND", 404);
     return mapUserDAOToResponse(user);
+}
+
+export async function getUserIdByUsername(username: string): Promise<number> {
+    const user = await userRepository.findByUsername(username);
+    if (!user) throw appErr("USER_NOT_FOUND", 404);
+    return user.id;
 }
 
 export async function getAllCategories(): Promise<CategoryResponseDTO[]> {

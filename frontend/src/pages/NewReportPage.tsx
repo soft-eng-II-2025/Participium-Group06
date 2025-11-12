@@ -1,10 +1,11 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { Box, Button, TextField, Grid, Typography, Paper, Select, MenuItem, IconButton, FormHelperText, CircularProgress } from "@mui/material";
+import { Box, Button, TextField, Grid, Typography, Paper, Select, MenuItem, IconButton, FormHelperText, CircularProgress, Snackbar, Alert } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAddReport, useUploadReportImages, useReportCategories } from "../hook/userApi.hook";
-import { CreateReportRequestDTO } from "../DTOs/ReportDTO";
+import { ReportDTO } from "../DTOs/ReportDTO";
 import { CategoryResponseDTO } from "../DTOs/CategoryResponseDTO";
+import { useAuth } from '../contexts/AuthContext';
 
 type FormState = {
   longitude: number | null;
@@ -17,6 +18,7 @@ type FormState = {
 export default function NewReportPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const addReportMutation = useAddReport();
   const uploadImagesMutation = useUploadReportImages();
@@ -37,6 +39,11 @@ export default function NewReportPage() {
   const [photos, setPhotos] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // --- STATI PER IL SNACKBAR ---
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("")
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
   useEffect(() => {
     const urls = photos.map((f) => URL.createObjectURL(f));
@@ -114,6 +121,8 @@ export default function NewReportPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSnackbarOpen(false);
+
     if (!validate()) return;
 
     let uploadedPhotoUrls: string[] = [];
@@ -122,25 +131,53 @@ export default function NewReportPage() {
       if (photos.length > 0) {
         uploadedPhotoUrls = await uploadImagesMutation.mutateAsync(photos);
       }
+      if(!user) {
+        throw new Error("User not authenticated");
+      }
 
-      const reportData: CreateReportRequestDTO = {
+
+      const reportData: ReportDTO = {
         longitude: Number(form.longitude),
         latitude: Number(form.latitude),
         title: form.title,
         description: form.description,
         categoryId: Number(form.categoryId),
+        user,
         photos: uploadedPhotoUrls,
       };
 
       await addReportMutation.mutateAsync(reportData);
 
-      navigate("/map");
+      setSnackbarMessage("Report created successfully!");
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+
+      setForm({
+        longitude: null,
+        latitude: null,
+        title: "",
+        description: "",
+        categoryId: "",
+      });
+
+      setPhotos([]);
+      setPreviews([]);
+      setTimeout(() => navigate("/map"), 2000);
+
+      //navigate("/map");
     } catch (err: any) {
       setError(err.message ?? "Failed to create report or upload images");
     }
   };
 
   const isSubmitting = addReportMutation.isPending || uploadImagesMutation.isPending;
+
+  const handleCloseSnackbar = (event?: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarOpen(false);
+  };
 
   return (
     <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", width: "100vw" }}>
@@ -322,6 +359,12 @@ export default function NewReportPage() {
           </Grid>
         </form>
       </Paper>
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

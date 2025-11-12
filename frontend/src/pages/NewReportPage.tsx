@@ -1,46 +1,50 @@
-// ...existing code...
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { Box, Button, TextField, Grid, Typography, Paper, Select, MenuItem } from "@mui/material";
+import { Box, Button, TextField, Grid, Typography, Paper, Select, MenuItem, IconButton, FormHelperText, CircularProgress, Snackbar, Alert } from "@mui/material";
+import CloseIcon from '@mui/icons-material/Close';
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAddReport, useUploadReportImages, useReportCategories } from "../hook/userApi.hook";
+import { ReportDTO } from "../DTOs/ReportDTO";
+import { CategoryResponseDTO } from "../DTOs/CategoryResponseDTO";
+import { useAuth } from '../contexts/AuthContext';
 
 type FormState = {
-  id: number | "";
-  longitude: number | "";
-  latitude: number | "";
+  longitude: number | null;
+  latitude: number | null;
   title: string;
   description: string;
-  userId: number | "";
   categoryId: number | "";
 };
 
-type Props = {
-  latitude: number;
-  longitude: number;
-};
-
-export default function NewReportPage(props: Props) {
-const location = useLocation();
+export default function NewReportPage() {
+  const location = useLocation();
   const navigate = useNavigate();
-  
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const { user } = useAuth();
+
+  const addReportMutation = useAddReport();
+  const uploadImagesMutation = useUploadReportImages();
+  const { data: categories, isLoading: isLoadingCategories, isError: isErrorCategories, error: categoriesError } = useReportCategories();
+
+  const initialLatitude = (location.state as any)?.latitude ? Number((location.state as any).latitude) : null;
+  const initialLongitude = (location.state as any)?.longitude ? Number((location.state as any).longitude) : null;
+
   const [form, setForm] = useState<FormState>({
-    id: "",
-    longitude: location.state?.longitude,
-    latitude: location.state?.latitude,
+    longitude: initialLongitude,
+    latitude: initialLatitude,
     title: "",
     description: "",
-    userId: "",
     categoryId: "",
-    photo: "",
   });
-  const [submitting, setSubmitting] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
   const [photos, setPhotos] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // generate previews when photos change
+  // --- STATI PER IL SNACKBAR ---
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("")
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+
   useEffect(() => {
     const urls = photos.map((f) => URL.createObjectURL(f));
     setPreviews(urls);
@@ -53,8 +57,11 @@ const location = useLocation();
     if (!files) return;
     const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
     if (arr.length === 0) return;
-    // append
-    setPhotos((p) => [...p, ...arr].slice(0, 10)); // limit to 10
+
+    setPhotos((p) => {
+      const newPhotos = [...p, ...arr];
+      return newPhotos.slice(0, 3);
+    });
   }, []);
 
   const handleDrop: React.DragEventHandler = useCallback((e) => {
@@ -76,9 +83,9 @@ const location = useLocation();
 
   const handleChange =
     (key: keyof FormState) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | { name?: string; value: unknown }>) => {
       const val = e.target.value;
-      if (key === "id" || key === "userId" || key === "categoryId") {
+      if (key === "categoryId") {
         setForm((s) => ({ ...s, [key]: val === "" ? "" : Number(val) }));
       } else if (key === "longitude" || key === "latitude") {
         setForm((s) => ({ ...s, [key]: val === "" ? "" : Number(val) }));
@@ -96,54 +103,95 @@ const location = useLocation();
       setError("Description is required");
       return false;
     }
-   
+    if (form.latitude === null || form.longitude === null) {
+      setError("Latitude and Longitude are required.");
+      return false;
+    }
+    if (photos.length === 0) {
+      setError("At least one photo is required.");
+      return false;
+    }
+    if (form.categoryId === "" || form.categoryId === null) {
+      setError("Category is required.");
+      return false;
+    }
     return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!validate()) return;
-    setSubmitting(true);
+    setSnackbarOpen(false);
 
-    const payload = {
-      id: form.id === "" ? undefined : form.id,
-      longitude: Number(form.longitude),
-      latitude: Number(form.latitude),
-      title: form.title,
-      description: form.description,
-      categoryId: form.categoryId === "" ? undefined : form.categoryId,
-      photo: form.photo === "" ? undefined : form.photo,
-    };
+    if (!validate()) return;
+
+    let uploadedPhotoUrls: string[] = [];
 
     try {
-      // todo add API call to create report
+      if (photos.length > 0) {
+        uploadedPhotoUrls = await uploadImagesMutation.mutateAsync(photos);
+      }
+      if(!user) {
+        throw new Error("User not authenticated");
+      }
 
-      // success — navigate or clear form
-      navigate("/map");
+
+      const reportData: ReportDTO = {
+        longitude: Number(form.longitude),
+        latitude: Number(form.latitude),
+        title: form.title,
+        description: form.description,
+        categoryId: Number(form.categoryId),
+        user,
+        photos: uploadedPhotoUrls,
+      };
+
+      await addReportMutation.mutateAsync(reportData);
+
+      setSnackbarMessage("Report created successfully!");
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+
+      setForm({
+        longitude: null,
+        latitude: null,
+        title: "",
+        description: "",
+        categoryId: "",
+      });
+
+      setPhotos([]);
+      setPreviews([]);
+      setTimeout(() => navigate("/map"), 2000);
+
+      //navigate("/map");
     } catch (err: any) {
-      setError(err.message ?? "Failed to create report");
-    } finally {
-      setSubmitting(false);
+      setError(err.message ?? "Failed to create report or upload images");
     }
   };
 
+  const isSubmitting = addReportMutation.isPending || uploadImagesMutation.isPending;
+
+  const handleCloseSnackbar = (event?: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarOpen(false);
+  };
+
   return (
-    // center the form horizontally and vertically and constrain width
-    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100vw" }}>
-          <Paper elevation={3} sx={{ width: "100%", maxWidth: 520, borderRadius: "12px", textAlign: "center", p: 4 }}>
+    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", width: "100vw" }}>
+      <Paper elevation={3} sx={{ width: "100%", maxWidth: 520, borderRadius: "12px", textAlign: "center", p: 4 }}>
         <Typography variant="h4" gutterBottom sx={{ fontWeight: 800, color: 'secondary.main', pb: 4 }}>
           Create a New Report
         </Typography>
-
         <form onSubmit={handleSubmit}>
-          {/* increase spacing between fields */}
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
               <TextField
                 label="Longitude"
                 type="number"
-                value={form.longitude}
+                value={form.longitude === null ? "" : form.longitude}
                 onChange={handleChange("longitude")}
                 fullWidth
                 inputProps={{ step: "any" }}
@@ -151,12 +199,11 @@ const location = useLocation();
                 disabled
               />
             </Grid>
-
             <Grid item xs={12} sm={6}>
               <TextField
                 label="Latitude"
                 type="number"
-                value={form.latitude}
+                value={form.latitude === null ? "" : form.latitude}
                 onChange={handleChange("latitude")}
                 fullWidth
                 inputProps={{ step: "any" }}
@@ -164,7 +211,6 @@ const location = useLocation();
                 disabled
               />
             </Grid>
-
             <Grid item xs={12}>
               <TextField
                 label="Title"
@@ -174,7 +220,6 @@ const location = useLocation();
                 required
               />
             </Grid>
-
             <Grid item xs={12}>
               <TextField
                 label="Description"
@@ -186,11 +231,10 @@ const location = useLocation();
                 required
               />
             </Grid>
-
-            <Grid item xs={12} sm={12}>
+            <Grid item xs={12}>
               <Select
                 displayEmpty
-                value={form.categoryId}
+                value={form.categoryId === "" ? "" : form.categoryId}
                 fullWidth
                 onChange={(e) =>
                   setForm((s) => ({
@@ -198,18 +242,39 @@ const location = useLocation();
                     categoryId: e.target.value === "" ? "" : Number(e.target.value),
                   }))
                 }
+                disabled={isLoadingCategories}
+                error={isErrorCategories || (error === "Category is required." && form.categoryId === "")}
               >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                <MenuItem value={1}>Pothole</MenuItem>
-                <MenuItem value={2}>Street Light</MenuItem>
-                <MenuItem value={3}>Graffiti</MenuItem>
-                <MenuItem value={4}>Trash</MenuItem>
+                {isLoadingCategories && (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} sx={{ mr: 1 }} /> Loading Categories...
+                  </MenuItem>
+                )}
+                {isErrorCategories && (
+                  <MenuItem disabled>Error loading categories: {categoriesError?.message}</MenuItem>
+                )}
+                {/* Soluzione: Rimuovi il Fragment e rendi condizionalmente un array di MenuItem */}
+                {!isLoadingCategories && !isErrorCategories && categories && (
+                    [
+                        <MenuItem key="select-category-placeholder" value="">
+                            <em>Select a Category</em>
+                        </MenuItem>,
+                        ...categories.map((category: CategoryResponseDTO) => (
+                            <MenuItem key={category.id} value={category.id}>
+                                {category.name}
+                            </MenuItem>
+                        ))
+                    ]
+                )}
+                {!isLoadingCategories && !isErrorCategories && (!categories || categories.length === 0) && (
+                    <MenuItem disabled>No Categories Available</MenuItem>
+                )}
               </Select>
+              {(error === "Category is required." && form.categoryId === "") && (
+                <FormHelperText error>Category is required.</FormHelperText>
+              )}
             </Grid>
-
-            {/* Photo upload: drag-and-drop or click to pick */}
+            {/* Photo upload */}
             <Grid item xs={12}>
               <input
                 ref={fileInputRef}
@@ -218,8 +283,8 @@ const location = useLocation();
                 multiple
                 style={{ display: "none" }}
                 onChange={(e) => onFiles(e.target.files)}
+                disabled={photos.length >= 3}
               />
-
               <Paper
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
@@ -229,55 +294,64 @@ const location = useLocation();
                   borderColor: "divider",
                   p: 2,
                   textAlign: "center",
-                  cursor: "pointer",
+                  cursor: photos.length < 3 ? "pointer" : "not-allowed",
+                  opacity: photos.length < 3 ? 1 : 0.6,
                 }}
-                onClick={handlePickFiles}
+                onClick={photos.length < 3 ? handlePickFiles : undefined}
               >
                 <Typography variant="body1" sx={{ mb: 1, color: 'secondary.main' }}>
-                  Drag & drop photos here, or click to select (max 3)
+                  Drag & drop photos here, or click to select (min 1, max 3)
                 </Typography>
-                <Box sx={{ display: "flex", gap: 1, overflowX: "auto", py: 1 }}>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, overflowX: "auto", py: 1, justifyContent: 'center' }}>
                   {previews.length === 0 && (
                     <Typography variant="body2" color="text.secondary">No photos selected</Typography>
                   )}
                   {previews.map((src, i) => (
-                    <Box key={src} sx={{ position: "relative" }}>
-                      <img src={src} alt={`preview-${i}`} style={{ width: 120, height: 80, objectFit: "cover", borderRadius: 6 }} />
-                      <Button
+                    <Box key={src} sx={{ position: "relative", width: 120, height: 80 }}>
+                      <img src={src} alt={`preview-${i}`} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }} />
+                      <IconButton
                         size="small"
-                        color="inherit"
+                        sx={{ position: "absolute", top: 0, right: 0, backgroundColor: 'rgba(255,255,255,0.7)', '&:hover': { backgroundColor: 'rgba(255,255,255,0.9)' } }}
                         onClick={(ev) => { ev.stopPropagation(); handleRemovePhoto(i); }}
-                        sx={{ position: "absolute", top: 4, right: 4, minWidth: 0, p: 0.5 }}
                       >
-                        ✕
-                      </Button>
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
                     </Box>
                   ))}
                 </Box>
               </Paper>
+              {error === "At least one photo is required." && (
+                <FormHelperText error sx={{ textAlign: 'center' }}>
+                  {error}
+                </FormHelperText>
+              )}
             </Grid>
-
-
-            {error && (
+            {error && error !== "At least one photo is required." && error !== "Category is required." && (
               <Grid item xs={12}>
                 <Typography color="error">{error}</Typography>
               </Grid>
             )}
-
+            {(addReportMutation.isError || uploadImagesMutation.isError || isErrorCategories) && (
+              <Grid item xs={12}>
+                <Typography color="error">
+                  Error: {addReportMutation.error?.message || uploadImagesMutation.error?.message || categoriesError?.message || "Unknown error"}
+                </Typography>
+              </Grid>
+            )}
             <Grid item xs={12} sx={{ display: "flex", gap: 2, justifyContent: "flex-start" }}>
               <Button
                 type="submit"
                 variant="contained"
                 className="partecipation-button"
-                disabled={submitting}
+                disabled={isSubmitting || isLoadingCategories}
               >
-                {submitting ? "Creating..." : "Create Report"}
+                {isSubmitting ? "Creating..." : "Create Report"}
               </Button>
               <Button
                 variant="outlined"
                 className="partecipation-button"
                 onClick={() => navigate(-1)}
-                disabled={submitting}
+                disabled={isSubmitting || isLoadingCategories}
               >
                 Cancel
               </Button>
@@ -285,7 +359,12 @@ const location = useLocation();
           </Grid>
         </form>
       </Paper>
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
-// ...existing code...

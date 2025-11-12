@@ -38,22 +38,8 @@ const LoginPage: React.FC = () => {
 
     setLoading(true);
     try {
-    const user = await login({ username, password }) as UserDTO | MunicipalityOfficerDTO | null;
-
-    // prefer role from the returned user object, role from context might not be updated yet
-    const userRole = (user && (user as any).role) ? (user as any).role.title : 'USER';
-
-    switch (userRole) {
-      case "ADMIN":
-        navigate("/admin/home");
-        break;
-      case "USER":
-        navigate("/map");
-        break;
-      // additional roles can be handled here
-      default:
-        navigate("/map");
-    }
+        const user = await login({ username, password }) as UserDTO | MunicipalityOfficerDTO | null;
+        navigate("/");
     } catch (err) {
       console.error(err);
       setError("An error occured during login. Try again.");

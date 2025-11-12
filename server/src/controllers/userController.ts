@@ -5,18 +5,37 @@ import { CreateUserRequestDTO } from "../models/DTOs/CreateUserRequestDTO";
 import { LoginRequestDTO } from "../models/DTOs/LoginRequestDTO";
 import { ReportRepository } from "../repositories/ReportRepository";
 import { UserRepository } from "../repositories/UserRepository";
-import { mapReportDAOToDTO as mapReportDAOToResponse, mapCreateReportRequestToDAO, mapUserDAOToDTO as mapUserDAOToResponse } from "../services/mapperService";
+import { CategoryRepository } from "../repositories/CategoryRepository";
+import { CategoryResponseDTO } from "../models/DTOs/CategoryResponseDTO";
+import { mapReportDAOToDTO as mapReportDAOToResponse, mapCreateReportRequestToDAO, mapUserDAOToDTO as mapUserDAOToResponse, mapCategoryDAOToDTO } from "../services/mapperService";
 import { hashPassword, verifyPassword } from "../services/passwordService";
 import { User } from "../models/User";
+import { map } from "zod";
+import { ReportPhoto } from "../models/ReportPhoto";
 
 const userRepository: UserRepository = new UserRepository();
 const reportRepository: ReportRepository = new ReportRepository();
+const categoryRepository: CategoryRepository = new CategoryRepository();
 
 function appErr(code: string, status = 400) { const e: any = new Error(code); e.status = status; return e; }
 
 export async function addReport(reportData: CreateReportRequestDTO): Promise<ReportResponseDTO> {
+    // In un sistema autenticato, l'ID dell'utente dovrebbe venire dal token/sessione.
+    // Per ora, assumiamo che reportData.userId sia valido.
     const reportDAO = mapCreateReportRequestToDAO(reportData);
-    const addedReport = await reportRepository.add(reportDAO);
+    const addedReport = await reportRepository.add(reportDAO); // Salva il report base
+    // Ora, aggiungiamo le foto al report aggiunto
+    if (reportData.photos && reportData.photos.length > 0) {
+        const photoDAOs = reportData.photos.map(photoUrl => {
+            const reportPhoto = new ReportPhoto();
+            reportPhoto.photo = photoUrl; // photoUrl ora è un percorso locale (es. /uploads/nomefile.jpg)
+            reportPhoto.report = addedReport;
+            return reportPhoto;
+        });
+        await reportRepository.addPhotosToReport(addedReport, photoDAOs);
+        // Per assicurarsi che l'oggetto addedReport restituito contenga le foto
+        addedReport.photos = photoDAOs;
+    }
     return mapReportDAOToResponse(addedReport);
 }
 
@@ -60,4 +79,9 @@ export async function getUserByUsername(username: string): Promise<UserResponseD
     const user = await userRepository.findByUsername(username);
     if (!user) throw appErr("USER_NOT_FOUND", 404);
     return mapUserDAOToResponse(user);
+}
+
+export async function getAllCategories(): Promise<CategoryResponseDTO[]> {
+    const categories = await categoryRepository.findAll();
+    return categories.map(mapCategoryDAOToDTO);
 }

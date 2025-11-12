@@ -10,10 +10,14 @@ import { Category } from "../models/Category";
 export class ReportRepository {
     protected ormRepository: Repository<Report>;
     protected photoRepository: Repository<ReportPhoto>;
+    protected userRepository: Repository<User>;
+    protected categoryRepository: Repository<Category>;
 
     constructor(dataSource: DataSource) {
         this.ormRepository = dataSource.getRepository(Report);
         this.photoRepository = dataSource.getRepository(ReportPhoto);
+        this.userRepository = dataSource.getRepository(User);
+        this.categoryRepository = dataSource.getRepository(Category);
     }
 
     async findAll(): Promise<Report[]> {
@@ -35,11 +39,13 @@ export class ReportRepository {
         newReport.description = report.description;
 
         if (report.user && report.user.id) {
-            newReport.user = await AppDataSource.getRepository(User).findOneBy({ id: report.user.id }) as User;
+            //newReport.user = await userRepository.findOneBy({ id: report.user.id }) as User;
+            newReport.user = await this.userRepository.findOneBy({ id: report.user.id }) as User;
             if (!newReport.user) throw new Error("User not found for report creation.");
         }
         if (report.category && report.category.id) {
-            newReport.category = await AppDataSource.getRepository(Category).findOneBy({ id: report.category.id }) as Category;
+            //newReport.category = await Repository(Category).findOneBy({ id: report.category.id }) as Category;
+            newReport.category = await this.categoryRepository.findOneBy({ id: report.category.id }) as Category;
             if (!newReport.category) throw new Error("Category not found for report creation.");
         }
 

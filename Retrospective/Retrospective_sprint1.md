@@ -1,4 +1,4 @@
-TEMPLATE FOR RETROSPECTIVE (Team ##)
+TEMPLATE FOR RETROSPECTIVE (Team 06)
 =====================================
 
 The retrospective should include _at least_ the following
@@ -16,7 +16,7 @@ sections:
 - Total points committed vs. done 
 - Nr of hours planned vs. spent (as a team)
 
-**Remember**a story is done ONLY if it fits the Definition of Done:
+**Remember** a story is done ONLY if it fits the Definition of Done:
  
 - Unit Tests passing
 - Code review completed
@@ -58,12 +58,12 @@ sections:
 - Unit Testing:
   - Total hours estimated = 4.5
   - Total hours spent = 2
-  - Nr of automated unit test cases = ?
+  - Nr of automated unit test cases = 0 
   - Coverage = ?
 - E2E testing:
   - Total hours estimated = 2
   - Total hours spent = 2
-  - Nr of test cases = ?
+  - Nr of test cases = 87
 - Code review 
   - Total hours estimated = 5
   - Total hours spent = 7.16
@@ -73,7 +73,8 @@ sections:
 ## ASSESSMENT
 
 - What did go wrong in the sprint? 
-  + We realised during the sprints that we didn't think about the cookies, so we had to add tasks during the spring.
+  + We realised that we need two more tasks during the sprints.
+  + We encounter some problems so at the end we don't have time to unit test
 
 - What caused your errors in estimation (if any)?
   + Globally the estimation was good, but some code review were much longer than expected due to bug hard to solve. On the other hand, some code reviews were really short
@@ -81,17 +82,19 @@ sections:
 - What lessons did you learn (both positive and negative) in this sprint?
   + How important code reviews are
   + To make meeting regularly
+  + Gives more importance to unit tests
 
 - Which improvement goals set in the previous retrospective were you able to achieve? 
   + We splitted better the tasks
   + We had a design meeting at the beginning to decide as a team of the design
   
 - Which ones you were not able to achieve? Why?
+  + Once again we underestimated time 
 
 - Improvement goals for the next sprint and how to achieve them (technical tasks, team coordination, etc.)
 
   > Propose one or two
   + Be better with testing, allocate more time to it and spend more time on it too
-
+  + Share the tasks when they are complicated
 - One thing you are proud of as a Team!!
   + The team works well together, everyone is reliable !

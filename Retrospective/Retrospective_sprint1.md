@@ -74,7 +74,7 @@ sections:
 
 - What did go wrong in the sprint? 
   + We realised that we need two more tasks during the sprints.
-  + We encounter some problems so at the end we don't have time to unit test
+  + We encounter some problems so at the end we didn't have time to unit test
 
 - What caused your errors in estimation (if any)?
   + Globally the estimation was good, but some code review were much longer than expected due to bug hard to solve. On the other hand, some code reviews were really short
@@ -82,7 +82,7 @@ sections:
 - What lessons did you learn (both positive and negative) in this sprint?
   + How important code reviews are
   + To make meeting regularly
-  + Gives more importance to unit tests
+  + Give more importance to unit tests
 
 - Which improvement goals set in the previous retrospective were you able to achieve? 
   + We splitted better the tasks

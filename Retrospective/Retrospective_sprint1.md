@@ -12,9 +12,9 @@ sections:
 
 ### Macro statistics
 
-- Number of stories committed vs. done 
-- Total points committed vs. done 
-- Nr of hours planned vs. spent (as a team)
+- Number of stories committed vs. done 5/0
+- Total points committed vs. done 24/0
+- Nr of hours planned vs. spent (as a team) 96h/99h 30min
 
 **Remember** a story is done ONLY if it fits the Definition of Done:
  
@@ -64,6 +64,7 @@ sections:
   - Total hours estimated = 2
   - Total hours spent = 2
   - Nr of test cases = 87
+  - Coverage = 88
 - Code review 
   - Total hours estimated = 5
   - Total hours spent = 7.16

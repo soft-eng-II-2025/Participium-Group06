@@ -17,7 +17,7 @@ export class AdminApi {
     }
 
     async setRole(params: AssignRoleRequestDTO) {
-        return axios.put<AssignRoleRequestDTO>(`${ACCOUNTS_BASE}/assign`, params);
+        return axios.put<MunicipalityOfficerResponseDTO>(`${ACCOUNTS_BASE}/assign`, params);
     }
 
     async getRoles() {

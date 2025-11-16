@@ -5,7 +5,6 @@ import {MunicipalityOfficerResponseDTO} from "../DTOs/MunicipalityOfficerRespons
 import {CreateUserRequestDTO} from "../DTOs/CreateUserRequestDTO";
 
 
-
 export class AuthApi {
 
 
@@ -13,17 +12,16 @@ export class AuthApi {
         return api.post<UserResponseDTO>(`/register`, params);
     }
 
+    async login(params: LoginDTO) {
+        return api.post<UserResponseDTO | MunicipalityOfficerResponseDTO>(`/login`, params);
+    }
 
-async login(params: LoginDTO) {
-    return api.post<UserResponseDTO | MunicipalityOfficerResponseDTO>(`/login`, params);
-}
+    async logout() {
+        return api.post(`/logout`);
+    }
 
-async logout() {
-    return api.post(`/logout`);
-}
-
-async getSession(): Promise<UserResponseDTO | MunicipalityOfficerResponseDTO | null> {
-    const res = await api.get<UserResponseDTO | MunicipalityOfficerResponseDTO | null>(`/session`);
-    return res.data;
-}
+    async getSession(): Promise<UserResponseDTO | MunicipalityOfficerResponseDTO | null> {
+        const res = await api.get<UserResponseDTO | MunicipalityOfficerResponseDTO | null>(`/session`);
+        return res.data;
+    }
 }

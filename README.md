@@ -4,7 +4,7 @@
 Francesco Servente s328852 \
 Alessandro Aldo Raoul Bonciani s345411 \
 Adrien Lacroix s350731 \
-Erastina Vreto s345027 \
+Erestina Vreto s345027 \
 Flavia Calabrese s334080 \
 Livio Galanti s340475 
 

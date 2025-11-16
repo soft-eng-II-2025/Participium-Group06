@@ -38,7 +38,7 @@ const LoginPage: React.FC = () => {
 
     setLoading(true);
     try {
-        const user = await login({ username, password }) as UserDTO | MunicipalityOfficerDTO | null;
+        const user = await login({ username, password }) as UserResponseDTO | MunicipalityOfficerResponseDTO | null;
         navigate("/");
     } catch (err) {
       console.error(err);

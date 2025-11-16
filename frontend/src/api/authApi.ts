@@ -1,26 +1,27 @@
-import {UserDTO} from "../DTOs/UserDTO";
-import {LoginDTO} from "../DTOs/LoginDTO";
-import {MunicipalityOfficerDTO} from "../DTOs/MunicipalityOfficerDTO";
 import api from "./api";
-
+import {UserResponseDTO} from "../DTOs/UserResponseDTO";
+import {LoginDTO} from "../DTOs/LoginDTO";
+import {MunicipalityOfficerResponseDTO} from "../DTOs/MunicipalityOfficerResponseDTO";
+import {CreateUserRequestDTO} from "../DTOs/CreateUserRequestDTO";
 
 
 export class AuthApi {
 
-    async registerUser(params: UserDTO) {
-        return api.post<UserDTO>(`/register`, params);
+
+    async registerUser(params: CreateUserRequestDTO) {
+        return api.post<UserResponseDTO>(`/register`, params);
     }
 
     async login(params: LoginDTO) {
-        return api.post<UserDTO | MunicipalityOfficerDTO>(`/login`, params);
+        return api.post<UserResponseDTO | MunicipalityOfficerResponseDTO>(`/login`, params);
     }
 
     async logout() {
         return api.post(`/logout`);
     }
 
-    async getSession(): Promise<UserDTO | MunicipalityOfficerDTO | null> {
-        const res = await api.get<UserDTO | MunicipalityOfficerDTO | null>(`/session`);
+    async getSession(): Promise<UserResponseDTO | MunicipalityOfficerResponseDTO | null> {
+        const res = await api.get<UserResponseDTO | MunicipalityOfficerResponseDTO | null>(`/session`);
         return res.data;
     }
 }

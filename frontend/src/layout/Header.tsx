@@ -6,7 +6,6 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
-// @ts-ignore
 import logo from "../assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";

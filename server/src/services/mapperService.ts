@@ -34,15 +34,13 @@ export function createCategoryDTO(name?: string, reports?: ReportResponseDTO[]):
 export function createMunicipalityOfficerDTO(
     username?: string,
     email?: string,
-    password?: string | null,
     first_name?: string,
     last_name?: string,
-    role?: RoleResponseDTO
+    role?: string | null
 ): MunicipalityOfficerResponseDTO {
-    return removeNullAttributes({
+    return ({
         username,
         email,
-        password,
         first_name,
         last_name,
         role,
@@ -112,10 +110,9 @@ export function mapMunicipalityOfficerDAOToDTO(officerDAO: MunicipalityOfficer):
     return createMunicipalityOfficerDTO(
         officerDAO.username,
         officerDAO.email,
-        null,
         officerDAO.first_name,
         officerDAO.last_name,
-        officerDAO.role ? mapRoleDAOToDTO(officerDAO.role) : undefined
+        officerDAO.role?.title || null
     );
 }
 

@@ -75,8 +75,8 @@ export async function createUser(userData: CreateUserRequestDTO): Promise<UserRe
 }
 
 export async function loginUser(loginData: LoginRequestDTO) {
-    const username = loginData.username?.trim().toLowerCase();
-    const password = loginData.password ?? "";
+    const username = loginData.username;
+    const password = loginData.password;
 
     if (!username || !password) throw appErr("MISSING_CREDENTIALS", 400);
 

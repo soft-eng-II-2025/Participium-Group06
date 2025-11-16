@@ -12,6 +12,7 @@ import { requireAuth } from '../middlewares/authMiddleware';
 
 export const router = Router();
 
+
 // --- CONFIGURAZIONE MULTER PER UPLOAD IN LOCALE ---
 // Crea la cartella 'uploads' se non esiste
 import fs from 'fs';
@@ -71,10 +72,10 @@ router.post('/reports/images/upload', upload.array('images', 3), async (req: Req
         // Quando si usa diskStorage, i file vengono già salvati sul disco.
         // req.files contiene ora un array di Multer.File con il path locale.
         const files = req.files as Express.Multer.File[];
-        
+
         // Passiamo i percorsi relativi o i nomi dei file al controller per salvarli nel DB.
         const imageUrls = files.map(file => `/uploads/${path.basename(file.path!)}`); // Esempio: /uploads/1678888888888-image.jpg
-        
+
         // Non è necessario chiamare userController.uploadReportImages qui in questo scenario.
         // La logica di salvare gli URL nel DB avverrà in userController.addReport.
         // Questo endpoint risponde semplicemente con gli URL che il frontend userà.

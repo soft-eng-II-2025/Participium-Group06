@@ -1,19 +1,20 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AuthApi } from '../api/authApi';
-import type { UserDTO } from '../DTOs/UserDTO';
 import type { LoginDTO } from '../DTOs/LoginDTO';
-import { MunicipalityOfficerDTO } from '../DTOs/MunicipalityOfficerDTO';
+import { MunicipalityOfficerResponseDTO } from '../DTOs/MunicipalityOfficerResponseDTO';
+import {UserResponseDTO} from "../DTOs/UserResponseDTO";
+import {CreateUserRequestDTO} from "../DTOs/CreateUserRequestDTO";
 
 type AuthContextType = {
-  user: UserDTO | null;
+  user: UserResponseDTO | null;
   loading: boolean;            // true while initial session fetch is pending
   isAuthenticated: boolean;
   role: string | null;
-  login: (creds: LoginDTO) => Promise<UserDTO | null>;
-  register: (payload: UserDTO) => Promise<UserDTO | null>;
+  login: (creds: LoginDTO) => Promise<UserResponseDTO | null>;
+  register: (payload: CreateUserRequestDTO) => Promise<UserResponseDTO | null>;
   logout: () => Promise<void>;
-  setUser: (u: UserDTO | null) => void;
+  setUser: (u: UserResponseDTO | null) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const authApi = new AuthApi();
 
   // 1) initial session load — AuthProvider owns the query
-  const { data: user, isLoading } = useQuery<UserDTO | null>({
+  const { data: user, isLoading } = useQuery<UserResponseDTO | null>({
     queryKey: ['session'],
     queryFn: () => authApi.getSession(),
     retry: false,
@@ -34,13 +35,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: (creds: LoginDTO) => authApi.login(creds),
     onSuccess: (res) => {
-      const u = (res as any)?.data as UserDTO | MunicipalityOfficerDTO ?? res;
+      const u = (res as any)?.data as UserResponseDTO | MunicipalityOfficerResponseDTO ?? res;
       qc.setQueryData(['session'], u ?? null);
     },
   });
 
   const registerMutation = useMutation({
-    mutationFn: (payload: UserDTO) => authApi.registerUser(payload),
+    mutationFn: (payload: CreateUserRequestDTO) => authApi.registerUser(payload),
     onSuccess: (res) => {
       const u = (res as any)?.data ?? res;
       qc.setQueryData(['session'], u ?? null);
@@ -55,12 +56,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
 
   // plain functions for components to call (these don't call hooks)
-  const login = async (creds: LoginDTO) : Promise<UserDTO | MunicipalityOfficerDTO | null> => {
+  const login = async (creds: LoginDTO) : Promise<UserResponseDTO | MunicipalityOfficerResponseDTO | null> => {
     const res = await loginMutation.mutateAsync(creds);
     return (res as any)?.data ?? res ?? null;
   };
 
-  const register = async (payload: UserDTO) => {
+  const register = async (payload: CreateUserRequestDTO) => {
     const res = await registerMutation.mutateAsync(payload);
     return (res as any)?.data ?? res ?? null;
   };
@@ -70,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // session is already cleared in onSuccess; optionally also clear other caches
   };
 
-  const setUser = (u: UserDTO | MunicipalityOfficerDTO | null) => {
+  const setUser = (u: UserResponseDTO | MunicipalityOfficerResponseDTO | null) => {
     qc.setQueryData(['session'], u);
   };
 
@@ -78,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user: user ?? null,
     loading: isLoading,
     isAuthenticated: !!user,
-    role: user ? ((user as MunicipalityOfficerDTO)?.role?.title ?? 'USER') : null,
+    role: user ? ((user as MunicipalityOfficerResponseDTO)?.role ?? 'USER') : null,
     login,
     register,
     logout,

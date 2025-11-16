@@ -15,6 +15,8 @@ export const router = Router();
 // --- CONFIGURAZIONE MULTER PER UPLOAD IN LOCALE ---
 // Crea la cartella 'uploads' se non esiste
 import fs from 'fs';
+import { StatusType } from '../models/StatusType';
+import { MunicipalityOfficerResponseDTO } from '../models/DTOs/MunicipalityOfficerResponseDTO';
 const uploadDir = path.join(__dirname, '../uploads'); // Cartella dove salvare le immagini
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -44,6 +46,7 @@ async function adaptCreateReportBody(body: any): Promise<CreateReportRequestDTO>
         description: String(body.description),
         userId: Number(userId),
         categoryId: Number(categoryId),
+        officer: body.officer,
         photos: Array.isArray(body.photos) ? body.photos.map(String) : [],
     };
 }
@@ -52,11 +55,23 @@ async function adaptCreateReportBody(body: any): Promise<CreateReportRequestDTO>
 router.post('/reports', async (req: Request, res: Response) => {
 
     const requestBodyWithUserId = { ...req.body };
+    console.log('Body:', req.body);
+
 
     const adapted = await adaptCreateReportBody(requestBodyWithUserId);
+    console.log('Adapted Body:', adapted);
+    adapted.officer = {
+    username: 'temp',
+    email: 'temp@x.com',
+    first_name: 'Temp',
+    last_name: 'User'
+    } as MunicipalityOfficerResponseDTO;
+
     req.body = adapted;
+    console.log('adapted with officer:', req.body);
     return validateDto(CreateReportRequestDTO)(req, res, async () => {
         const newReport = await userController.addReport(req.body);
+        console.log('New Report:', newReport);
         res.status(201).json(newReport);
     });
 });

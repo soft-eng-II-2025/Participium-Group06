@@ -1,0 +1,139 @@
+import { MigrationInterface, QueryRunner } from "typeorm";
+
+export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
+  name = 'InitSchemaAndSeedData1710000000000';
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        // 1. Create StatusType enum
+        await queryRunner.query(`
+            CREATE TYPE "status_type_enum" AS ENUM(
+                'Pending Approval',
+                'Assigned',
+                'In Progress',
+                'Suspended',
+                'Rejected',
+                'Resolved'
+            )
+        `);
+
+        // 2. Create tables in order of dependencies
+        await queryRunner.query(`
+            CREATE TABLE "role" (
+                "id" SERIAL PRIMARY KEY,
+                "title" VARCHAR NOT NULL UNIQUE
+            )
+        `);
+
+        await queryRunner.query(`
+            CREATE TABLE "municipality_officer" (
+                "id" SERIAL PRIMARY KEY,
+                "username" VARCHAR NOT NULL UNIQUE,
+                "email" VARCHAR NOT NULL UNIQUE,
+                "password" VARCHAR NOT NULL,
+                "first_name" VARCHAR NOT NULL,
+                "last_name" VARCHAR NOT NULL,
+                "role" INT,
+                CONSTRAINT "FK_municipality_officer_role" FOREIGN KEY ("role") REFERENCES "role"("id")
+            )
+        `);
+
+        await queryRunner.query(`
+            CREATE TABLE "user" (
+                "id" SERIAL PRIMARY KEY,
+                "username" VARCHAR NOT NULL UNIQUE,
+                "email" VARCHAR NOT NULL UNIQUE,
+                "password" VARCHAR NOT NULL,
+                "first_name" VARCHAR NOT NULL,
+                "last_name" VARCHAR NOT NULL,
+                "photo" VARCHAR NOT NULL,
+                "telegram_id" VARCHAR NOT NULL,
+                "flag_email" BOOLEAN NOT NULL
+            )
+        `);
+
+        await queryRunner.query(`
+            CREATE TABLE "category" (
+                "id" SERIAL PRIMARY KEY,
+                "name" VARCHAR NOT NULL UNIQUE
+            )
+        `);
+
+        await queryRunner.query(`
+            CREATE TABLE "report" (
+                "id" SERIAL PRIMARY KEY,
+                "longitude" REAL NOT NULL,
+                "latitude" REAL NOT NULL,
+                "title" VARCHAR NOT NULL,
+                "description" VARCHAR NOT NULL,
+                "status" "status_type_enum" NOT NULL,
+                "explanation" VARCHAR NOT NULL,
+                "officerId" INT,
+                "userId" INT,
+                "categoryId" INT,
+                CONSTRAINT "FK_report_officer" FOREIGN KEY ("officerId") REFERENCES "municipality_officer"("id"),
+                CONSTRAINT "FK_report_user" FOREIGN KEY ("userId") REFERENCES "user"("id"),
+                CONSTRAINT "FK_report_category" FOREIGN KEY ("categoryId") REFERENCES "category"("id")
+            )
+        `);
+
+        await queryRunner.query(`
+            CREATE TABLE "report_photo" (
+                "id" SERIAL PRIMARY KEY,
+                "photo" VARCHAR NOT NULL,
+                "reportId" INT,
+                CONSTRAINT "FK_report_photo_report" FOREIGN KEY ("reportId") REFERENCES "report"("id") ON DELETE CASCADE
+            )
+        `);
+
+        // 3. Seed initial roles
+        await queryRunner.query(`
+            INSERT INTO "role" ("id", "title") VALUES
+            (1,'ADMIN'),
+            (2,'ORGANIZATION_OFFICER'),
+            (3,'TECH_LEAD_INFRASTRUCTURE'),
+            (4,'TECH_AGENT_INFRASTRUCTURE'),
+            (5,'TECH_LEAD_GREEN_AREAS'),
+            (6,'TECH_AGENT_GREEN_AREAS'),
+            (7,'TECH_LEAD_ENVIRONMENTAL_QUALITY'),
+            (8,'TECH_AGENT_ENVIRONMENTAL_QUALITY'),
+            (9,'TECH_LEAD_URBAN_PLANNING'),
+            (10,'TECH_AGENT_URBAN_PLANNING'),
+            (11,'TECH_LEAD_PRIVATE_BUILDINGS'),
+            (12,'TECH_AGENT_PRIVATE_BUILDINGS'),
+            (13,'TECH_LEAD_PUBLIC_BUILDINGS'),
+            (14,'TECH_AGENT_PUBLIC_BUILDINGS'),
+            (15,'TECH_LEAD_ENERGY_LIGHTING'),
+            (16,'TECH_AGENT_ENERGY_LIGHTING'),
+            (17,'TECH_LEAD_MOBILITY_TRANSPORT'),
+            (18,'TECH_AGENT_MOBILITY_TRANSPORT'),
+            (19,'TECH_LEAD_WASTE_MANAGEMENT'),
+            (20,'TECH_AGENT_WASTE_MANAGEMENT')
+            ON CONFLICT ("id") DO NOTHING
+        `);
+
+        // 4. Seed initial categories
+        await queryRunner.query(`
+            INSERT INTO "category" ("id", "name") VALUES
+            (1,'Water Supply – Drinking Water'),
+            (2,'Architectural Barriers'),
+            (3,'Sewer System'),
+            (4,'Public Lighting'),
+            (5,'Waste'),
+            (6,'Road Signs and Traffic Lights'),
+            (7,'Roads and Urban Furnishings'),
+            (8,'Public Green Areas and Playgrounds'),
+            (9,'Other')
+            ON CONFLICT ("id") DO NOTHING
+        `);
+    }
+
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`DROP TABLE "report_photo"`);
+        await queryRunner.query(`DROP TABLE "report"`);
+        await queryRunner.query(`DROP TABLE "category"`);
+        await queryRunner.query(`DROP TABLE "user"`);
+        await queryRunner.query(`DROP TABLE "municipality_officer"`);
+        await queryRunner.query(`DROP TABLE "role"`);
+        await queryRunner.query(`DROP TYPE "status_type_enum"`);
+    }
+}

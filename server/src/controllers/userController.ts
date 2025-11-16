@@ -15,6 +15,9 @@ import { User } from "../models/User";
 import { map } from "zod";
 import { ReportPhoto } from "../models/ReportPhoto";
 import { DataSource } from "typeorm";
+import { off } from "process";
+import { MunicipalityOfficerRepository } from "../repositories/MunicipalityOfficerRepository";
+import { StatusType } from "../models/StatusType";
 
 /*const userRepository: UserRepository = new UserRepository(AppDataSource);
 const reportRepository: ReportRepository = new ReportRepository(AppDataSource);
@@ -23,11 +26,13 @@ const categoryRepository: CategoryRepository = new CategoryRepository(AppDataSou
 let userRepository: UserRepository;
 let reportRepository: ReportRepository;
 let categoryRepository: CategoryRepository;
+let municipalityOfficerRepository: MunicipalityOfficerRepository;
 
 export function initializeUserRepositories(dataSource: DataSource) {
   userRepository = new UserRepository(dataSource);
   reportRepository = new ReportRepository(dataSource);
   categoryRepository = new CategoryRepository(dataSource);
+  municipalityOfficerRepository = new MunicipalityOfficerRepository(dataSource);
 }
 
 function appErr(code: string, status = 400) { const e: any = new Error(code); e.status = status; return e; }
@@ -36,6 +41,11 @@ export async function addReport(reportData: CreateReportRequestDTO): Promise<Rep
     // In un sistema autenticato, l'ID dell'utente dovrebbe venire dal token/sessione.
     // Per ora, assumiamo che reportData.userId sia valido.
     const reportDAO = mapCreateReportRequestToDAO(reportData);
+    reportDAO.status = StatusType.PendingApproval;
+
+    // Here we need an additional step to decide the officer and set it
+    // reportDAO.officer = await reportRepository.assignOfficerToReport(addedReport);
+    reportDAO.officer = await municipalityOfficerRepository.findAll().then(officers => officers[0]); // Temporary: assign first officer
     const addedReport = await reportRepository.add(reportDAO);
     // Ora, aggiungiamo le foto al report aggiunto
     if (reportData.photos && reportData.photos.length > 0) {
@@ -69,6 +79,9 @@ export async function createUser(userData: CreateUserRequestDTO): Promise<UserRe
     userDao.password = hashed;
     userDao.first_name = userData.first_name;
     userDao.last_name = userData.last_name;
+    userDao.photo = "";
+    userDao.telegram_id = "";
+    userDao.flag_email = false;
 
     const addedUserDao = await userRepository.add(userDao);
     return mapUserDAOToResponse(addedUserDao); // password nulla in output

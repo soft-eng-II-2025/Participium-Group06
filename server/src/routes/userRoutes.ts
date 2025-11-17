@@ -65,12 +65,14 @@ router.post('/reports', async (req: Request, res: Response) => {
     username: 'temp',
     email: 'temp@x.com',
     first_name: 'Temp',
-    last_name: 'User'
+    last_name: 'User',
+    role: 'TempRole'
     } as MunicipalityOfficerResponseDTO;
 
     req.body = adapted;
     console.log('adapted with officer:', req.body);
     return validateDto(CreateReportRequestDTO)(req, res, async () => {
+        console.log('Validated Body:', req.body);
         const newReport = await userController.addReport(req.body);
         console.log('New Report:', newReport);
         res.status(201).json(newReport);

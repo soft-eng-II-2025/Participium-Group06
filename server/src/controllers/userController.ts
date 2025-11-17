@@ -38,6 +38,7 @@ export function initializeUserRepositories(dataSource: DataSource) {
 function appErr(code: string, status = 400) { const e: any = new Error(code); e.status = status; return e; }
 
 export async function addReport(reportData: CreateReportRequestDTO): Promise<ReportResponseDTO> {
+    console.log('Adding report with data:', reportData);
     // In un sistema autenticato, l'ID dell'utente dovrebbe venire dal token/sessione.
     // Per ora, assumiamo che reportData.userId sia valido.
     const reportDAO = mapCreateReportRequestToDAO(reportData);

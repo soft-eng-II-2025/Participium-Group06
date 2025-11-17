@@ -24,9 +24,11 @@ export class CreateReportRequestDTO {
     @IsNumber()
     userId!: number;
 
-    @IsNumber() categoryId!: number;
+    @IsNumber() 
+    categoryId!: number;
+
+
     @IsOptional()
-    @ValidateNested()
     @Type(() => MunicipalityOfficerResponseDTO)
     officer?: MunicipalityOfficerResponseDTO;
 

@@ -12,8 +12,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import "./LoginPage.css";
 import { useAuth } from "../contexts/AuthContext";
-import { MunicipalityOfficerDTO } from "../DTOs/MunicipalityOfficerDTO";
-import { UserDTO } from "../DTOs/UserDTO";
+import { MunicipalityOfficerResponseDTO } from "../DTOs/MunicipalityOfficerResponseDTO";
+import { UserResponseDTO } from "../DTOs/UserResponseDTO";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -38,7 +38,7 @@ const LoginPage: React.FC = () => {
 
     setLoading(true);
     try {
-        const user = await login({ username, password }) as UserDTO | MunicipalityOfficerDTO | null;
+        const user = await login({ username, password }) as UserResponseDTO | MunicipalityOfficerResponseDTO | null;
         navigate("/");
     } catch (err) {
       console.error(err);

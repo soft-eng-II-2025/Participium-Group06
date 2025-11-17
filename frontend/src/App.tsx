@@ -32,6 +32,7 @@ function App() {
         if (!isAuthenticated) return <HomePage />;
         if (role === 'ADMIN') return <AdminHomePage />;
         if (role === 'USER') return <Map />;
+        else return <HomePage />;
     };
     return (
         <QueryClientProvider client={queryClient}>

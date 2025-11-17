@@ -1,8 +1,9 @@
 // src/api/userApi.ts
 
 import api from "./api";
-import { ReportDTO, CreateReportRequestDTO } from "../DTOs/ReportDTO"; // Importa anche CreateReportRequestDTO
 import { CategoryResponseDTO } from "../DTOs/CategoryResponseDTO";
+import {CreateReportRequestDTO} from "../DTOs/CreateReportRequestDTO";
+import {ReportDTO} from "../DTOs/ReportDTO";
 
 const BASE_URL = "users"; // Base URL per le tue API
 
@@ -17,7 +18,7 @@ export class UserApi {
         images.forEach((file) => {
             formData.append("images", file); // 'images' deve corrispondere al campo in multer.array('images', ...)
         });
-        
+
         // L'URL punta all'endpoint locale che gestisce l'upload
         // Assumendo che la tua API sia montata su /api
         const response = await api.post<{ urls: string[] }>(`${BASE_URL}/reports/images/upload`, formData, {

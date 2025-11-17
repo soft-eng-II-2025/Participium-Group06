@@ -4,7 +4,7 @@
 Francesco Servente s328852 \
 Alessandro Aldo Raoul Bonciani s345411 \
 Adrien Lacroix s350731 \
-Erastina Vreto s345027 \
+Erestina Vreto s345027 \
 Flavia Calabrese s334080 \
 Livio Galanti s340475 
 
@@ -126,23 +126,23 @@ The frontend will run on http://localhost:8080
 
 **User API**
 ```ts
-import {UserDTO} from "./UserDTO";
+import {UserResponseDTO} from "./UserResponseDTO";
 import {LoginDTO} from "./LoginDTO";
 
-function registerUser(user: UserDTO);    // POST /api/register  registers a new user account into the system
+function registerUser(user: UserResponseDTO);    // POST /api/register  registers a new user account into the system
 function login(credentials: LoginDTO);   // POST /api/login                       
-function addReport(report: ReportDTO);   // POST /api/users/reports
+function addReport(report: ReportResponseDTO);   // POST /api/users/reports
 ```
 
 **Admin API**
 
 ```ts
-import {MunicipalityOfficerDTO} from "./MunicipalityOfficerDTO";
+import {MunicipalityOfficerResponseDTO} from "./MunicipalityOfficerResponseDTO";
 
-function registerMunicipalityOfficer(body: MunicipalityOfficerDTO);  // POST /api/admin/accounts/register  registers a new municipality officer account into the system
-function getAllMunicipalityUsers(): Promise<MunicipalityOfficerDTO[]>;                       // GET /api/admin/accounts/list       retrieves all municipality users in the system
-function setRole(body: MunicipalityOfficerDTO);                      // PUT /api/admin/accounts/assign     assigns a role to a specific municipality user
-function getRoles(): Promise<RoleDTO[]>;                                              // GET /api/admin/roles/list   retrieves all available roles in the system
+function registerMunicipalityOfficer(body: MunicipalityOfficerResponseDTO);  // POST /api/admin/accounts/register  registers a new municipality officer account into the system
+function getAllMunicipalityUsers(): Promise<MunicipalityOfficerResponseDTO[]>;                       // GET /api/admin/accounts/list       retrieves all municipality users in the system
+function setRole(body: MunicipalityOfficerResponseDTO);                      // PUT /api/admin/accounts/assign     assigns a role to a specific municipality user
+function getRoles(): Promise<RoleResponseDTO[]>;                                              // GET /api/admin/roles/list   retrieves all available roles in the system
 ```
 
 ### **Municipality Officers Roles:**

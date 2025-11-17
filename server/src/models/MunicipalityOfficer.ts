@@ -1,5 +1,6 @@
-import {Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Unique} from 'typeorm';
+import {Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Unique, OneToMany} from 'typeorm';
 import { Role } from './Role';
+import { Report } from './Report';
 
 @Entity()
 export class MunicipalityOfficer {
@@ -24,4 +25,7 @@ export class MunicipalityOfficer {
   @ManyToOne(() => Role, (role) => role.municipalityOfficer, { nullable: true })
   @JoinColumn({ name: 'role' })
   role?: Role;
+  
+  @OneToMany(() => Report, (report) => report.officer)
+  reports!: Report[];
 }

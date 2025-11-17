@@ -12,6 +12,8 @@ import { Report } from "../models/Report";
 import { Role } from "../models/Role";
 import { User } from "../models/User";
 import { ReportPhoto } from "../models/ReportPhoto";
+import { StatusType } from "../models/StatusType";
+import { get } from "http";
 
 /* Helper */
 function removeNullAttributes<T extends Record<string, any>>(dto: T): Partial<T> {
@@ -54,6 +56,9 @@ export function createReportDTO(
     description?: string,
     userId?: number,
     categoryId?: number,
+    status?: StatusType,
+    explanation?: string,
+    officer?: MunicipalityOfficerResponseDTO,
     photos?: string[]
 ): ReportResponseDTO {
     return removeNullAttributes({
@@ -77,6 +82,9 @@ export function createUserDTO(
     password?: string | null,
     first_name?: string,
     last_name?: string,
+    photo?: string | null,
+    telegram_id?: string | null,
+    flag_email?: boolean,
     reports?: ReportResponseDTO[]
 ): UserResponseDTO {
     return removeNullAttributes({
@@ -85,6 +93,9 @@ export function createUserDTO(
         password,
         first_name,
         last_name,
+        photo,
+        telegram_id,
+        flag_email,
         reports,
     }) as UserResponseDTO;
 }
@@ -124,6 +135,9 @@ export function mapReportDAOToDTO(reportDAO: Report): ReportResponseDTO {
         reportDAO.description,
         reportDAO.user?.id,
         reportDAO.category?.id,
+        reportDAO.status,
+        reportDAO.explanation,
+        reportDAO.officer ? mapMunicipalityOfficerDAOToDTO(reportDAO.officer) : undefined,
         reportDAO.photos?.map((p: ReportPhoto) => p.photo)
     );
 }
@@ -142,6 +156,9 @@ export function mapUserDAOToDTO(userDAO: User): UserResponseDTO {
         null,
         userDAO.first_name,
         userDAO.last_name,
+        userDAO.photo,
+        userDAO.telegram_id,
+        userDAO.flag_email,
         userDAO.reports?.map((r: Report) => mapReportDAOToDTO(r))
     );
 }
@@ -158,7 +175,9 @@ export function mapCreateReportRequestToDAO(dto: CreateReportRequestDTO): Report
 
     dao.user = new User();
     dao.user.id = dto.userId;
-
+    dao.status = StatusType.PendingApproval;
+    dao.officer = undefined; // verrà assegnato successivamente
+    dao.explanation = "";
     dao.category = new Category();
     dao.category.id = dto.categoryId;
 

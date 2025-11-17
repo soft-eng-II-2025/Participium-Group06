@@ -7,6 +7,7 @@ import { useAddReport, useUploadReportImages, useReportCategories } from "../hoo
 import { ReportDTO } from "../DTOs/ReportDTO";
 import { CategoryResponseDTO } from "../DTOs/CategoryResponseDTO";
 import { useAuth } from '../contexts/AuthContext';
+import { StatusType } from "../DTOs/StatusType";
 
 type FormState = {
   longitude: number | null;
@@ -146,6 +147,9 @@ export default function NewReportPage() {
         description: form.description,
         categoryId: Number(form.categoryId),
         user,
+        status: StatusType.PendingApproval,
+        explanation: "", 
+        officer: undefined, // Empty officer object to be filled by backend
         photos: uploadedPhotoUrls,
       };
 

@@ -1,4 +1,7 @@
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsNotEmpty, IsNumber, IsString, Max, Min } from "class-validator";
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from "class-validator";
+import { StatusType } from "../StatusType";
+import { MunicipalityOfficerResponseDTO } from "./MunicipalityOfficerResponseDTO";
+import { Type } from "class-transformer";
 
 export class CreateReportRequestDTO {
 
@@ -21,8 +24,13 @@ export class CreateReportRequestDTO {
     @IsNumber()
     userId!: number;
 
-    @IsNumber()
+    @IsNumber() 
     categoryId!: number;
+
+
+    @IsOptional()
+    @Type(() => MunicipalityOfficerResponseDTO)
+    officer?: MunicipalityOfficerResponseDTO;
 
     @IsArray()
     @ArrayMinSize(1)

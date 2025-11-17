@@ -6,6 +6,8 @@ import { Repository, DataSource }  from "typeorm";
 import { ReportPhoto } from "../models/ReportPhoto";
 import { User } from "../models/User";
 import { Category } from "../models/Category";
+import { StatusType } from "../models/StatusType";
+import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
 
 export class ReportRepository {
     protected ormRepository: Repository<Report>;
@@ -32,25 +34,35 @@ export class ReportRepository {
     }
 
     async add(report: Report): Promise<Report> {
-        const newReport = new Report();
-        newReport.longitude = report.longitude;
-        newReport.latitude = report.latitude;
-        newReport.title = report.title;
-        newReport.description = report.description;
+    const newReport = new Report();
+    newReport.longitude = report.longitude;
+    newReport.latitude = report.latitude;
+    newReport.title = report.title;
+    newReport.description = report.description;
+    newReport.status = report.status ?? StatusType.PendingApproval; // ensure non-null
+    newReport.explanation = report.explanation ?? "";
 
-        if (report.user && report.user.id) {
-            //newReport.user = await userRepository.findOneBy({ id: report.user.id }) as User;
-            newReport.user = await this.userRepository.findOneBy({ id: report.user.id }) as User;
-            if (!newReport.user) throw new Error("User not found for report creation.");
-        }
-        if (report.category && report.category.id) {
-            //newReport.category = await Repository(Category).findOneBy({ id: report.category.id }) as Category;
-            newReport.category = await this.categoryRepository.findOneBy({ id: report.category.id }) as Category;
-            if (!newReport.category) throw new Error("Category not found for report creation.");
-        }
-
-        return this.ormRepository.save(newReport);
+    if (report.user && report.user.id) {
+        newReport.user = await this.userRepository.findOneBy({ id: report.user.id }) as User;
+        if (!newReport.user) throw new Error("User not found for report creation.");
     }
+
+    if (report.category && report.category.id) {
+        newReport.category = await this.categoryRepository.findOneBy({ id: report.category.id }) as Category;
+        if (!newReport.category) throw new Error("Category not found for report creation.");
+    }
+
+    if (report.officer && report.officer.id) {
+    const officer = await this.ormRepository.manager.findOne(MunicipalityOfficer, {
+        where: { id: report.officer.id }
+    });
+    if (!officer) throw new Error("Officer not found for report creation.");
+    newReport.officer = officer; // TypeScript knows this is not null now
+    }
+
+    return this.ormRepository.save(newReport);
+}
+
 
     async addPhotosToReport(report: Report, photos: ReportPhoto[]): Promise<ReportPhoto[]> {
         const photosWithReport = photos.map(photo => {

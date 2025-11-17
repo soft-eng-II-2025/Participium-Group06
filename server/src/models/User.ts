@@ -21,6 +21,15 @@ export class User {
   @Column()
   last_name!: string;
 
+  @Column()
+  photo!: string;
+
+  @Column()
+  telegram_id!: string;
+
+  @Column()
+  flag_email!: boolean;
+
   @OneToMany(() => Report, (report) => report.user)
   reports!: Report[];
 }

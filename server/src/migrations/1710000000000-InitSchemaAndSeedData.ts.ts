@@ -20,7 +20,8 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
         await queryRunner.query(`
             CREATE TABLE "role" (
                 "id" SERIAL PRIMARY KEY,
-                "title" VARCHAR NOT NULL UNIQUE
+                "title" VARCHAR NOT NULL UNIQUE,
+                "label" VARCHAR NOT NULL UNIQUE
             )
         `);
 
@@ -87,30 +88,29 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
 
         // 3. Seed initial roles
         await queryRunner.query(`
-            INSERT INTO "role" ("id", "title") VALUES
-            (1,'ADMIN'),
-            (2,'ORGANIZATION_OFFICER'),
-            (3,'TECH_LEAD_INFRASTRUCTURE'),
-            (4,'TECH_AGENT_INFRASTRUCTURE'),
-            (5,'TECH_LEAD_GREEN_AREAS'),
-            (6,'TECH_AGENT_GREEN_AREAS'),
-            (7,'TECH_LEAD_ENVIRONMENTAL_QUALITY'),
-            (8,'TECH_AGENT_ENVIRONMENTAL_QUALITY'),
-            (9,'TECH_LEAD_URBAN_PLANNING'),
-            (10,'TECH_AGENT_URBAN_PLANNING'),
-            (11,'TECH_LEAD_PRIVATE_BUILDINGS'),
-            (12,'TECH_AGENT_PRIVATE_BUILDINGS'),
-            (13,'TECH_LEAD_PUBLIC_BUILDINGS'),
-            (14,'TECH_AGENT_PUBLIC_BUILDINGS'),
-            (15,'TECH_LEAD_ENERGY_LIGHTING'),
-            (16,'TECH_AGENT_ENERGY_LIGHTING'),
-            (17,'TECH_LEAD_MOBILITY_TRANSPORT'),
-            (18,'TECH_AGENT_MOBILITY_TRANSPORT'),
-            (19,'TECH_LEAD_WASTE_MANAGEMENT'),
-            (20,'TECH_AGENT_WASTE_MANAGEMENT')
+            INSERT INTO "role" ("id", "title", "label") VALUES
+            (1,'ADMIN', 'Administrator'),
+            (2,'ORGANIZATION_OFFICER', 'Organization Officer'),
+            (3,'TECH_LEAD_INFRASTRUCTURE', 'Tech Lead, Infrastructure'),
+            (4,'TECH_AGENT_INFRASTRUCTURE', 'Tech Agent, Infrastructure'),
+            (5,'TECH_LEAD_GREEN_AREAS', 'Tech Lead, Green Areas'),
+            (6,'TECH_AGENT_GREEN_AREAS', 'Tech Agent, Green Areas'),
+            (7,'TECH_LEAD_ENVIRONMENTAL_QUALITY', 'Tech Lead, Environmental Quality'),
+            (8,'TECH_AGENT_ENVIRONMENTAL_QUALITY', 'Tech Agent, Environmental Quality'),
+            (9,'TECH_LEAD_URBAN_PLANNING', 'Tech Lead, Urban Planning'),
+            (10,'TECH_AGENT_URBAN_PLANNING', 'Tech Agent, Urban Planning'),
+            (11,'TECH_LEAD_PRIVATE_BUILDINGS', 'Tech Lead, Private Buildings'),
+            (12,'TECH_AGENT_PRIVATE_BUILDINGS', 'Tech Agent, Private Buildings'),
+            (13,'TECH_LEAD_PUBLIC_BUILDINGS', 'Tech Lead, Public Buildings'),
+            (14,'TECH_AGENT_PUBLIC_BUILDINGS', 'Tech Agent, Public Buildings'),
+            (15,'TECH_LEAD_ENERGY_LIGHTING', 'Tech Lead, Energy & Lighting'),
+            (16,'TECH_AGENT_ENERGY_LIGHTING', 'Tech Agent, Energy & Lighting'),
+            (17,'TECH_LEAD_MOBILITY_TRANSPORT', 'Tech Lead, Mobility & Transport'),
+            (18,'TECH_AGENT_MOBILITY_TRANSPORT', 'Tech Agent, Mobility & Transport'),
+            (19,'TECH_LEAD_WASTE_MANAGEMENT', 'Tech Lead, Waste Management'),
+            (20,'TECH_AGENT_WASTE_MANAGEMENT', 'Tech Agent, Waste Management')
             ON CONFLICT ("id") DO NOTHING
         `);
-
         // 4. Seed initial categories
         await queryRunner.query(`
             INSERT INTO "category" ("id", "name") VALUES

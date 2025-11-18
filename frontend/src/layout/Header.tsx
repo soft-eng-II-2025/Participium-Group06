@@ -85,15 +85,26 @@ export default function Header() {
           <Box sx={{ flexGrow: 1 }} />
 
           {!isAuthenticated && (
-            <Button
-              color="secondary"
-              variant="contained"
-              size="medium"
-              className="partecipation-button"
-              onClick={() => navigate("/login")}
-            >
-              Login
-            </Button>
+            <>
+              <Button
+                color="secondary"
+                variant="contained"
+                size="medium"
+                className="partecipation-button"
+                onClick={() => navigate("/login")}
+              >
+                Login
+              </Button>
+              <Button
+                sx={{color: "inherit", borderColor: "inherit", ml: 2}}
+                variant="outlined"
+                size="medium"
+                className="partecipation-button"
+                onClick={() => navigate("/register")}
+              >
+                Sign Up
+              </Button>
+            </>
           )}
 
           {isAuthenticated && (

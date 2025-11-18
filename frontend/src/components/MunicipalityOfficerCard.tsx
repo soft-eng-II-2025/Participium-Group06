@@ -51,16 +51,11 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onEditRole }) => {
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }} noWrap>
                     {user.username}
                 </Typography>
-                {user.first_name || user.last_name ? (
-                    <Typography variant="body2" color="text.secondary" noWrap>
-                        {user.first_name} {user.last_name}
-                    </Typography>
-                ) : null}
                 {hasRole ? (
                     <Chip
                         label={findRoleByTitle(user.role)}
                         size="small"
-                        sx={{ mt: 0.5, maxWidth: '100%' }}
+                        sx={{ mt: 1, maxWidth: '100%' }}
                         color="primary"
                         variant="outlined"
                     />

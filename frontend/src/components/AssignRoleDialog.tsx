@@ -9,14 +9,13 @@ import {
     DialogContent,
     DialogTitle,
     FormControl,
-    InputLabel,
-    MenuItem,
-    Select,
     Typography,
 } from "@mui/material";
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
 import { useGetRoles, useSetRole } from "../hook/adminApi.hook";
 import { useQueryClient } from "@tanstack/react-query";
-import {AssignRoleRequestDTO} from "../DTOs/AssignRoleRequestDTO";
+import { AssignRoleRequestDTO } from "../DTOs/AssignRoleRequestDTO";
 
 type Props = {
     open: boolean;
@@ -84,23 +83,22 @@ export default function AssignRoleDialog({ open, user, onClose }: Props) {
                             Account: <strong>{user.username}</strong>
                         </Typography>
 
-                        <FormControl fullWidth disabled={rolesPending || setRoleMut.isPending}>
-                            <InputLabel id="role-label">Select role…</InputLabel>
-                            <Select
-                                labelId="role-label"
-                                label="Select role…"
-                                value={selectedTitle}
-                                onChange={(e) => {
-                                    setSelectedTitle(e.target.value as string);
-                                    setConfirmStep(false);
-                                }}
-                            >
-                                {roles.map((r) => (
-                                    <MenuItem key={r.title} value={r.title}>
-                                        {r.title}
-                                    </MenuItem>
-                                ))}
-                            </Select>
+                        <FormControl
+                            fullWidth
+                            disabled={rolesPending || setRoleMut.isPending}
+                            sx={{ mt: 2 }}
+                        >
+                            <Autocomplete
+                                options={roles}
+                                getOptionLabel={(opt) => opt.label ?? ""}
+                                value={roles.find(r => r.title === selectedTitle) ?? undefined}
+                                onChange={(_, v) => setSelectedTitle(v?.title ?? "")}
+                                isOptionEqualToValue={(o, v) => o.title === v.title}
+                                disableClearable
+                                renderInput={(params) => (
+                                    <TextField {...params} label="Select role…" size="medium" />
+                                )}
+                            />
                         </FormControl>
 
                         {rolesError && (
@@ -110,7 +108,7 @@ export default function AssignRoleDialog({ open, user, onClose }: Props) {
                         )}
 
                         {confirmStep && (
-                            <Alert severity="warning" sx={{ mt: 2 }}>
+                            <Alert severity="info" sx={{ mt: 2 }}>
                                 Once assigned, the role <strong>cannot be modified</strong>.
                                 Click <strong>Confirm</strong> again to proceed.
                             </Alert>
@@ -134,7 +132,7 @@ export default function AssignRoleDialog({ open, user, onClose }: Props) {
                 <Button
                     onClick={onConfirm}
                     variant="contained"
-                    color={confirmStep ? "error" : "primary"}
+                    color="primary"
                     disabled={!canConfirm}
                     startIcon={setRoleMut.isPending ? <CircularProgress size={18} /> : undefined}
                 >

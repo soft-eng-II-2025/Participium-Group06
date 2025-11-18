@@ -9,6 +9,9 @@ export class Role {
   @Column({ unique: true })
   title!: string;
 
+  @Column()
+  label!: string;
+
   @OneToMany(() => MunicipalityOfficer, (municipalityOfficer) => municipalityOfficer.role)
   municipalityOfficer!: MunicipalityOfficer[];
 }

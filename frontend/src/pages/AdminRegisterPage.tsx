@@ -36,6 +36,7 @@ const AdminRegisterPage: React.FC = () => {
                     onSubmit={handleAdminRegister as any}
                     loading={isPending}
                     serverError={serverErrorMessage}
+                    isAdmin={true}
                 />
             </Box>
         </Container>

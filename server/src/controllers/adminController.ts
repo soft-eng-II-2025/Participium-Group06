@@ -92,12 +92,12 @@ export async function loginOfficer(loginData: LoginRequestDTO) {
     return mapMunicipalityOfficerDAOToResponse(officer);
 }
 
-// NEW: lista ruoli (solo id + title) per UI - solo assegnabili
-type RoleListItem = { id: number; title: string };
+// NEW: lista ruoli (solo id + title + label) per UI - solo assegnabili
+type RoleListItem = { id: number; title: string, label: string };
 
 export async function getAllRoles(): Promise<RoleListItem[]> {
     const roles = await roleRepository.findAssignable(); // <-- esclude admin/super admin
-    return roles.map((r) => ({ id: r.id, title: r.title }));
+    return roles.map((r) => ({ id: r.id, title: r.title, label: r.label }));
 }
 
 export async function getMunicipalityOfficerByUsername(username: string): Promise<MunicipalityOfficerResponseDTO> {

@@ -40,6 +40,7 @@ const AdminHomePage = () => {
 
                 <Button
                     variant="contained"
+                    className="partecipation-button"
                     startIcon={<AddIcon />}
                     onClick={handleAddAccount}
                     sx={{

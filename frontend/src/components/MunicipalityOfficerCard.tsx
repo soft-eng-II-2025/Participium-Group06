@@ -1,6 +1,8 @@
 import React from 'react';
 import { Card, Typography, Avatar, Button, Box, Chip } from '@mui/material';
 import { MunicipalityOfficerResponseDTO } from "../DTOs/MunicipalityOfficerResponseDTO";
+import { useGetRoles } from "../hook/adminApi.hook";
+
 
 type UserCardProps = { user: MunicipalityOfficerResponseDTO; onEditRole: (username: string) => void; };
 
@@ -12,9 +14,16 @@ function getInitials(name: string) {
 }
 
 export const UserCard: React.FC<UserCardProps> = ({ user, onEditRole }) => {
+    const { data: roles = [] } = useGetRoles();
     const display = `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.username;
     const initials = getInitials(display);
     const hasRole = user.role !== null && user.role !== undefined;
+    
+    function findRoleByTitle(role: string | null): React.ReactNode {
+        const r = roles.find(r => r.title === role);
+        return r ? r.label : role;
+    }
+    
 
     return (
         <Card
@@ -34,20 +43,19 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onEditRole }) => {
                 overflow: 'hidden',
             }}
         >
-            <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48, fontSize: 18, flexShrink: 0 }}>
+            <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48, fontSize: 18, flexShrink: 0, marginLeft: 2 }}>
                 {initials}
             </Avatar>
 
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1 }} noWrap>
+            <Box sx={{ flex: 1, minWidth: 0, marginLeft: 3}}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }} noWrap>
                     {user.username}
                 </Typography>
-
                 {hasRole ? (
                     <Chip
-                        label={user.role! as string}
+                        label={findRoleByTitle(user.role)}
                         size="small"
-                        sx={{ mt: 0.5, maxWidth: '100%' }}
+                        sx={{ mt: 1, maxWidth: '100%' }}
                         color="primary"
                         variant="outlined"
                     />
@@ -55,9 +63,10 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onEditRole }) => {
                     <Button
                         variant="contained"
                         color="secondary"
+                        className="partecipation-button"
                         onClick={() => onEditRole(user.username)}
                         size="small"
-                        sx={{ mt: 0.5, alignSelf: 'flex-start' }}
+                        sx={{ mt: 1, alignSelf: 'flex-start' }}
                     >
                         Assign role
                     </Button>

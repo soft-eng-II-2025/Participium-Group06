@@ -125,6 +125,22 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
             (9,'Other')
             ON CONFLICT ("id") DO NOTHING
         `);
+
+        await queryRunner.query(`
+            INSERT INTO "municipality_officer"
+                ("id","username","email","password","first_name","last_name","role")
+            VALUES
+                (1,'admin','admin@participium.local',
+                '$argon2id$v=19$m=65536,t=3,p=1$6FOS86yBc3WowYzkpdqonQ$fuBmKGHx8IRs15LrImF8/baI15mxyfvGnTkUNyVDd6g',
+                'System','Admin',1)
+            ON CONFLICT ("id") DO NOTHING;
+            `);
+
+        await queryRunner.query(`
+            SELECT setval(pg_get_serial_sequence('"municipality_officer"','id'),
+                            GREATEST((SELECT COALESCE(MAX(id),0) FROM "municipality_officer"), 1),
+                            true);
+            `);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

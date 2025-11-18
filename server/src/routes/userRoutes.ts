@@ -4,6 +4,7 @@ import { Router, Response } from 'express';
 import { validateDto } from "../middlewares/validationMiddleware";
 import { CreateReportRequestDTO } from "../models/DTOs/CreateReportRequestDTO";
 import * as userController from "../controllers/userController";
+import * as reportController from "../controllers/reportController";
 import multer from 'multer';
 import path from 'path'; // Importa path
 import { Request } from 'express';
@@ -73,7 +74,7 @@ router.post('/reports', async (req: Request, res: Response) => {
     console.log('adapted with officer:', req.body);
     return validateDto(CreateReportRequestDTO)(req, res, async () => {
         console.log('Validated Body:', req.body);
-        const newReport = await userController.addReport(req.body);
+        const newReport = await reportController.addReport(req.body);
         console.log('New Report:', newReport);
         res.status(201).json(newReport);
     });

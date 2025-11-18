@@ -3,5 +3,8 @@ import { MunicipalityOfficerResponseDTO } from "./MunicipalityOfficerResponseDTO
 
 export class RoleResponseDTO {
     title?: string;
+
+    label?: string;
+    
     /*officers!: MunicipalityOfficerResponseDTO[];*/
 }

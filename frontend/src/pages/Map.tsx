@@ -13,9 +13,17 @@ const Map: React.FC = () => {
   };
 
   return (
-    <div style={{ height: "100vw", width: "100vw" }}>
-  <MapSelector onSelect={handleSelect} />
-  </div>
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        height: "100vh"
+      }}>
+          {/* Wrapper div per gestire lo stile responsive */}
+          <div style={{ flex: 1, minHeight: 300 }}>
+              <MapSelector onSelect={handleSelect} />
+          </div>
+      </div>
   );
 };
 

@@ -69,9 +69,11 @@ function App() {
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/admin/register" element={
-                                    <RequireRole role="ADMIN">
-                                        <AdminRegisterPage />
-                                    </RequireRole>
+                                    <ProtectedRoute>
+                                        <RequireRole role="ADMIN">
+                                            <AdminRegisterPage />
+                                        </RequireRole>
+                                    </ProtectedRoute>
                                 } />
                             </Routes>
                         </Layout>

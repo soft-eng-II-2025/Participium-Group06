@@ -9,6 +9,6 @@ export const router = Router();
 router.use("/users", userRouter);
 router.use("", authRouter);
 router.use("/admin", adminRouter);
-router.use("/reports", userRouter); 
+router.use("/reports", reportRouter); 
 
 

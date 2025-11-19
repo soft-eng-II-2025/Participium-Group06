@@ -10,6 +10,7 @@ import { errorHandler } from "./middlewares/errorMiddleware";
 import { router } from "./routes/routes";
 import { initializeUserRepositories } from './controllers/userController';
 import { initializeAdminRepositories } from './controllers/adminController';
+import {initializeReportRepositories} from './controllers/reportController';
 
 const PORT = Number(process.env.PORT ?? 3000);
 
@@ -39,6 +40,7 @@ export async function initializeApp(dataSource: any = AppDataSource) {
     console.log('Database connesso');
     initializeUserRepositories(dataSource);
     initializeAdminRepositories(dataSource);
+    initializeReportRepositories(dataSource);
 }
 
 async function main() {

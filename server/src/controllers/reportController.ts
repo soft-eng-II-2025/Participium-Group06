@@ -4,7 +4,7 @@ import { ReportResponseDTO } from "../models/DTOs/ReportResponseDTO";
 import { ReportRepository } from "../repositories/ReportRepository";
 import { StatusType } from "../models/StatusType";
 import { DataSource } from "typeorm";
-import { getMunicipalityOfficerForNewRequest } from "./userController";
+import { getMunicipalityOfficerForNewRequest,getMunicipalityOfficerByUsername } from "./userController";
 import { ReportPhoto } from "../models/ReportPhoto";
 
 let reportRepository: ReportRepository;
@@ -51,4 +51,20 @@ export async function UpdateReportStatus(reportId: number, newStatus: StatusType
     report.explanation = explanation;   
     const updatedReport = await reportRepository.update(report);
     return mapReportDAOToResponse(updatedReport);
+}
+
+export async function GetAllReports():Promise<ReportResponseDTO[]> {
+    const reports = await reportRepository.findAll();
+    return reports.map(mapReportDAOToResponse);
+}
+
+export async function GetReportsByUserId(userId: number):Promise<ReportResponseDTO[]> {
+    const reports = await reportRepository.findByUserId(userId);
+    return reports.map(mapReportDAOToResponse);
+}
+
+export async function GetReportsByOfficerUsername(username: string):Promise<ReportResponseDTO[]> {
+    const officer = await getMunicipalityOfficerByUsername(username);
+    const reports = await reportRepository.findByOfficer(officer);
+    return reports.map(mapReportDAOToResponse);
 }

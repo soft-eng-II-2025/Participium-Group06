@@ -30,3 +30,14 @@ router.post('/:id/status', async (req: express.Request, res: Response) => {
         return res.status(statusCode).json({ error: error.message || 'INTERNAL_SERVER_ERROR' });
     }
 });
+
+router.get('/allReports', async (req: express.Request, res: Response) => {
+    try {
+        const reports = await reportController.GetAllReports();
+        return res.status(200).json(reports);
+    } catch (error: any) {
+        console.error('Error fetching all reports:', error);
+        const statusCode = error.status || 500;
+        return res.status(statusCode).json({ error: error.message || 'INTERNAL_SERVER_ERROR' });
+    }
+});

@@ -25,13 +25,11 @@ const reportRepository: ReportRepository = new ReportRepository(AppDataSource);
 const categoryRepository: CategoryRepository = new CategoryRepository(AppDataSource);*/
 
 let userRepository: UserRepository;
-let reportRepository: ReportRepository;
 let categoryRepository: CategoryRepository;
 let municipalityOfficerRepository: MunicipalityOfficerRepository;
 
 export function initializeUserRepositories(dataSource: DataSource) {
   userRepository = new UserRepository(dataSource);
-  reportRepository = new ReportRepository(dataSource);
   categoryRepository = new CategoryRepository(dataSource);
   municipalityOfficerRepository = new MunicipalityOfficerRepository(dataSource);
 }
@@ -96,4 +94,10 @@ export async function getAllCategories(): Promise<CategoryResponseDTO[]> {
 
 export async function getMunicipalityOfficerForNewRequest () : Promise<MunicipalityOfficer> {
     return municipalityOfficerRepository.findAll().then(officers => officers[0])
+}
+
+export async function getMunicipalityOfficerByUsername(username: string): Promise<MunicipalityOfficer> {
+    const officer = await municipalityOfficerRepository.findByUsername(username);
+    if (!officer) throw appErr("OFFICER_NOT_FOUND", 404);
+    return officer;
 }

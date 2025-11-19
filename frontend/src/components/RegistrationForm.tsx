@@ -7,6 +7,7 @@ type Props = {
     loading?: boolean;
     serverError?: string | null;
     title?: string;
+    isAdmin?: boolean;
 };
 
 const RegistrationForm: React.FC<Props> = ({
@@ -14,6 +15,7 @@ const RegistrationForm: React.FC<Props> = ({
                                                loading = false,
                                                serverError = null,
                                                title = "Create your account",
+                                               isAdmin = false,
                                            }) => {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
@@ -189,6 +191,9 @@ const RegistrationForm: React.FC<Props> = ({
                     {isLoading ? "Registering..." : "Register"}
                 </Button>
             </Box>
+            {!isAdmin && <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                You already have an account? <a href="/login">Log in here</a>.
+            </Typography>}
         </Paper>
     );
 };

@@ -36,7 +36,12 @@ const RegisterPage: React.FC = () => {
                     pb: 6,
                 }}
             >
-                <RegistrationForm onSubmit={handleRegister} loading={loading} serverError={error} />
+                <RegistrationForm
+                    onSubmit={handleRegister}
+                    loading={loading}
+                    serverError={error}
+                    isAdmin={false}
+                />
             </Box>
         </Container>
     );

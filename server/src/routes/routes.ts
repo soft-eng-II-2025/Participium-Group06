@@ -2,7 +2,7 @@ import {Router} from "express";
 import {router as userRouter} from "./userRoutes";
 import {router as authRouter} from "./authRoutes";
 import {router as adminRouter} from "./adminRoutes";
-import {router as reportRouter} from "./userRoutes";
+import {router as reportRouter} from "./reportRoutes";
 
 export const router = Router();
 

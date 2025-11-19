@@ -14,7 +14,7 @@ router.post('/:id/status', async (req: express.Request, res: Response) => {
         if (!status) {
             return res.status(400).json({ error: 'STATUS_REQUIRED' });
         }
-        if (status == StatusType.Rejected || status == StatusType.Resolved || status == StatusType.InProgress || status == StatusType.Suspended || status == StatusType.Assigned || status == StatusType.PendingApproval) {
+        if (status != StatusType.Rejected && status != StatusType.Resolved && status != StatusType.InProgress && status != StatusType.Suspended && status != StatusType.Assigned && status != StatusType.PendingApproval) {
             return res.status(400).json({ error: 'INVALID_STATUS_VALUE' });
         }
         if (status == StatusType.Rejected && (explanation == null || explanation == "" || explanation == undefined)) {
@@ -31,7 +31,7 @@ router.post('/:id/status', async (req: express.Request, res: Response) => {
     }
 });
 
-router.get('/allReports', async (req: express.Request, res: Response) => {
+router.get('/', async (req: express.Request, res: Response) => {
     try {
         const reports = await reportController.GetAllReports();
         return res.status(200).json(reports);

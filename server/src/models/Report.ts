@@ -47,4 +47,6 @@ export class Report {
 
   @OneToMany(() => ReportPhoto, (photo) => photo.report)
   photos!: ReportPhoto[];
+  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt!: Date;
 }

@@ -4,7 +4,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAddReport, useUploadReportImages, useReportCategories } from "../hook/userApi.hook";
-import { ReportDTO } from "../DTOs/ReportDTO";
+import { CreateReportDTO } from "../DTOs/CreateReportDTO";
 import { CategoryResponseDTO } from "../DTOs/CategoryResponseDTO";
 import { useAuth } from '../contexts/AuthContext';
 import { StatusType } from "../DTOs/StatusType";
@@ -140,7 +140,7 @@ export default function NewReportPage() {
       }
 
 
-      const reportData: ReportDTO = {
+      const reportData: CreateReportDTO = {
         longitude: Number(form.longitude),
         latitude: Number(form.latitude),
         title: form.title,

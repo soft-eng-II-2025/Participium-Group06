@@ -364,20 +364,48 @@ export default function NewReportPage() {
       </Snackbar>
 
       <Dialog
-        open={successDialogOpen}
-        disableEscapeKeyDown
-        PaperProps={{ sx: { borderRadius: 3, p: 2, minWidth: 360, boxShadow: 6, padding: 4 } }}
+          open={successDialogOpen}
+          disableEscapeKeyDown
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              p: 2,
+              px: 3,
+              py: 2,
+              width: { xs: '90%', sm: 400, md: 480 }, // larghezza adattiva
+              maxWidth: '90vw',
+              boxShadow: 6,
+            },
+          }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 2, pt: 1 }}>
-          <Box sx={{ width: 56, height: 56, borderRadius: '50%', bgcolor: 'success.main', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: '50%',
+                bgcolor: 'success.main',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: 3,
+                flexShrink: 0,
+              }}
+          >
             <CheckCircleIcon sx={{ color: 'white', fontSize: 32 }} />
           </Box>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>Report created</Typography>
-            <Typography variant="body2" color="text.secondary">Your report was uploaded successfully. Redirecting to the map...</Typography>
+
+          <Box sx={{ minWidth: 0 }}> {/* essenziale per il wrapping */}
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              Report created
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Your report was uploaded successfully. Redirecting to the map...
+            </Typography>
           </Box>
         </Box>
       </Dialog>
+
     </Box>
   );
 }

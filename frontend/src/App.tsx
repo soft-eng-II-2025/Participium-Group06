@@ -63,15 +63,17 @@ function App() {
                                 } /> */}
                                 <Route path="/new-report" element={
                                     <ProtectedRoute>
-                                    <RequireRole role="USER">
-                                        <NewReportPage />
-                                    </RequireRole>
+                                        <RequireRole role="USER">
+                                            <NewReportPage />
+                                        </RequireRole>
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/admin/register" element={
-                                    <RequireRole role="ADMIN">
-                                        <AdminRegisterPage />
-                                    </RequireRole>
+                                    <ProtectedRoute>
+                                        <RequireRole role="ADMIN">
+                                            <AdminRegisterPage />
+                                        </RequireRole>
+                                    </ProtectedRoute>
                                 } />
                             </Routes>
                         </Layout>

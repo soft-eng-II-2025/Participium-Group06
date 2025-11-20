@@ -31,7 +31,7 @@ router.post('/login', validateDto(LoginRequestDTO), (req: Request, res: Response
     })(req, res, next);
 });
 
-router.post('/logout', (req, res) => {
+router.post('/logout', requireAuth, (req, res) => {
     req.logout(() => {
         req.session?.destroy(() => {
             res.clearCookie('connect.sid');
@@ -40,7 +40,7 @@ router.post('/logout', (req, res) => {
     });
 });
 
-router.get('/session', (req, res) => {
+router.get('/session', requireAuth,(req, res) => {
     try {
         // req.user is populated by passport.deserializeUser when authenticated
         return res.status(200).json(req.user ?? null);

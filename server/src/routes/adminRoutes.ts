@@ -4,12 +4,13 @@ import { AssignRoleRequestDTO } from "../models/DTOs/AssignRoleRequestDTO";
 import { MunicipalityOfficerResponseDTO } from "../models/DTOs/MunicipalityOfficerResponseDTO"; // solo tipo di output, non usato in validate
 import * as adminController from "../controllers/adminController";
 import {CreateUserRequestDTO} from "../models/DTOs/CreateUserRequestDTO";
+import { requireAdmin } from '../middlewares/authMiddleware';
 
 export const router = Router();
 
 
 
-router.post('/accounts/register', validateDto(CreateUserRequestDTO), async (req, res: Response, next) => {
+router.post('/accounts/register', requireAdmin, validateDto(CreateUserRequestDTO), async (req, res: Response, next) => {
 
     const newMunicipalityOfficer = await adminController.addMunicipalityOfficer(req.body);
     res.status(201).json(newMunicipalityOfficer);
@@ -17,7 +18,7 @@ router.post('/accounts/register', validateDto(CreateUserRequestDTO), async (req,
 
 
 
-router.get("/accounts/list", async (req, res, next) => {
+router.get("/accounts/list", requireAdmin, async (req, res, next) => {
 
     const allMunicipalityOfficer = await adminController.getAllMunicipalityOfficer();
     res.status(200).json(allMunicipalityOfficer);
@@ -25,7 +26,7 @@ router.get("/accounts/list", async (req, res, next) => {
 });
 
 
-router.put("/accounts/assign", validateDto(AssignRoleRequestDTO), async (req, res: Response, next) => {
+router.put("/accounts/assign", requireAdmin, validateDto(AssignRoleRequestDTO), async (req, res: Response, next) => {
 
     const updatedOfficer = await adminController.updateMunicipalityOfficer(req.body);
     res.status(200).json(updatedOfficer);
@@ -34,7 +35,7 @@ router.put("/accounts/assign", validateDto(AssignRoleRequestDTO), async (req, re
 
 
 
-router.get("/roles/list", async (req, res,next) => {
+router.get("/roles/list", requireAdmin, async (req, res,next) => {
     const roles = await adminController.getAllRoles();
     res.status(200).json(roles);
 });

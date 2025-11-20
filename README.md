@@ -130,7 +130,7 @@ import {UserResponseDTO} from "./UserResponseDTO";
 import {LoginDTO} from "./LoginDTO";
 
 function registerUser(user: UserResponseDTO);    // POST /api/register  registers a new user account into the system
-function login(credentials: LoginDTO);   // POST /api/login                       
+function login(credentials: LoginDTO);            // POST /api/login                       
 function addReport(report: ReportResponseDTO);   // POST /api/users/reports
 ```
 
@@ -145,44 +145,21 @@ function setRole(body: MunicipalityOfficerResponseDTO);                      // 
 function getRoles(): Promise<RoleResponseDTO[]>;                                              // GET /api/admin/roles/list   retrieves all available roles in the system
 ```
 
-### **Municipality Officers Roles:**
+### 👥 Municipality Officer Roles
 
-- ADMIN (Manages the entire platform and assigns roles to other municipal officers)
-
-- ORGANIZATION_OFFICER (Reviews citizen reports, approves or rejects them, and assigns them to the correct technical area.)
-
-- TECH_LEAD_INFRASTRUCTURE (Supervises infrastructure and road maintenance.)
-
-- TECH_AGENT_INFRASTRUCTURE (Performs field work and updates report status on roads and infrastructure.)
-
-- TECH_LEAD_GREEN_AREAS (Manages public parks, green areas, and playgrounds.)
-
-- TECH_AGENT_GREEN_AREAS (Carries out maintenance tasks in green and recreational areas.)
-
-- TECH_LEAD_ENVIRONMENTAL_QUALITY (Oversees pollution control and environmental hygiene.)
-
-- TECH_AGENT_ENVIRONMENTAL_QUALITY (Performs environmental inspections and clean-up operations.)
-
-- TECH_LEAD_URBAN_PLANNING (Responsible for urban accessibility and architectural barriers.)
-
-- TECH_AGENT_URBAN_PLANNING (Conducts on-site evaluations of accessibility and urban design issues.)
-
-- TECH_LEAD_PRIVATE_BUILDINGS (Supervises private building safety and code compliance.)
-
-- TECH_AGENT_PRIVATE_BUILDINGS (Handles inspections of private properties and construction issues.)
-
-- TECH_LEAD_PUBLIC_BUILDINGS (Manages maintenance of schools and municipal buildings.)
-
-- TECH_AGENT_PUBLIC_BUILDINGS (Executes maintenance and repair work on public buildings.)
-
-- TECH_LEAD_ENERGY_LIGHTING (Supervises public lighting and energy systems.)
-
-- TECH_AGENT_ENERGY_LIGHTING (Repairs and maintains streetlights and energy installations.)
-
-- TECH_LEAD_MOBILITY_TRANSPORT (Oversees mobility, transport, and parking infrastructure.)
-
-- TECH_AGENT_MOBILITY_TRANSPORT (Handles traffic light, signage, and parking maintenance.)
-
-- TECH_LEAD_WASTE_MANAGEMENT (Manages waste collection, street cleaning, and hygiene services.)
-
-- TECH_AGENT_WASTE_MANAGEMENT (Performs waste removal and street cleaning tasks.)
+| Role Name | Assigned Categories |
+| :--- | :--- |
+| `ADMIN` | ALL |
+| `ORGANIZATION_OFFICER` | ALL |
+| `TECH_LEAD_INFRASTRUCTURE` | Roads and Urban Furnishings \| Architectural Barriers \| Sewer System \| Water Supply – Drinking Water |
+| `TECH_AGENT_INFRASTRUCTURE` | Roads and Urban Furnishings \| Architectural Barriers \| Sewer System \| Water Supply – Drinking Water |
+| `TECH_LEAD_MOBILITY` | Road Signs and Traffic Lights \| Roads and Urban Furnishings |
+| `TECH_AGENT_MOBILITY` | Road Signs and Traffic Lights \| Roads and Urban Furnishings |
+| `TECH_LEAD_GREEN_AREAS` | Public Green Areas and Playgrounds |
+| `TECH_AGENT_GREEN_AREAS` | Public Green Areas and Playgrounds |
+| `TECH_LEAD_WASTE_MANAGEMENT` | Waste \| Sewer System |
+| `TECH_AGENT_WASTE_MANAGEMENT` | Waste \| Sewer System |
+| `TECH_LEAD_ENERGY_LIGHTING` | Public Lighting |
+| `TECH_AGENT_ENERGY_LIGHTING` | Public Lighting |
+| `TECH_LEAD_PUBLIC_BUILDINGS` | Architectural Barriers \| Other |
+| `TECH_AGENT_PUBLIC_BUILDINGS` | Architectural Barriers \| Other |

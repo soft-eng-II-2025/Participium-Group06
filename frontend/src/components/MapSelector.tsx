@@ -127,23 +127,11 @@ const MapSelector: React.FC<MapSelectorProps> = ({onSelect}) => {
 
     if (loading) return <p>Loading map...</p>;
 
-    // Component per centrare la mappa sui bounds del GeoJSON
-    const FitBounds: React.FC<{ geoData: any }> = ({ geoData }) => {
-        const map = useMap();
 
-        useEffect(() => {
-            if (!geoData) return;
-
-            const bounds = L.geoJSON(geoData).getBounds();
-            map.fitBounds(bounds, { padding: [20, 20] });
-        }, [geoData, map]);
-
-        return null;
-    };
 
     return (
         <MapContainer
-            center={[45.00, 7.7]}
+            center={[45.0703, 7.6869]}   // Torino centro
             zoom={12.5}
             style={{height: "100%", width: "100%"}}
         >
@@ -164,8 +152,6 @@ const MapSelector: React.FC<MapSelectorProps> = ({onSelect}) => {
                 />
             )}
 
-            {/* Centra la mappa su Torino */}
-            {geoData && <FitBounds geoData={geoData} />}
             <ClickHandler onSelect={onSelect} geoData={geoData}/>
         </MapContainer>
     );

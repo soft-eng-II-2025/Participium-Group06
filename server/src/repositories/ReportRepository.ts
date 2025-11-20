@@ -33,6 +33,27 @@ export class ReportRepository {
         });
     }
 
+    async findById(reportId: number): Promise<Report | null> {
+        return this.ormRepository.findOne({
+            where: { id: reportId },
+            relations: ['category', 'photos', 'user', 'officer']
+        });
+    }
+
+    async findByUserId(userId: number): Promise<Report[]> {
+        return this.ormRepository.find({
+            where: { user: { id: userId } },
+            relations: ['category', 'photos', 'user', 'officer']
+        });
+    }
+
+    async findByOfficer(officer: MunicipalityOfficer): Promise<Report[]> {
+        return this.ormRepository.find({
+            where: { officer: { id: officer.id } },
+            relations: ['category', 'photos', 'user', 'officer']
+        });
+    }
+
     async add(report: Report): Promise<Report> {
     const newReport = new Report();
     newReport.longitude = report.longitude;
@@ -97,6 +118,10 @@ export class ReportRepository {
 
     async changeTitle(report: Report, newTitle: string): Promise<Report> {
         report.title = newTitle;
+        return this.ormRepository.save(report);
+    }
+
+    async update(report: Report): Promise<Report> {
         return this.ormRepository.save(report);
     }
 }

@@ -18,50 +18,23 @@ import { DataSource } from "typeorm";
 import { off } from "process";
 import { MunicipalityOfficerRepository } from "../repositories/MunicipalityOfficerRepository";
 import { StatusType } from "../models/StatusType";
+import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
 
 /*const userRepository: UserRepository = new UserRepository(AppDataSource);
 const reportRepository: ReportRepository = new ReportRepository(AppDataSource);
 const categoryRepository: CategoryRepository = new CategoryRepository(AppDataSource);*/
 
 let userRepository: UserRepository;
-let reportRepository: ReportRepository;
 let categoryRepository: CategoryRepository;
 let municipalityOfficerRepository: MunicipalityOfficerRepository;
 
 export function initializeUserRepositories(dataSource: DataSource) {
   userRepository = new UserRepository(dataSource);
-  reportRepository = new ReportRepository(dataSource);
   categoryRepository = new CategoryRepository(dataSource);
   municipalityOfficerRepository = new MunicipalityOfficerRepository(dataSource);
 }
 
 function appErr(code: string, status = 400) { const e: any = new Error(code); e.status = status; return e; }
-
-export async function addReport(reportData: CreateReportRequestDTO): Promise<ReportResponseDTO> {
-    console.log('Adding report with data:', reportData);
-    // In un sistema autenticato, l'ID dell'utente dovrebbe venire dal token/sessione.
-    // Per ora, assumiamo che reportData.userId sia valido.
-    const reportDAO = mapCreateReportRequestToDAO(reportData);
-    reportDAO.status = StatusType.PendingApproval;
-
-    // Here we need an additional step to decide the officer and set it
-    // reportDAO.officer = await reportRepository.assignOfficerToReport(addedReport);
-    reportDAO.officer = await municipalityOfficerRepository.findAll().then(officers => officers[0]); // Temporary: assign first officer
-    const addedReport = await reportRepository.add(reportDAO);
-    // Ora, aggiungiamo le foto al report aggiunto
-    if (reportData.photos && reportData.photos.length > 0) {
-        const photoDAOs = reportData.photos.map(photoUrl => {
-            const reportPhoto = new ReportPhoto();
-            reportPhoto.photo = photoUrl; // photoUrl ora è un percorso locale (es. /uploads/nomefile.jpg)
-            reportPhoto.report = addedReport;
-            return reportPhoto;
-        });
-        await reportRepository.addPhotosToReport(addedReport, photoDAOs);
-        // Per assicurarsi che l'oggetto addedReport restituito contenga le foto
-        addedReport.photos = photoDAOs;
-    }
-    return mapReportDAOToResponse(addedReport);
-}
 
 export async function createUser(userData: CreateUserRequestDTO): Promise<UserResponseDTO> {
     if (!userData.password?.trim()) throw appErr("PASSWORD_REQUIRED", 400);
@@ -117,4 +90,14 @@ export async function getUserIdByUsername(username: string): Promise<number> {
 export async function getAllCategories(): Promise<CategoryResponseDTO[]> {
     const categories = await categoryRepository.findAll();
     return categories.map(mapCategoryDAOToDTO);
+}
+
+export async function getMunicipalityOfficerForNewRequest () : Promise<MunicipalityOfficer> {
+    return municipalityOfficerRepository.findAll().then(officers => officers[0])
+}
+
+export async function getMunicipalityOfficerByUsername(username: string): Promise<MunicipalityOfficer> {
+    const officer = await municipalityOfficerRepository.findByUsername(username);
+    if (!officer) throw appErr("OFFICER_NOT_FOUND", 404);
+    return officer;
 }

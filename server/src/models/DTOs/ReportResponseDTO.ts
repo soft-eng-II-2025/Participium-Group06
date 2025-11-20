@@ -15,7 +15,7 @@ export class ReportResponseDTO {
 
     categoryId!: number;
 
-    status!: StatusType;
+    status!: string;
 
     explanation!: string;
 

@@ -8,7 +8,7 @@ import multer from 'multer';
 import path from 'path'; // Importa path
 import { Request } from 'express';
 import express from 'express';
-import { requireAuth } from '../middlewares/authMiddleware';
+import { requireAuth, requireUser } from '../middlewares/authMiddleware';
 
 export const router = Router();
 
@@ -53,7 +53,7 @@ async function adaptCreateReportBody(body: any): Promise<CreateReportRequestDTO>
 }
 
 // Rotta per la creazione di un report (invariata)
-router.post('/reports', async (req: Request, res: Response) => {
+router.post('/reports', requireUser, async (req: Request, res: Response) => {
 
     const requestBodyWithUserId = { ...req.body };
     console.log('Body:', req.body);
@@ -80,7 +80,7 @@ router.post('/reports', async (req: Request, res: Response) => {
 });
 
 // NUOVA ROTTA: Endpoint per l'upload delle immagini dei report
-router.post('/reports/images/upload', upload.array('images', 3), async (req: Request, res: Response) => {
+router.post('/reports/images/upload', requireUser, upload.array('images', 3), async (req: Request, res: Response) => {
     if (!req.files || req.files.length === 0) {
         return res.status(400).json({ message: 'No files uploaded.' });
     }
@@ -110,7 +110,7 @@ router.use('/uploads', express.static(uploadDir));
 
 
 // Rotta per le categorie (invariata)
-router.get('/reports/categories', async (req, res: Response) => {
+router.get('/reports/categories', requireAuth, async (req, res: Response) => {
     const categories = await userController.getAllCategories();
     res.status(200).json(categories);
 });

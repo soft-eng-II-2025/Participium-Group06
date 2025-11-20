@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user: user ?? null,
     loading: isLoading,
     isAuthenticated: !!user,
-    role: user ? ((user as MunicipalityOfficerResponseDTO)?.role ?? 'USER') : null,
+    role: resolveRole(user),
     login,
     register,
     logout,
@@ -88,6 +88,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+const resolveRole = (user: any): string | null => {
+  if (!user) return null;
+
+  if (!("role" in user)) return "USER"; // regular user has no role property
+  if (user.role === null) return null; // officer with no assigned role
+
+  return user.role; 
+};
 
 export function useAuth(): AuthContextType {
   const ctx = useContext(AuthContext);

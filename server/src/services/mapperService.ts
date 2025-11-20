@@ -56,7 +56,7 @@ export function createReportDTO(
     description?: string,
     userId?: number,
     categoryId?: number,
-    status?: StatusType,
+    status?: string,
     explanation?: string,
     officer?: MunicipalityOfficerResponseDTO,
     photos?: string[]
@@ -67,6 +67,9 @@ export function createReportDTO(
         title,
         description,
         userId,
+        status,
+        explanation,
+        officer,
         categoryId,
         photos,
     }) as ReportResponseDTO;

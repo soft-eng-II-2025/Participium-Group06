@@ -130,7 +130,7 @@ import {UserResponseDTO} from "./UserResponseDTO";
 import {LoginDTO} from "./LoginDTO";
 
 function registerUser(user: UserResponseDTO);    // POST /api/register  registers a new user account into the system
-function login(credentials: LoginDTO);   // POST /api/login                       
+function login(credentials: LoginDTO);            // POST /api/login                       
 function addReport(report: ReportResponseDTO);   // POST /api/users/reports
 ```
 

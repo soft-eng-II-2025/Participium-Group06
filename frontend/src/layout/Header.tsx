@@ -57,7 +57,7 @@ export default function Header() {
 
   return (
       <>
-        <AppBar position="fixed" sx={{width: "100%"}}>
+        <AppBar position="fixed" sx={{ left: 0, right: 0 }}>
           <Toolbar sx={{justifyContent: "flex-start"}}>
             <IconButton
                 size="small"

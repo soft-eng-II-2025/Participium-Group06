@@ -50,14 +50,14 @@ export function createMunicipalityOfficerDTO(
 }
 
 export function createReportDTO(
-    longitude?: number,
-    latitude?: number,
-    title?: string,
-    description?: string,
-    userId?: number,
-    categoryId?: number,
-    status?: string,
-    explanation?: string,
+    longitude: number,
+    latitude: number,
+    title: string,
+    description: string,
+    user: User, 
+    categoryId: number,
+    status: string,
+    explanation: string,
     officer?: MunicipalityOfficerResponseDTO,
     photos?: string[]
 ): ReportResponseDTO {
@@ -66,14 +66,16 @@ export function createReportDTO(
         latitude,
         title,
         description,
-        userId,
+        user: mapUserDAOToDTO(user),
+        categoryId,
         status,
         explanation,
         officer,
-        categoryId,
         photos,
     }) as ReportResponseDTO;
 }
+
+
 
 export function createRoleDTO(title?: string, officers?: MunicipalityOfficerResponseDTO[]): RoleResponseDTO {
     return removeNullAttributes({ title, officers }) as RoleResponseDTO;
@@ -131,12 +133,13 @@ export function mapMunicipalityOfficerDAOToDTO(officerDAO: MunicipalityOfficer):
 }
 
 export function mapReportDAOToDTO(reportDAO: Report): ReportResponseDTO {
+    
     return createReportDTO(
         reportDAO.longitude,
         reportDAO.latitude,
         reportDAO.title,
         reportDAO.description,
-        reportDAO.user?.id,
+        reportDAO.user,
         reportDAO.category?.id,
         reportDAO.status,
         reportDAO.explanation,

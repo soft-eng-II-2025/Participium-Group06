@@ -80,8 +80,8 @@ The frontend will run on http://localhost:8080
 
 
 ## Backend API
-### **User Routes - Citizen**
 
+### **Auth Routes**
 - POST `/api/register`
   - Description: Creates a new user in the database.
   - Success: Returns the newly created user object.
@@ -92,6 +92,16 @@ The frontend will run on http://localhost:8080
   - Success: Returns the logged-in user object.
   - Error: Returns an error.
 
+- GET `/api/logout`
+  - Description: Logs out the currently logged-in user.
+  - Success: Returns a success message.
+
+- GET `/api/session`
+  - Description: Retrieves the currently logged-in user object.
+  - Success: Returns the logged-in user object.
+  - Error: Returns an error.
+
+### **User Routes - Citizen**
 - POST `/api/users/reports`
   - Description: Adds a new report to the database.
   - Success: Returns the newly created report object.
@@ -127,34 +137,58 @@ The frontend will run on http://localhost:8080
   - Success: Returns an array of role objects.
   - Error: Returns an error response.
 
+### **User Routes - Tech-Lead**
+- PUT `/api/tech-lead/:officerId/report/:reportId`
+  - Description: Assigns a report to an Officer. 
+  - Success: Returns the updated report
+  - Error: Returns an error response
 
-### **Report Routes **
+- GET `/api/tech-lead/:id/agents`
+  - Desciption: Returns the list of all the tech agents of the tech lead.
+  - Success: Returns a list of municipality users.
+  - Error: Returns an error response
 
-- PUT `/api/reports/:id/status`
-    - Description: Updates the status of an existing report.
-    - Success: Returns the updated report object.
-    - Error: Returns an error response.
+- GET `/api/tech-lead/:id/reports/list`
+  - Description: Returns the list of all the reports of the category managed by a tech lead, except the one in pending approval
+  - Success: Returns a list of report
+  - Error: Returns an error response
+
+### **User Routes - Tech agents**
+- GET `/api/tech/:id/reports/list`
+  - Description: Returns the list of all the reports assign to a tech agent
+  - Sucess: Returns a list of report
+  - Error: Returns an error response
+
+### **Report Routes**
+- POST `/api/reports/:id/status`
+  - Description: Modify the status of a report given its id
+  - Success: Returns the updated report
+  - Error: Returns an error response
 
 - GET `/api/reports/list`
-    - Description: Retrieves the list of all reports.
-    - Success: Returns an array of report objects.
-    - Error: Returns an error response.
-
-
+  - Desciption: Retrieves all the reports 
+  - Sucess: Return a list of reports
+  - Error: Returns an error response
 
 ## Frontend API 
 
 
 ### **Overview**
 
+**Auth API**
+```ts
+function registerUser(params: CreateUserRequestDTO);   // POST /api/register  registers a new user account into the system
+function login(params: LoginRequestDTO);              // POST /api/login    
+function logout();                                   // GET /api/logout
+function getSession();                              // GET /api/session
+
+```
 **User API**
 ```ts
-import {UserResponseDTO} from "./UserResponseDTO";
-import {LoginDTO} from "./LoginDTO";
-
-function registerUser(user: UserResponseDTO);    // POST /api/register  registers a new user account into the system
-function login(credentials: LoginDTO);            // POST /api/login                       
-function addReport(report: ReportResponseDTO);   // POST /api/users/reports
+function addReport(report: ReportResponseDTO);                   // POST /api/users/reports
+function uploadReportImages(images: File[]): Promise<string[]>  // POST /api/users/reports/images/upload
+function getAllCategories(): Promise<CategoryResponseDTO[]>    // GET /api/users/reports/categories
+function updateUserProfile(userId: number, payload: UpdateUserRequestDTO): Promise<UserResponseDTO>  // PUT /api/users/:id
 ```
 
 **Admin API**
@@ -166,6 +200,24 @@ function registerMunicipalityOfficer(body: MunicipalityOfficerResponseDTO);  // 
 function getAllMunicipalityUsers(): Promise<MunicipalityOfficerResponseDTO[]>;                       // GET /api/admin/accounts/list       retrieves all municipality users in the system
 function setRole(body: MunicipalityOfficerResponseDTO);                      // PUT /api/admin/accounts/assign     assigns a role to a specific municipality user
 function getRoles(): Promise<RoleResponseDTO[]>;                                              // GET /api/admin/roles/list   retrieves all available roles in the system
+```
+
+**Report API**
+```ts
+function getAllReports(): Promise<ReportResponseDTO[]>;  // GET /api/reports/list
+function updateReportStatus(reportId: number, payload: UpdateStatusReportDTO): Promise<ReportResponseDTO>;  // PUT /api/reports/:id/status
+```
+
+**Tech Lead API**
+```ts
+function assignTechAgent(officerId: number, reportId: number): Promise<ReportResponseDTO>;  // PUT /api/tech-lead/:officerId/report/:reportId
+function getAgentsByTechLeadId(techLeadId: number): Promise<MunicipalityOfficerResponseDTO[]>;  // GET /api/tech-lead/:id/agents
+function getTechLeadReports(techLeadId: number): Promise<ReportResponseDTO[]>;  // GET /api/tech-lead/:id/reports/list
+```
+
+**Tech API**
+```ts
+function getTechReports(techAgentId: number): Promise<ReportResponseDTO[]>;  // GET /api/tech/:id/reports/list
 ```
 
 ### 👥 Municipality Officer Roles

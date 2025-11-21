@@ -75,9 +75,22 @@ export async function getReportById(reportId: number):Promise<ReportResponseDTO>
     return mapReportDAOToResponse(report);
 }
 
+
+export async function GetReportsByOfficerUsername(username: string):Promise<ReportResponseDTO[]> {
+    const officer = await getMunicipalityOfficerDAOByUsername(username);
+    const reports = await reportRepository.findByOfficer(officer);
+    return reports.map(mapReportDAOToResponse);
+}
+
+export async function getAllAcceptedReports():Promise<ReportResponseDTO[]> {
+    const reports = await reportRepository.findApproved();
+    return reports.map(mapReportDAOToResponse);
+}
+
 export async function getReportsByCategoryIdAndStatus(categoryId :number, Status : StatusType[]):Promise<ReportResponseDTO[]> {
     const reports = await reportRepository.findByCategoryId(categoryId);
     const filteredReports = reports.filter(report => Status.includes(report.status));
     return filteredReports.map(mapReportDAOToResponse);
 }   
+
 

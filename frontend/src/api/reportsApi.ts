@@ -16,6 +16,10 @@ export class ReportsApi {
         const response = await api.get<ReportResponseDTO[]>(`${BASE_URL}/list`);
         return response.data;
     }
+    /* * GET /reports/list * Retrieve all approved reports */
+     async getApprovedReports(): Promise<ReportResponseDTO[]> {
+        const response = await api.get<ReportResponseDTO[]>(`${BASE_URL}/list/accepted`); 
+        return response.data; }
 
     /*
      * PUT /reports/:id/status

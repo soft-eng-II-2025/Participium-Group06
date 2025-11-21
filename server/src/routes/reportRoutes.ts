@@ -35,3 +35,16 @@ router.get("/list", async (req, res, next) => {
     const reports = await reportController.getAllReports();
     res.status(200).json(reports);
 });
+
+
+router.get('/list/accepted', async (req, res) => {
+    try {
+        const reports = await reportController.getAllAcceptedReports();
+        return res.status(200).json(reports);
+    } catch (error: any) {
+        console.error('Error fetching all reports:', error);
+        const statusCode = error.status || 500;
+        return res.status(statusCode).json({ error: error.message || 'INTERNAL_SERVER_ERROR' });
+    }
+});
+

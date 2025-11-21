@@ -19,7 +19,7 @@ router.put("/:id/status",
         }
 
         const { newStatus, explanation } = req.body as UpdateStatusReportDTO;
-        const updatedReport = await reportController.UpdateReportStatus(
+        const updatedReport = await reportController.updateReportStatus(
             reportId,
             newStatus as StatusType,
             explanation || ""
@@ -32,6 +32,6 @@ router.put("/:id/status",
    Get a list of all reports */
 
 router.get("/list", async (req, res, next) => {
-    const reports = await reportController.GetAllReports();
+    const reports = await reportController.getAllReports();
     res.status(200).json(reports);
 });

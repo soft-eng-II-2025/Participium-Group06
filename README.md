@@ -127,20 +127,38 @@ The frontend will run on http://localhost:8080
   - Success: Returns an array of role objects.
   - Error: Returns an error response.
 
+### **User Routes - Tech-Lead**
+- PUT `/api/tech-lead/:officerId/report/:reportId`
+  - Description: Assigns a report to an Officer. 
+  - Success: Returns the updated report
+  - Error: Returns an error response
 
-### **Report Routes **
+- GET `/api/tech-lead/:id/agents`
+  - Desciption: Returns the list of all the tech agents of the tech lead.
+  - Success: Returns a list of municipality users.
+  - Error: Returns an error response
 
-- PUT `/api/reports/:id/status`
-    - Description: Updates the status of an existing report.
-    - Success: Returns the updated report object.
-    - Error: Returns an error response.
+- GET `/api/tech-lead/:id/reports/list`
+  - Description: Returns the list of all the reports of the category managed by a tech lead, except the one in pending approval
+  - Success: Returns a list of report
+  - Error: Returns an error response
+
+### **User Routes - Tech agents**
+- GET `/api/tech/:id/reports/list`
+  - Description: Returns the list of all the reports assign to a tech agent
+  - Sucess: Returns a list of report
+  - Error: Returns an error response
+
+### **Report Routes**
+- POST `/api/reports/:id/status`
+  - Description: Modify the status of a report given its id
+  - Success: Returns the updated report
+  - Error: Returns an error response
 
 - GET `/api/reports/list`
-    - Description: Retrieves the list of all reports.
-    - Success: Returns an array of report objects.
-    - Error: Returns an error response.
-
-
+  - Desciption: Retrieves all the reports 
+  - Sucess: Return a list of reports
+  - Error: Returns an error response
 
 ## Frontend API 
 

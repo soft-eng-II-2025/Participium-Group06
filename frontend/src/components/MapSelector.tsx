@@ -31,26 +31,39 @@ L.Icon.Default.mergeOptions({
     shadowUrl: markerShadow,
 });
 
-// Custom marker for new report
-const myCustomColour = "#d33";
+// Custom marker for new report with inner white circle
+const myCustomColour = "#d33"; // main pin color
+
 const markerHtmlStyles = `
-  background-color: ${myCustomColour};
+  position: relative;
   width: 2rem;
   height: 2rem;
-  display: block;
-  left: -1rem;
-  top: -1rem;
-  position: relative;
+  background-color: ${myCustomColour};
   border-radius: 2rem 2rem 0;
   transform: rotate(45deg);
   border: 1px solid #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
+
+const innerCircleStyles = `
+  width: 0.7rem;
+  height: 0.7rem;
+  background-color: white;
+  border-radius: 50%;
+  transform: rotate(-45deg); /* counter rotate to stay circular */
+`;
+
 export const newReportIcon = L.divIcon({
   className: "my-custom-pin",
-  iconAnchor: [0, 24],
-  popupAnchor: [0, -36],
-  html: `<span style="${markerHtmlStyles}" />`,
+  html: `<span style="${markerHtmlStyles}"><span style="${innerCircleStyles}"></span></span>`,
+  iconSize: [32, 32],
+  iconAnchor: [16, 28],
+  popupAnchor: [0, -30],
 });
+
+
 
 // Default icon for existing reports
 const existingReportIcon = new L.Icon({

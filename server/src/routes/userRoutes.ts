@@ -120,11 +120,7 @@ router.get('/reports/categories', requireAuth, async (req, res: Response) => {
 
 
 // Update profilo utente
-router.put(
-    "/users/:id",
-    requireUser,
-    validateDto(UpdateUserRequestDTO),
-    async (req: Request, res: Response) => {
+router.put("/users/:id", requireUser, validateDto(UpdateUserRequestDTO), async (req: Request, res: Response) => {
         try {
             const userId = Number(req.params.id);
 

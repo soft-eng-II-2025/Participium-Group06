@@ -204,9 +204,22 @@ function getRoles(): Promise<RoleResponseDTO[]>;                                
 
 **Report API**
 ```ts
-function getAllReports(): Promise<ReportResponseDTO[]>  // GET /api/reports/list
-function updateReportStatus(reportId: number, payload: UpdateStatusReportDTO): Promise<ReportResponseDTO>  // PUT /api/reports/:id/status
+function getAllReports(): Promise<ReportResponseDTO[]>;  // GET /api/reports/list
+function updateReportStatus(reportId: number, payload: UpdateStatusReportDTO): Promise<ReportResponseDTO>;  // PUT /api/reports/:id/status
 ```
+
+**Tech Lead API**
+```ts
+function assignTechAgent(officerId: number, reportId: number): Promise<ReportResponseDTO>;  // PUT /api/tech-lead/:officerId/report/:reportId
+function getAgentsByTechLeadId(techLeadId: number): Promise<MunicipalityOfficerResponseDTO[]>;  // GET /api/tech-lead/:id/agents
+function getTechLeadReports(techLeadId: number): Promise<ReportResponseDTO[]>;  // GET /api/tech-lead/:id/reports/list
+```
+
+**Tech API**
+```ts
+function getTechReports(techAgentId: number): Promise<ReportResponseDTO[]>;  // GET /api/tech/:id/reports/list
+```
+
 ### 👥 Municipality Officer Roles
 
 | Role Name | Assigned Categories |

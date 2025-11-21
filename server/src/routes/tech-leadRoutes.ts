@@ -5,11 +5,11 @@ import * as adminController from "../controllers/adminController";
 
 export const router = Router();
 
-router.put('/tech-lead/:OfficerId/report/:reportId', requireTechLead, async (req, res: Response) => {
-    const OfficerId = Number(req.params.OfficerId);
+router.put('/tech-lead/:officerId/report/:reportId', requireTechLead, async (req, res: Response) => {
+    const officerId = Number(req.params.officerId);
     const reportId = Number(req.params.reportId);
 
-    const updatedReport = await adminController.assignTechAgent(reportId, OfficerId);
+    const updatedReport = await adminController.assignTechAgent(reportId, officerId);
     res.status(200).json(updatedReport);
 });
 

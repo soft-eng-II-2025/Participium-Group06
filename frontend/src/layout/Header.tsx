@@ -13,9 +13,9 @@ import Avatar from '@mui/material/Avatar';
 import Stack from '@mui/material/Stack';
 import MenuIcon from "@mui/icons-material/Menu";
 import {
-  Drawer,
-  useMediaQuery,
-  useTheme
+    Drawer,
+    useMediaQuery,
+    useTheme
 } from "@mui/material";
 
 export default function Header() {
@@ -123,10 +123,10 @@ export default function Header() {
             {!isMobile && isAuthenticated && (
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Avatar
-                      sx={{width: 36, height: 36, bgcolor: 'secondary.main', fontSize: 16, fontWeight: 600}}>
+                      sx={{width: 36, height: 36, bgcolor: 'secondary.main', fontSize: 16, fontWeight: 600}} onClick={() => navigate("/account")}>
                     {initials}
                   </Avatar>
-                  <Stack direction="column" spacing={0} sx={{mr: 2, textAlign: 'left'}}>
+                  <Stack direction="column" spacing={0} sx={{mr: 2, textAlign: 'left'}} onClick={() => navigate("/account")}>
                     <Typography sx={{mr: 2, fontWeight: 600, fontSize: 14}}>
                       {user?.first_name} {user?.last_name}
                     </Typography>

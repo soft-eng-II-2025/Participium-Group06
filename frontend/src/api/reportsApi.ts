@@ -1,4 +1,4 @@
-// src/api/officerApi.ts
+// src/api/reportsApi.ts
 
 import api from "./api";
 import { UpdateStatusReportDTO } from "../DTOs/UpdateStatusReportDTO";
@@ -6,7 +6,7 @@ import {ReportResponseDTO} from "../DTOs/ReportResponseDTO";
 
 const BASE_URL = "reports"; // mappato su /api/reports
 
-export class OfficerApi {
+export class ReportsApi {
     /*
      * GET /reports/list
      * Retrieve all reports

@@ -7,10 +7,10 @@ import { UpdateStatusReportDTO } from "../models/DTOs/UpdateStatusReportDTO";
 
 export const router = Router();
 
-/*  PUT /reports/:id/status
+/*  PUT /:id/status
     Update the status of a report */
 
-router.put("/reports/:id/status",
+router.put("/:id/status",
     validateDto(UpdateStatusReportDTO),
     async (req, res, next) => {
         const reportId = Number(req.params.id);
@@ -28,10 +28,10 @@ router.put("/reports/:id/status",
     }
 );
 
-/* GET allReports /reports/list
+/* GET allReports /list
    Get a list of all reports */
 
-router.get("/reports/list", async (req, res, next) => {
+router.get("/list", async (req, res, next) => {
     const reports = await reportController.GetAllReports();
     res.status(200).json(reports);
 });

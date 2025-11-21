@@ -128,7 +128,7 @@ The frontend will run on http://localhost:8080
   - Error: Returns an error response.
 
 
-### **User Routes - Municipality Officer**
+### **Report Routes **
 
 - PUT `/api/reports/:id/status`
     - Description: Updates the status of an existing report.

@@ -10,6 +10,7 @@ import path from 'path'; // Importa path
 import { Request } from 'express';
 import express from 'express';
 import { requireAuth, requireUser } from '../middlewares/authMiddleware';
+import { UpdateUserRequestDTO } from "../models/DTOs/UpdateUserRequestDTO";
 
 export const router = Router();
 
@@ -115,3 +116,32 @@ router.get('/reports/categories', requireAuth, async (req, res: Response) => {
     const categories = await userController.getAllCategories();
     res.status(200).json(categories);
 });
+
+
+
+// Update profilo utente
+router.put(
+    "/users/:id",
+    requireUser,
+    validateDto(UpdateUserRequestDTO),
+    async (req: Request, res: Response) => {
+        try {
+            const userId = Number(req.params.id);
+
+            // opzionale: se vuoi impedire a un utente di aggiornare profili altrui,
+            // confronta userId con quello nel token/sessione qui.
+
+            const updatedUser = await userController.updateUserProfile(
+                userId,
+                req.body as UpdateUserRequestDTO
+            );
+
+            res.status(200).json(updatedUser);
+        } catch (error: any) {
+            console.error("Error updating user profile:", error);
+            res
+                .status(error.status || 500)
+                .json({ message: error.message || "Failed to update user profile." });
+        }
+    }
+);

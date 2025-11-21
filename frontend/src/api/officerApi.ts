@@ -1,8 +1,8 @@
 // src/api/officerApi.ts
 
 import api from "./api";
-import { ReportDTO } from "../DTOs/ReportDTO";
 import { UpdateStatusReportDTO } from "../DTOs/UpdateStatusReportDTO";
+import {ReportResponseDTO} from "../DTOs/ReportResponseDTO";
 
 const BASE_URL = "reports"; // mappato su /api/reports
 
@@ -12,8 +12,8 @@ export class OfficerApi {
      * Retrieve all reports
      */
 
-    async getAllReports(): Promise<ReportDTO[]> {
-        const response = await api.get<ReportDTO[]>(`${BASE_URL}/list`);
+    async getAllReports(): Promise<ReportResponseDTO[]> {
+        const response = await api.get<ReportResponseDTO[]>(`${BASE_URL}/list`);
         return response.data;
     }
 
@@ -25,8 +25,8 @@ export class OfficerApi {
     async updateReportStatus(
         reportId: number,
         payload: UpdateStatusReportDTO
-    ): Promise<ReportDTO> {
-        const response = await api.put<ReportDTO>(
+    ): Promise<ReportResponseDTO> {
+        const response = await api.put<ReportResponseDTO>(
             `${BASE_URL}/${reportId}/status`,
             payload
         );

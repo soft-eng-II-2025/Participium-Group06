@@ -4,12 +4,13 @@ import { Router, Response } from 'express';
 import { validateDto } from "../middlewares/validationMiddleware";
 import { CreateReportRequestDTO } from "../models/DTOs/CreateReportRequestDTO";
 import * as userController from "../controllers/userController";
-import * as reportController from "../controllers/reportController";
+import * as reportController from "../controllers/reportController"; 
 import multer from 'multer';
 import path from 'path'; // Importa path
 import { Request } from 'express';
 import express from 'express';
 import { requireAuth, requireUser } from '../middlewares/authMiddleware';
+import { UpdateUserRequestDTO } from "../models/DTOs/UpdateUserRequestDTO";
 
 export const router = Router();
 
@@ -115,3 +116,38 @@ router.get('/reports/categories', requireAuth, async (req, res: Response) => {
     const categories = await userController.getAllCategories();
     res.status(200).json(categories);
 });
+
+
+
+// Update profilo utente
+router.put("/users/:id", requireUser, validateDto(UpdateUserRequestDTO), async (req: Request, res: Response) => {
+        try {
+            const userId = Number(req.params.id);
+            if (Number.isNaN(userId)) {
+                return res.status(400).json({ message: "Invalid user id" });
+            }
+
+            // Utente autenticato messo da requireUser (es. req.user = { id, username, ... })
+            const authUser = (req as any).user;
+
+            // Impedisce di aggiornare profili altrui
+            if (!authUser || authUser.id !== userId) {
+                return res
+                    .status(403)
+                    .json({ message: "You are not allowed to update this user profile." });
+            }
+
+            const updatedUser = await userController.updateUserProfile(
+                userId,
+                req.body as UpdateUserRequestDTO
+            );
+
+            res.status(200).json(updatedUser);
+        } catch (error: any) {
+            console.error("Error updating user profile:", error);
+            res
+                .status(error.status || 500)
+                .json({ message: error.message || "Failed to update user profile." });
+        }
+    }
+);

@@ -1,11 +1,17 @@
+// src/models/DTOs/UpdateUserRequestDTO.ts
 
+import { IsBoolean, IsOptional, IsString } from "class-validator";
 
 export class UpdateUserRequestDTO {
+    @IsOptional()
+    @IsString()
+    telegram_id?: string;
 
-    telegramId?: number | null;
+    @IsOptional()
+    @IsString()
+    photo?: string;
 
-    photo?: string | null;
-
-    flagEmail?: boolean | null;
-    
+    @IsOptional()
+    @IsBoolean()
+    flag_email?: boolean;
 }

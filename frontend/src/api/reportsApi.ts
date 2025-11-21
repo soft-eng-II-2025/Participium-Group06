@@ -16,20 +16,18 @@ export class ReportsApi {
         const response = await api.get<ReportResponseDTO[]>(`${BASE_URL}/list`);
         return response.data;
     }
+    /* * GET /reports/list * Retrieve all approved reports */
+     async getApprovedReports(): Promise<ReportResponseDTO[]> {
+        const response = await api.get<ReportResponseDTO[]>(`${BASE_URL}/list/accepted`); 
+        return response.data; }
 
     /*
      * PUT /reports/:id/status
      * Update the status of a report
      */
 
-    async updateReportStatus(
-        reportId: number,
-        payload: UpdateStatusReportDTO
-    ): Promise<ReportResponseDTO> {
-        const response = await api.put<ReportResponseDTO>(
-            `${BASE_URL}/${reportId}/status`,
-            payload
-        );
+    async updateReportStatus(reportId: number, payload: UpdateStatusReportDTO): Promise<ReportResponseDTO> {
+        const response = await api.put<ReportResponseDTO>(`${BASE_URL}/${reportId}/status`, payload);
         return response.data;
     }
 }

@@ -20,6 +20,7 @@ import { off } from "process";
 import { MunicipalityOfficerRepository } from "../repositories/MunicipalityOfficerRepository";
 import { StatusType } from "../models/StatusType";
 import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
+import {UpdateUserRequestDTO} from "../models/DTOs/UpdateUserRequestDTO";
 
 /*const userRepository: UserRepository = new UserRepository(AppDataSource);
 const reportRepository: ReportRepository = new ReportRepository(AppDataSource);
@@ -107,4 +108,12 @@ export async function getUserIdByUsername(username: string): Promise<number> {
 export async function getAllCategories(): Promise<CategoryResponseDTO[]> {
     const categories = await categoryRepository.findAll();
     return categories.map(mapCategoryDAOToDTO);
+}
+
+export async function updateUserProfile(
+    userId: number,
+    payload: UpdateUserRequestDTO
+) {
+    // TODO: implement updateUserProfile (carica utente, aggiorna campi, salva, ritorna DTO)
+    throw new Error("updateUserProfile not implemented");
 }

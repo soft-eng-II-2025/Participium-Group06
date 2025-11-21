@@ -47,6 +47,16 @@ export class ReportRepository {
         });
     }
 
+     /*
+     * Find ONLY approved reports
+     */
+    async findApproved(): Promise<Report[]> {
+        return this.ormRepository.find({
+            where: { status: StatusType.Assigned },
+            relations: ["user", "category", "photos", "officer"],
+            order: { createdAt: "DESC" }
+        });
+    }
     async findByOfficer(officer: MunicipalityOfficer): Promise<Report[]> {
         return this.ormRepository.find({
             where: { officer: { id: officer.id } },
@@ -123,5 +133,12 @@ export class ReportRepository {
 
     async update(report: Report): Promise<Report> {
         return this.ormRepository.save(report);
+    }
+
+    async findByCategoryId(categoryId: number): Promise<Report[]> { 
+        return this.ormRepository.find({
+            where: { category: { id: categoryId } },
+            relations: ['category', 'photos', 'user', 'officer']
+        });
     }
 }

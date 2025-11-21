@@ -17,6 +17,7 @@ import ProtectedRoute from './routes/ProtectedRoute';
 import GuestRoute from './routes/GuestRoute';
 import NewReportPage from './pages/NewReportPage';
 import { useAuth } from './contexts/AuthContext';
+import {UserAccountPage} from "./pages/UserAccountPage";
 
 
 const queryClient = new QueryClient();
@@ -65,6 +66,13 @@ function App() {
                                     <ProtectedRoute>
                                         <RequireRole role="USER">
                                             <NewReportPage />
+                                        </RequireRole>
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/account" element={
+                                    <ProtectedRoute>
+                                        <RequireRole role="USER">
+                                            <UserAccountPage />
                                         </RequireRole>
                                     </ProtectedRoute>
                                 } />

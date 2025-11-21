@@ -9,7 +9,6 @@ services:
       - "5434:5432"
     restart: unless-stopped
     healthcheck:
-      # Wait until Postgres is ready
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-participium}"]
       interval: 5s
       timeout: 3s
@@ -22,9 +21,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    working_dir: /app
     environment:
-      # These map to data-source.ts (ENV-first with local fallbacks)
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USER: ${POSTGRES_USER:-postgres}
@@ -32,26 +29,37 @@ services:
       DB_NAME: ${POSTGRES_DB:-participium}
       NODE_ENV: production
     command: >
-      sh -c "npx typeorm-ts-node-commonjs migration:run -d src/data-source.ts &&
+      sh -c "npx typeorm migration:run -d dist/data-source.js &&
              echo '✅ Migrations completed'"
     restart: "no"
 
-  # api:
-  #   build:
-  #     context: ./server
-  #     dockerfile: Dockerfile
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     migrator:
-  #       condition: service_completed_successfully
-  #   environment:
-  #     DB_HOST: postgres
-  #     DB_PORT: 5432
-  #     DB_USER: ${POSTGRES_USER:-postgres}
-  #     DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-  #     DB_NAME: ${POSTGRES_DB:-participium}
-  #     NODE_ENV: development
-  #   ports:
-  #     - "8080:8080"
-  #   command: ["npm", "run", "dev"] # adjust to your actual start cmd
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DB_NAME: ${POSTGRES_DB:-participium}
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    command: ["npm", "run", "start"]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "5173:80"

@@ -97,6 +97,16 @@ The frontend will run on http://localhost:8080
   - Success: Returns the newly created report object.
   - Error: Returns an error response.
 
+- POST `/api/users/reports/images/upload`
+    - Description: Uploads up to 3 images for a report and returns their URLs.
+    - Success: Returns an object containing the list of uploaded image URLs.
+    - Error: Returns an error response if upload fails or no files are provided.
+
+- GET `/api/users/reports/categories`
+    - Description: Returns the full list of available report categories.
+    - Success: Returns the full list of available report categories.
+    - Error: Returns an error response.
+
 ### **User Routes - Admin**
 - POST `/api/admin/accounts/register`
   - Description: Creates a new municipality officer in the database.
@@ -116,6 +126,19 @@ The frontend will run on http://localhost:8080
   - Description: Retrieves a list of all available roles that can be assigned to municipality officers.
   - Success: Returns an array of role objects.
   - Error: Returns an error response.
+
+
+### **Report Routes **
+
+- PUT `/api/reports/:id/status`
+    - Description: Updates the status of an existing report.
+    - Success: Returns the updated report object.
+    - Error: Returns an error response.
+
+- GET `/api/reports/list`
+    - Description: Retrieves the list of all reports.
+    - Success: Returns an array of report objects.
+    - Error: Returns an error response.
 
 
 

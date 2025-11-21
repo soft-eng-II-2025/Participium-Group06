@@ -41,7 +41,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE TABLE "user" (
+      CREATE TABLE "app_user" (
           "id" SERIAL PRIMARY KEY,
           "username" VARCHAR NOT NULL UNIQUE,
           "email" VARCHAR NOT NULL UNIQUE,
@@ -73,10 +73,11 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
           "officerId" INT,
           "userId" INT,
           "categoryId" INT,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
           CONSTRAINT "FK_report_officer"
             FOREIGN KEY ("officerId") REFERENCES "municipality_officer"("id"),
           CONSTRAINT "FK_report_user"
-            FOREIGN KEY ("userId") REFERENCES "user"("id"),
+            FOREIGN KEY ("userId") REFERENCES "app_user"("id"),
           CONSTRAINT "FK_report_category"
             FOREIGN KEY ("categoryId") REFERENCES "category"("id")
       )
@@ -204,7 +205,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "report_photo"`);
     await queryRunner.query(`DROP TABLE "report"`);
     await queryRunner.query(`DROP TABLE "category"`);
-    await queryRunner.query(`DROP TABLE "user"`);
+    await queryRunner.query(`DROP TABLE "app_user"`);
     await queryRunner.query(`DROP TABLE "municipality_officer"`);
     await queryRunner.query(`DROP TABLE "role"`);
     await queryRunner.query(`DROP TYPE "status_type_enum"`);

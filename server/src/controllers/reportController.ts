@@ -68,3 +68,8 @@ export async function GetReportsByOfficerUsername(username: string):Promise<Repo
     const reports = await reportRepository.findByOfficer(officer);
     return reports.map(mapReportDAOToResponse);
 }
+
+export async function getAllAcceptedReports():Promise<ReportResponseDTO[]> {
+    const reports = await reportRepository.findApproved();
+    return reports.map(mapReportDAOToResponse);
+}

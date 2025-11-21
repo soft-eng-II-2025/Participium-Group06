@@ -1,4 +1,4 @@
-import {ReportDTO} from "./ReportDTO";
+import {CreateReportDTO} from "./CreateReportDTO";
 
 export interface UserResponseDTO {
     userId?: number;
@@ -6,5 +6,5 @@ export interface UserResponseDTO {
     email: string;
     first_name: string;
     last_name: string;
-    reports?: ReportDTO[];
+    reports?: CreateReportDTO[];
 }

@@ -9,7 +9,7 @@ router.put('/tech-lead/:OfficerId/report/:reportId', requireTechLead, async (req
     const OfficerId = Number(req.params.OfficerId);
     const reportId = Number(req.params.reportId);
 
-    const updatedReport = await adminController.AssignTechAgent(reportId, OfficerId);
+    const updatedReport = await adminController.assignTechAgent(reportId, OfficerId);
     res.status(200).json(updatedReport);
 });
 

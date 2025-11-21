@@ -11,7 +11,7 @@ import {AssignRoleRequestDTO} from "../models/DTOs/AssignRoleRequestDTO";
 import {CreateUserRequestDTO} from "../models/DTOs/CreateUserRequestDTO";
 import { DataSource } from "typeorm";
 import { get } from "http";
-import { UpdateReportOfficer,GetReportsByCategoryIdAndStatus } from "./reportController";
+import { updateReportOfficer,getReportsByCategoryIdAndStatus } from "./reportController";
 import { ReportResponseDTO } from "../models/DTOs/ReportResponseDTO";
 import { StatusType } from "../models/StatusType";
 
@@ -125,10 +125,10 @@ export async function getMunicipalityOfficerDAOByUsername(username: string): Pro
     return officer;
 }
 
-export async function AssignTechAgent(reportId:number, MunicipalityOfficerId:number):Promise<ReportResponseDTO> {
+export async function assignTechAgent(reportId:number, MunicipalityOfficerId:number):Promise<ReportResponseDTO> {
     const Officer = await municipalityOfficerRepository.findById(MunicipalityOfficerId);
     if (!Officer) throw appErr("OFFICER_NOT_FOUND", 404);
-    return UpdateReportOfficer(reportId, Officer);
+    return updateReportOfficer(reportId, Officer);
 }
 
 export async function getAgentsByTechLeadId(OfficerId :number):Promise<MunicipalityOfficerResponseDTO[]> {
@@ -161,7 +161,7 @@ export async function getTechLeadReports(OfficerId :number):Promise<ReportRespon
     let reports: ReportResponseDTO[] = [];
     for (const category of categories) {
         const Statuss = [StatusType.Assigned,StatusType.InProgress,StatusType.Resolved,StatusType.Rejected,StatusType.Suspended];
-        const categoryReports = await GetReportsByCategoryIdAndStatus(category.id, Statuss);
+        const categoryReports = await getReportsByCategoryIdAndStatus(category.id, Statuss);
         reports = reports.concat(categoryReports);
     }
     return reports;

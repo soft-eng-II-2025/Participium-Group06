@@ -43,7 +43,7 @@ export async function addReport(reportData: CreateReportRequestDTO): Promise<Rep
     return mapReportDAOToResponse(addedReport);
 }
 
-export async function UpdateReportStatus(reportId: number, newStatus: StatusType, explanation: string): Promise<ReportResponseDTO> {
+export async function updateReportStatus(reportId: number, newStatus: StatusType, explanation: string): Promise<ReportResponseDTO> {
     console.log(`Updating report ${reportId} to status ${newStatus}`);
     const report = await reportRepository.findById(reportId);
     if (!report) throw appErr('REPORT_NOT_FOUND', 404);
@@ -54,7 +54,7 @@ export async function UpdateReportStatus(reportId: number, newStatus: StatusType
     return mapReportDAOToResponse(updatedReport);
 }
 
-export async function UpdateReportOfficer(reportId: number, MunicipalityOfficer: MunicipalityOfficer): Promise<ReportResponseDTO> {
+export async function updateReportOfficer(reportId: number, MunicipalityOfficer: MunicipalityOfficer): Promise<ReportResponseDTO> {
     console.log(`Updating report ${reportId} to officer ${MunicipalityOfficer.username}`);
     const report = await reportRepository.findById(reportId);
     if (!report) throw appErr('REPORT_NOT_FOUND', 404);
@@ -64,29 +64,18 @@ export async function UpdateReportOfficer(reportId: number, MunicipalityOfficer:
     return mapReportDAOToResponse(updatedReport);
 }
 
-export async function GetAllReports():Promise<ReportResponseDTO[]> {
+export async function getAllReports():Promise<ReportResponseDTO[]> {
     const reports = await reportRepository.findAll();
     return reports.map(mapReportDAOToResponse);
 }
 
-export async function GetReportsByUserId(userId: number):Promise<ReportResponseDTO[]> {
-    const reports = await reportRepository.findByUserId(userId);
-    return reports.map(mapReportDAOToResponse);
-}
-
-export async function GetReportsByOfficerUsername(username: string):Promise<ReportResponseDTO[]> {
-    const officer = await getMunicipalityOfficerDAOByUsername(username);
-    const reports = await reportRepository.findByOfficer(officer);
-    return reports.map(mapReportDAOToResponse);
-}
-
-export async function GetReportById(reportId: number):Promise<ReportResponseDTO> {
+export async function getReportById(reportId: number):Promise<ReportResponseDTO> {
     const report = await reportRepository.findById(reportId);
     if (!report) throw appErr('REPORT_NOT_FOUND', 404);
     return mapReportDAOToResponse(report);
 }
 
-export async function GetReportsByCategoryIdAndStatus(categoryId :number, Status : StatusType[]):Promise<ReportResponseDTO[]> {
+export async function getReportsByCategoryIdAndStatus(categoryId :number, Status : StatusType[]):Promise<ReportResponseDTO[]> {
     const reports = await reportRepository.findByCategoryId(categoryId);
     const filteredReports = reports.filter(report => Status.includes(report.status));
     return filteredReports.map(mapReportDAOToResponse);

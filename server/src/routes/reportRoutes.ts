@@ -21,7 +21,7 @@ router.post('/:id/status', async (req: express.Request, res: Response) => {
             return res.status(400).json({ error: 'EXPLANATION_REQUIRED_FOR_REJECTION' });
         }
 
-        const updatedReport = await reportController.UpdateReportStatus(reportId, status, explanation || "");
+        const updatedReport = await reportController.updateReportStatus(reportId, status, explanation || "");
 
         return res.status(200).json(updatedReport);
     } catch (error: any) {
@@ -33,7 +33,7 @@ router.post('/:id/status', async (req: express.Request, res: Response) => {
 
 router.get('/', async (req: express.Request, res: Response) => {
     try {
-        const reports = await reportController.GetAllReports();
+        const reports = await reportController.getAllReports();
         return res.status(200).json(reports);
     } catch (error: any) {
         console.error('Error fetching all reports:', error);

@@ -1,43 +1,37 @@
-import { Router, Response } from 'express';
-import express from 'express';
-import * as reportController from '../controllers/reportController';
-import { StatusType } from '../models/StatusType';
-
+import { Router, Response, Request } from "express";
+import * as reportController from "../controllers/reportController";
+import { StatusType } from "../models/StatusType";
+import { validateDto } from "../middlewares/validationMiddleware";
+import { UpdateStatusReportDTO } from "../models/DTOs/UpdateStatusReportDTO";
+// eventualmente: import { requireAdmin } from "../middlewares/authMiddleware";
 
 export const router = Router();
 
-router.post('/:id/status', async (req: express.Request, res: Response) => {
-    try {
+/*  PUT /:id/status
+    Update the status of a report */
+
+router.put("/:id/status",
+    validateDto(UpdateStatusReportDTO),
+    async (req, res, next) => {
         const reportId = Number(req.params.id);
-        const { status, explanation } = req.body;
-
-        if (!status) {
-            return res.status(400).json({ error: 'STATUS_REQUIRED' });
-        }
-        if (status != StatusType.Rejected && status != StatusType.Resolved && status != StatusType.InProgress && status != StatusType.Suspended && status != StatusType.Assigned && status != StatusType.PendingApproval) {
-            return res.status(400).json({ error: 'INVALID_STATUS_VALUE' });
-        }
-        if (status == StatusType.Rejected && (explanation == null || explanation == "" || explanation == undefined)) {
-            return res.status(400).json({ error: 'EXPLANATION_REQUIRED_FOR_REJECTION' });
+        if (Number.isNaN(reportId)) {
+            return res.status(400).json({ error: "INVALID_REPORT_ID" });
         }
 
-        const updatedReport = await reportController.updateReportStatus(reportId, status, explanation || "");
-
-        return res.status(200).json(updatedReport);
-    } catch (error: any) {
-        console.error('Error updating report status:', error);
-        const statusCode = error.status || 500;
-        return res.status(statusCode).json({ error: error.message || 'INTERNAL_SERVER_ERROR' });
+        const { newStatus, explanation } = req.body as UpdateStatusReportDTO;
+        const updatedReport = await reportController.UpdateReportStatus(
+            reportId,
+            newStatus as StatusType,
+            explanation || ""
+        );
+        res.status(200).json(updatedReport);
     }
-});
+);
 
-router.get('/', async (req: express.Request, res: Response) => {
-    try {
-        const reports = await reportController.getAllReports();
-        return res.status(200).json(reports);
-    } catch (error: any) {
-        console.error('Error fetching all reports:', error);
-        const statusCode = error.status || 500;
-        return res.status(statusCode).json({ error: error.message || 'INTERNAL_SERVER_ERROR' });
-    }
+/* GET allReports /list
+   Get a list of all reports */
+
+router.get("/list", async (req, res, next) => {
+    const reports = await reportController.GetAllReports();
+    res.status(200).json(reports);
 });

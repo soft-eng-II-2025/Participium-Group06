@@ -10,5 +10,5 @@ router.use("/users", userRouter);
 router.use("", authRouter);
 router.use("/admin", adminRouter);
 router.use("/reports", reportRouter); 
-
+router.use("/tech-lead")
 

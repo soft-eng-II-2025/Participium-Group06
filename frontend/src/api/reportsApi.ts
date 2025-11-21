@@ -26,14 +26,8 @@ export class ReportsApi {
      * Update the status of a report
      */
 
-    async updateReportStatus(
-        reportId: number,
-        payload: UpdateStatusReportDTO
-    ): Promise<ReportResponseDTO> {
-        const response = await api.put<ReportResponseDTO>(
-            `${BASE_URL}/${reportId}/status`,
-            payload
-        );
+    async updateReportStatus(reportId: number, payload: UpdateStatusReportDTO): Promise<ReportResponseDTO> {
+        const response = await api.put<ReportResponseDTO>(`${BASE_URL}/${reportId}/status`, payload);
         return response.data;
     }
 }

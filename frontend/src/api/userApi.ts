@@ -4,6 +4,8 @@ import api from "./api";
 import { CategoryResponseDTO } from "../DTOs/CategoryResponseDTO";
 import {CreateReportRequestDTO} from "../DTOs/CreateReportRequestDTO";
 import {CreateReportDTO} from "../DTOs/CreateReportDTO";
+import {UpdateUserRequestDTO} from "../DTOs/UpdateUserRequestDTO";
+import {UserResponseDTO} from "../DTOs/UserResponseDTO";
 
 const BASE_URL = "users"; // Base URL per le tue API
 
@@ -31,6 +33,11 @@ export class UserApi {
 
     async getAllCategories(): Promise<CategoryResponseDTO[]> {
         const response = await api.get<CategoryResponseDTO[]>(`${BASE_URL}/reports/categories`);
+        return response.data;
+    }
+
+    async updateUserProfile(userId: number, payload: UpdateUserRequestDTO): Promise<UserResponseDTO> {
+        const response = await api.put<UserResponseDTO>(`${BASE_URL}/${userId}`, payload);
         return response.data;
     }
 }

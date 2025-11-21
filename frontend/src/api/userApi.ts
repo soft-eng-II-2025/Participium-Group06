@@ -3,13 +3,13 @@
 import api from "./api";
 import { CategoryResponseDTO } from "../DTOs/CategoryResponseDTO";
 import {CreateReportRequestDTO} from "../DTOs/CreateReportRequestDTO";
-import {ReportDTO} from "../DTOs/ReportDTO";
+import {CreateReportDTO} from "../DTOs/CreateReportDTO";
 
 const BASE_URL = "users"; // Base URL per le tue API
 
 export class UserApi {
     async addReport(params: CreateReportRequestDTO) {
-        return api.post<ReportDTO>(`${BASE_URL}/reports`, params);
+        return api.post<CreateReportDTO>(`${BASE_URL}/reports`, params);
     }
 
     // Funzione per l'upload delle immagini (ora per endpoint locale)

@@ -11,7 +11,7 @@ type AuthContextType = {
   loading: boolean;            // true while initial session fetch is pending
   isAuthenticated: boolean;
   role: string | null;
-  login: (creds: LoginDTO) => Promise<UserResponseDTO | null>;
+  login: (creds: LoginDTO) => Promise<UserResponseDTO | MunicipalityOfficerResponseDTO | null>;
   register: (payload: CreateUserRequestDTO) => Promise<UserResponseDTO | null>;
   logout: () => Promise<void>;
   setUser: (u: UserResponseDTO | null) => void;

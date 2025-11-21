@@ -97,6 +97,16 @@ The frontend will run on http://localhost:8080
   - Success: Returns the newly created report object.
   - Error: Returns an error response.
 
+- POST `/api/users/reports/images/upload`
+    - Description: Uploads up to 3 images for a report and returns their URLs.
+    - Success: Returns an object containing the list of uploaded image URLs.
+    - Error: Returns an error response if upload fails or no files are provided.
+
+- GET `/api/users/reports/categories`
+    - Description: Returns the full list of available report categories.
+    - Success: Returns the full list of available report categories.
+    - Error: Returns an error response.
+
 ### **User Routes - Admin**
 - POST `/api/admin/accounts/register`
   - Description: Creates a new municipality officer in the database.
@@ -117,7 +127,38 @@ The frontend will run on http://localhost:8080
   - Success: Returns an array of role objects.
   - Error: Returns an error response.
 
+### **User Routes - Tech-Lead**
+- PUT `/api/tech-lead/:officerId/report/:reportId`
+  - Description: Assigns a report to an Officer. 
+  - Success: Returns the updated report
+  - Error: Returns an error response
 
+- GET `/api/tech-lead/:id/agents`
+  - Desciption: Returns the list of all the tech agents of the tech lead.
+  - Success: Returns a list of municipality users.
+  - Error: Returns an error response
+
+- GET `/api/tech-lead/:id/reports/list`
+  - Description: Returns the list of all the reports of the category managed by a tech lead, except the one in pending approval
+  - Success: Returns a list of report
+  - Error: Returns an error response
+
+### **User Routes - Tech agents**
+- GET `/api/tech/:id/reports/list`
+  - Description: Returns the list of all the reports assign to a tech agent
+  - Sucess: Returns a list of report
+  - Error: Returns an error response
+
+### **Report Routes**
+- POST `/api/reports/:id/status`
+  - Description: Modify the status of a report given its id
+  - Success: Returns the updated report
+  - Error: Returns an error response
+
+- GET `/api/reports/list`
+  - Desciption: Retrieves all the reports 
+  - Sucess: Return a list of reports
+  - Error: Returns an error response
 
 ## Frontend API 
 

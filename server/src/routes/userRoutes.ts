@@ -4,7 +4,7 @@ import { Router, Response } from 'express';
 import { validateDto } from "../middlewares/validationMiddleware";
 import { CreateReportRequestDTO } from "../models/DTOs/CreateReportRequestDTO";
 import * as userController from "../controllers/userController";
-import * as reportController from "../controllers/reportController";
+import * as reportController from "../controllers/reportController"; 
 import multer from 'multer';
 import path from 'path'; // Importa path
 import { Request } from 'express';
@@ -80,7 +80,7 @@ router.post('/reports', requireUser, async (req: Request, res: Response) => {
     });
 });
 
-// NUOVA ROTTA: Endpoint per l'upload delle immagini dei report
+// Endpoint per l'upload delle immagini dei report
 router.post('/reports/images/upload', requireUser, upload.array('images', 3), async (req: Request, res: Response) => {
     if (!req.files || req.files.length === 0) {
         return res.status(400).json({ message: 'No files uploaded.' });

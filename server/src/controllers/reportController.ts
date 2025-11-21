@@ -4,7 +4,7 @@ import { ReportResponseDTO } from "../models/DTOs/ReportResponseDTO";
 import { ReportRepository } from "../repositories/ReportRepository";
 import { StatusType } from "../models/StatusType";
 import { DataSource } from "typeorm";
-import { getMunicipalityOfficerForNewRequest,getMunicipalityOfficerByUsername } from "./userController";
+import { getMunicipalityOfficerDAOForNewRequest,getMunicipalityOfficerDAOByUsername } from "./adminController";
 import { ReportPhoto } from "../models/ReportPhoto";
 
 let reportRepository: ReportRepository;
@@ -25,7 +25,7 @@ export async function addReport(reportData: CreateReportRequestDTO): Promise<Rep
 
     // Here we need an additional step to decide the officer and set it
     // reportDAO.officer = await reportRepository.assignOfficerToReport(addedReport);
-    reportDAO.officer = await getMunicipalityOfficerForNewRequest() // Temporary: assign first officer
+    reportDAO.officer = await getMunicipalityOfficerDAOForNewRequest() // Temporary: assign first officer
     const addedReport = await reportRepository.add(reportDAO);
     // Ora, aggiungiamo le foto al report aggiunto
     if (reportData.photos && reportData.photos.length > 0) {
@@ -64,7 +64,7 @@ export async function GetReportsByUserId(userId: number):Promise<ReportResponseD
 }
 
 export async function GetReportsByOfficerUsername(username: string):Promise<ReportResponseDTO[]> {
-    const officer = await getMunicipalityOfficerByUsername(username);
+    const officer = await getMunicipalityOfficerDAOByUsername(username);
     const reports = await reportRepository.findByOfficer(officer);
     return reports.map(mapReportDAOToResponse);
 }

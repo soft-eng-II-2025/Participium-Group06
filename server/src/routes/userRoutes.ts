@@ -4,7 +4,7 @@ import { Router, Response } from 'express';
 import { validateDto } from "../middlewares/validationMiddleware";
 import { CreateReportRequestDTO } from "../models/DTOs/CreateReportRequestDTO";
 import * as userController from "../controllers/userController";
-import * as reportController from "../controllers/reportController";
+import * as reportController from "../controllers/reportController"; 
 import multer from 'multer';
 import path from 'path'; // Importa path
 import { Request } from 'express';

@@ -48,7 +48,11 @@ router.put('/tech-lead/:OfficerId/report/:reportId', requireTechLead, async (req
     res.status(200).json(updatedReport);
 });
 
-
+router.get('tech-lead/:id/agents', requireTechLead, async (req, res: Response) => {
+    const techLeadId = Number(req.params.id);
+    const agents = await adminController.getAgentsByTechLeadId(techLeadId);
+    res.status(200).json(agents);
+});
 
 // Adapter: accetta sia { username, roleTitle } che { username, role: { title } }
 /*function adaptAssignRoleBody(body: any): AssignRoleRequestDTO {

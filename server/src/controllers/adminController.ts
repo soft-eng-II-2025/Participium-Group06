@@ -129,3 +129,16 @@ export async function AssignTechAgent(reportId:number, MunicipalityOfficerId:num
     if (!Officer) throw appErr("OFFICER_NOT_FOUND", 404);
     return UpdateReportOfficer(reportId, Officer);
 }
+
+export async function getAgentsByTechLeadId(OfficerId :number):Promise<MunicipalityOfficerResponseDTO[]> {
+    const OfficerTitle = (await municipalityOfficerRepository.findById(OfficerId))?.role?.title;
+    if (!OfficerTitle) {
+        throw appErr("OFFICER_NOT_FOUND", 404);
+    }
+    if (OfficerTitle.slice(0,9) != "TECH_LEAD") {
+        throw appErr("INVALID_TECH_LEAD_LABEL", 400);
+    }
+    const tech_agent_title= "TECH_AGENT"+OfficerTitle.slice(9,OfficerTitle.length);
+    const tech_agents = await municipalityOfficerRepository.findByRoleTitle(tech_agent_title);
+    return tech_agents.map(mapMunicipalityOfficerDAOToResponse);
+}

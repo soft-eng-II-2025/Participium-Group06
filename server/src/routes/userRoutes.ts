@@ -129,8 +129,6 @@ router.put("/users/:id", requireUser, validateDto(UpdateUserRequestDTO), async (
 
             // Utente autenticato messo da requireUser (es. req.user = { id, username, ... })
             const authUser = (req as any).user;
-            console.log("Auth user in /users/:id PUT:", authUser);
-
 
             // Impedisce di aggiornare profili altrui
             if (!authUser || authUser.id !== userId) {

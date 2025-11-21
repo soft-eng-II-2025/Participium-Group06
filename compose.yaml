@@ -29,7 +29,7 @@ services:
       DB_NAME: ${POSTGRES_DB:-participium}
       NODE_ENV: production
     command: >
-      sh -c "npx typeorm migration:run -d dist/data-source.js &&
+      sh -c "npm run build && npx typeorm migration:run -d dist/data-source.js &&
              echo '✅ Migrations completed'"
     restart: "no"
 

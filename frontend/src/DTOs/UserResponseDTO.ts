@@ -7,4 +7,7 @@ export interface UserResponseDTO {
     first_name: string;
     last_name: string;
     reports?: ReportDTO[];
+    photo?: string;
+    telegram_id?: string;
+    flag_email?: boolean;
 }

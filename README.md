@@ -80,8 +80,8 @@ The frontend will run on http://localhost:8080
 
 
 ## Backend API
-### **User Routes - Citizen**
 
+### **Auth Routes**
 - POST `/api/register`
   - Description: Creates a new user in the database.
   - Success: Returns the newly created user object.
@@ -92,6 +92,16 @@ The frontend will run on http://localhost:8080
   - Success: Returns the logged-in user object.
   - Error: Returns an error.
 
+- GET `/api/logout`
+  - Description: Logs out the currently logged-in user.
+  - Success: Returns a success message.
+
+- GET `/api/session`
+  - Description: Retrieves the currently logged-in user object.
+  - Success: Returns the logged-in user object.
+  - Error: Returns an error.
+
+### **User Routes - Citizen**
 - POST `/api/users/reports`
   - Description: Adds a new report to the database.
   - Success: Returns the newly created report object.
@@ -147,14 +157,20 @@ The frontend will run on http://localhost:8080
 
 ### **Overview**
 
+**Auth API**
+```ts
+function registerUser(params: CreateUserRequestDTO);   // POST /api/register  registers a new user account into the system
+function login(params: LoginRequestDTO);              // POST /api/login    
+function logout();                                   // GET /api/logout
+function getSession();                              // GET /api/session
+
+```
 **User API**
 ```ts
-import {UserResponseDTO} from "./UserResponseDTO";
-import {LoginDTO} from "./LoginDTO";
-
-function registerUser(user: UserResponseDTO);    // POST /api/register  registers a new user account into the system
-function login(credentials: LoginDTO);            // POST /api/login                       
-function addReport(report: ReportResponseDTO);   // POST /api/users/reports
+function addReport(report: ReportResponseDTO);                   // POST /api/users/reports
+function uploadReportImages(images: File[]): Promise<string[]>  // POST /api/users/reports/images/upload
+function getAllCategories(): Promise<CategoryResponseDTO[]>    // GET /api/users/reports/categories
+function updateUserProfile(userId: number, payload: UpdateUserRequestDTO): Promise<UserResponseDTO>  // PUT /api/users/:id
 ```
 
 **Admin API**
@@ -168,6 +184,11 @@ function setRole(body: MunicipalityOfficerResponseDTO);                      // 
 function getRoles(): Promise<RoleResponseDTO[]>;                                              // GET /api/admin/roles/list   retrieves all available roles in the system
 ```
 
+**Report API**
+```ts
+function getAllReports(): Promise<ReportResponseDTO[]>  // GET /api/reports/list
+function updateReportStatus(reportId: number, payload: UpdateStatusReportDTO): Promise<ReportResponseDTO>  // PUT /api/reports/:id/status
+```
 ### 👥 Municipality Officer Roles
 
 | Role Name | Assigned Categories |

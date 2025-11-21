@@ -151,13 +151,13 @@ function getRoles(): Promise<RoleResponseDTO[]>;                                
 | :--- | :--- |
 | `ADMIN` | ALL |
 | `ORGANIZATION_OFFICER` | ALL |
-| `TECH_LEAD_INFRASTRUCTURE` | Roads and Urban Furnishings \| Architectural Barriers \| Sewer System \| Water Supply – Drinking Water |
+| `TECH_LEAD_INFRASTRUCTURE` | Roads and Urban Furnishings \| Sewer System \| Water Supply – Drinking Water |
 | `TECH_AGENT_INFRASTRUCTURE` | Roads and Urban Furnishings \| Architectural Barriers \| Sewer System \| Water Supply – Drinking Water |
-| `TECH_LEAD_MOBILITY` | Road Signs and Traffic Lights \| Roads and Urban Furnishings |
+| `TECH_LEAD_MOBILITY` | Road Signs and Traffic Lights |
 | `TECH_AGENT_MOBILITY` | Road Signs and Traffic Lights \| Roads and Urban Furnishings |
 | `TECH_LEAD_GREEN_AREAS` | Public Green Areas and Playgrounds |
 | `TECH_AGENT_GREEN_AREAS` | Public Green Areas and Playgrounds |
-| `TECH_LEAD_WASTE_MANAGEMENT` | Waste \| Sewer System |
+| `TECH_LEAD_WASTE_MANAGEMENT` | Waste |
 | `TECH_AGENT_WASTE_MANAGEMENT` | Waste \| Sewer System |
 | `TECH_LEAD_ENERGY_LIGHTING` | Public Lighting |
 | `TECH_AGENT_ENERGY_LIGHTING` | Public Lighting |

@@ -49,7 +49,7 @@ export async function UpdateReportStatus(reportId: number, newStatus: StatusType
     if (!report) throw appErr('REPORT_NOT_FOUND', 404);
     
     report.status = newStatus;
-    report.explanation = explanation;   
+    report.explanation = explanation;
     const updatedReport = await reportRepository.update(report);
     return mapReportDAOToResponse(updatedReport);
 }
@@ -85,3 +85,10 @@ export async function GetReportById(reportId: number):Promise<ReportResponseDTO>
     if (!report) throw appErr('REPORT_NOT_FOUND', 404);
     return mapReportDAOToResponse(report);
 }
+
+export async function GetReportsByCategoryIdAndStatus(categoryId :number, Status : StatusType[]):Promise<ReportResponseDTO[]> {
+    const reports = await reportRepository.findByCategoryId(categoryId);
+    const filteredReports = reports.filter(report => Status.includes(report.status));
+    return filteredReports.map(mapReportDAOToResponse);
+}   
+

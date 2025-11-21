@@ -19,3 +19,9 @@ router.get('/tech-lead/:id/agents', requireTechLead, async (req, res: Response) 
     res.status(200).json(agents);
 });
 
+router.get('/tech-lead/:id/reports/list', requireTechLead, async (req, res: Response) => {
+    const techLeadId = Number(req.params.id);
+    const reports = await adminController.getTechLeadReports(techLeadId);
+    res.status(200).json(reports);
+});
+

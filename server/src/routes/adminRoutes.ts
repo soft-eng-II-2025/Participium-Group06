@@ -4,7 +4,7 @@ import { AssignRoleRequestDTO } from "../models/DTOs/AssignRoleRequestDTO";
 import { MunicipalityOfficerResponseDTO } from "../models/DTOs/MunicipalityOfficerResponseDTO"; // solo tipo di output, non usato in validate
 import * as adminController from "../controllers/adminController";
 import {CreateUserRequestDTO} from "../models/DTOs/CreateUserRequestDTO";
-import { requireAdmin,requireTechLead } from '../middlewares/authMiddleware';
+import { requireAdmin } from '../middlewares/authMiddleware';
 
 export const router = Router();
 
@@ -40,19 +40,6 @@ router.get("/roles/list", requireAdmin, async (req, res,next) => {
     res.status(200).json(roles);
 });
 
-router.put('/tech-lead/:OfficerId/report/:reportId', requireTechLead, async (req, res: Response) => {
-    const OfficerId = Number(req.params.OfficerId);
-    const reportId = Number(req.params.reportId);
-
-    const updatedReport = await adminController.AssignTechAgent(reportId, OfficerId);
-    res.status(200).json(updatedReport);
-});
-
-router.get('tech-lead/:id/agents', requireTechLead, async (req, res: Response) => {
-    const techLeadId = Number(req.params.id);
-    const agents = await adminController.getAgentsByTechLeadId(techLeadId);
-    res.status(200).json(agents);
-});
 
 // Adapter: accetta sia { username, roleTitle } che { username, role: { title } }
 /*function adaptAssignRoleBody(body: any): AssignRoleRequestDTO {

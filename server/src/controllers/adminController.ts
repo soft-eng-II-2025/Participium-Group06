@@ -4,15 +4,16 @@ import { MunicipalityOfficerRepository } from "../repositories/MunicipalityOffic
 import { RoleRepository } from "../repositories/RoleRepository";
 import { LoginRequestDTO } from "../models/DTOs/LoginRequestDTO";
 import { verifyPassword, hashPassword } from "../services/passwordService";
-import { mapMunicipalityOfficerDAOToDTO as mapMunicipalityOfficerDAOToResponse } from "../services/mapperService";
+import { mapMunicipalityOfficerDAOToDTO as mapMunicipalityOfficerDAOToResponse, mapReportDAOToDTO as mapReportDAOToResponse } from "../services/mapperService";
 import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
 import { AppDataSource } from "../data-source";
 import {AssignRoleRequestDTO} from "../models/DTOs/AssignRoleRequestDTO";
 import {CreateUserRequestDTO} from "../models/DTOs/CreateUserRequestDTO";
 import { DataSource } from "typeorm";
 import { get } from "http";
-import { UpdateReportOfficer } from "./reportController";
+import { UpdateReportOfficer,GetReportsByCategoryIdAndStatus } from "./reportController";
 import { ReportResponseDTO } from "../models/DTOs/ReportResponseDTO";
+import { StatusType } from "../models/StatusType";
 
 /*const municipalityOfficerRepository = new MunicipalityOfficerRepository(AppDataSource);
 const roleRepository = new RoleRepository(AppDataSource);*/
@@ -141,4 +142,27 @@ export async function getAgentsByTechLeadId(OfficerId :number):Promise<Municipal
     const tech_agent_title= "TECH_AGENT"+OfficerTitle.slice(9,OfficerTitle.length);
     const tech_agents = await municipalityOfficerRepository.findByRoleTitle(tech_agent_title);
     return tech_agents.map(mapMunicipalityOfficerDAOToResponse);
+}
+
+export async function getTechReports(OfficerId :number):Promise<ReportResponseDTO[]> {
+    const officer = await municipalityOfficerRepository.findById(OfficerId);
+    if (!officer) {
+        throw appErr("OFFICER_NOT_FOUND", 404);
+    }
+    return officer.reports.map(mapReportDAOToResponse);
+}
+
+export async function getTechLeadReports(OfficerId :number):Promise<ReportResponseDTO[]> {
+    const officer = await municipalityOfficerRepository.findById(OfficerId);
+    if (!officer) {
+        throw appErr("OFFICER_NOT_FOUND", 404);
+    }
+    const categories = officer?.role?.categories || [];
+    let reports: ReportResponseDTO[] = [];
+    for (const category of categories) {
+        const Statuss = [StatusType.Assigned,StatusType.InProgress,StatusType.Resolved,StatusType.Rejected,StatusType.Suspended];
+        const categoryReports = await GetReportsByCategoryIdAndStatus(category.id, Statuss);
+        reports = reports.concat(categoryReports);
+    }
+    return reports;
 }

@@ -13,6 +13,9 @@ export class UserRepository {
     async findByUsername(username: string): Promise<User | null> {
         return this.ormRepository.findOneBy({ username });
     }
+    async findByid(id: number): Promise<User | null> {
+        return this.ormRepository.findOneBy({ id });
+    }
     async findByEmail(email: string): Promise<User | null> {
         return this.ormRepository.findOneBy({ email });
     }
@@ -40,6 +43,18 @@ export class UserRepository {
     }
     async changeFirstName(user: User, newFirstName: string): Promise<User> {
         user.first_name = newFirstName;
+        return this.ormRepository.save(user);
+    }
+    async changePhoto(user: User, newPhoto: string): Promise<User> {
+        user.photo = newPhoto;
+        return this.ormRepository.save(user);
+    }
+    async changeTelegramId(user: User, newTelegramId: string): Promise<User> {
+        user.telegram_id = newTelegramId;
+        return this.ormRepository.save(user);
+    }
+    async changeFlagEmail(user: User, newFlagEmail: boolean): Promise<User> {
+        user.flag_email = newFlagEmail;
         return this.ormRepository.save(user);
     }
 }

@@ -134,4 +134,11 @@ export class ReportRepository {
     async update(report: Report): Promise<Report> {
         return this.ormRepository.save(report);
     }
+
+    async findByCategoryId(categoryId: number): Promise<Report[]> { 
+        return this.ormRepository.find({
+            where: { category: { id: categoryId } },
+            relations: ['category', 'photos', 'user', 'officer']
+        });
+    }
 }

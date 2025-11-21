@@ -123,9 +123,21 @@ router.get('/reports/categories', requireAuth, async (req, res: Response) => {
 router.put("/users/:id", requireUser, validateDto(UpdateUserRequestDTO), async (req: Request, res: Response) => {
         try {
             const userId = Number(req.params.id);
+            if (Number.isNaN(userId)) {
+                return res.status(400).json({ message: "Invalid user id" });
+            }
 
-            // opzionale: se vuoi impedire a un utente di aggiornare profili altrui,
-            // confronta userId con quello nel token/sessione qui.
+            // Utente autenticato messo da requireUser (es. req.user = { id, username, ... })
+            const authUser = (req as any).user;
+            console.log("Auth user in /users/:id PUT:", authUser);
+
+
+            // Impedisce di aggiornare profili altrui
+            if (!authUser || authUser.id !== userId) {
+                return res
+                    .status(403)
+                    .json({ message: "You are not allowed to update this user profile." });
+            }
 
             const updatedUser = await userController.updateUserProfile(
                 userId,

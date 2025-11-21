@@ -6,7 +6,7 @@ import {UserResponseDTO} from "../DTOs/UserResponseDTO";
 interface TelegramCardProps {
     user: UserResponseDTO;
     type: string;
-    status?: string;
+    status?: string | null;
     onChange?: (value: string) => void; // opzionale per gestire aggiornamenti
 }
 

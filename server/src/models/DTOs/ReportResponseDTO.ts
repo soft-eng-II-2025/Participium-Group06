@@ -22,4 +22,6 @@ export class ReportResponseDTO {
     officer!: MunicipalityOfficerResponseDTO;
 
     photos!: string[];
+
+    createdAt!: Date;
 }

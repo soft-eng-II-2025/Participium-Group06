@@ -105,3 +105,13 @@ export async function getMunicipalityOfficerByUsername(username: string): Promis
     if (!officer) throw appErr("OFFICER_NOT_FOUND", 404);
     return mapMunicipalityOfficerDAOToResponse(officer);
 }
+
+export async function getMunicipalityOfficerDAOForNewRequest () : Promise<MunicipalityOfficer> {
+    return municipalityOfficerRepository.findAll().then(officers => officers[0])
+}
+
+export async function getMunicipalityOfficerDAOByUsername(username: string): Promise<MunicipalityOfficer> {
+    const officer = await municipalityOfficerRepository.findByUsername(username);
+    if (!officer) throw appErr("OFFICER_NOT_FOUND", 404);
+    return officer;
+}

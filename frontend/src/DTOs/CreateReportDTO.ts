@@ -2,7 +2,7 @@ import {UserResponseDTO} from "./UserResponseDTO";
 import { MunicipalityOfficerResponseDTO } from "./MunicipalityOfficerResponseDTO";
 import { StatusType } from "./StatusType";
 
-export interface ReportDTO { // Questa è la tua interfaccia esistente, per i dati completi
+export interface CreateReportDTO { // Questa è la tua interfaccia esistente, per i dati completi
     longitude: number;
     latitude: number;
     title: string;

@@ -151,7 +151,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
     // TECH_AGENT_PUBLIC_BUILDINGS → Architectural Barriers | Other
     await queryRunner.query(`INSERT INTO role_categories VALUES (14,2),(14,9)`);
 
-    // 7. Admin officer (LASCIO ESATTAMENTE COME NEL TUO FILE ORIGINALE)
+    // 7. Admin officer
     await queryRunner.query(`
       INSERT INTO "municipality_officer"
         ("id","username","email","password","first_name","last_name","role")

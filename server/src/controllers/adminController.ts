@@ -10,6 +10,9 @@ import { AppDataSource } from "../data-source";
 import {AssignRoleRequestDTO} from "../models/DTOs/AssignRoleRequestDTO";
 import {CreateUserRequestDTO} from "../models/DTOs/CreateUserRequestDTO";
 import { DataSource } from "typeorm";
+import { get } from "http";
+import { UpdateReportOfficer } from "./reportController";
+import { ReportResponseDTO } from "../models/DTOs/ReportResponseDTO";
 
 /*const municipalityOfficerRepository = new MunicipalityOfficerRepository(AppDataSource);
 const roleRepository = new RoleRepository(AppDataSource);*/
@@ -107,11 +110,22 @@ export async function getMunicipalityOfficerByUsername(username: string): Promis
 }
 
 export async function getMunicipalityOfficerDAOForNewRequest () : Promise<MunicipalityOfficer> {
-    return municipalityOfficerRepository.findAll().then(officers => officers[0])
+    return municipalityOfficerRepository.findByRoleTitle("ORGANIZATION_OFFICER").then(officers => {
+        if (officers.length === 0) {
+            throw appErr("NO_OFFICER_AVAILABLE", 404);
+        }
+        return officers[0]; // Only one Organization Officer is expected
+    });
 }
 
 export async function getMunicipalityOfficerDAOByUsername(username: string): Promise<MunicipalityOfficer> {
     const officer = await municipalityOfficerRepository.findByUsername(username);
     if (!officer) throw appErr("OFFICER_NOT_FOUND", 404);
     return officer;
+}
+
+export async function AssignTechAgent(reportId:number, MunicipalityOfficerId:number):Promise<ReportResponseDTO> {
+    const Officer = await municipalityOfficerRepository.findById(MunicipalityOfficerId);
+    if (!Officer) throw appErr("OFFICER_NOT_FOUND", 404);
+    return UpdateReportOfficer(reportId, Officer);
 }

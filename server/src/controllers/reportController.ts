@@ -6,6 +6,7 @@ import { StatusType } from "../models/StatusType";
 import { DataSource } from "typeorm";
 import { getMunicipalityOfficerDAOForNewRequest,getMunicipalityOfficerDAOByUsername } from "./adminController";
 import { ReportPhoto } from "../models/ReportPhoto";
+import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
 
 let reportRepository: ReportRepository;
 
@@ -53,6 +54,16 @@ export async function UpdateReportStatus(reportId: number, newStatus: StatusType
     return mapReportDAOToResponse(updatedReport);
 }
 
+export async function UpdateReportOfficer(reportId: number, MunicipalityOfficer: MunicipalityOfficer): Promise<ReportResponseDTO> {
+    console.log(`Updating report ${reportId} to officer ${MunicipalityOfficer.username}`);
+    const report = await reportRepository.findById(reportId);
+    if (!report) throw appErr('REPORT_NOT_FOUND', 404);
+    
+    report.officer = MunicipalityOfficer;  
+    const updatedReport = await reportRepository.update(report);
+    return mapReportDAOToResponse(updatedReport);
+}
+
 export async function GetAllReports():Promise<ReportResponseDTO[]> {
     const reports = await reportRepository.findAll();
     return reports.map(mapReportDAOToResponse);
@@ -67,4 +78,10 @@ export async function GetReportsByOfficerUsername(username: string):Promise<Repo
     const officer = await getMunicipalityOfficerDAOByUsername(username);
     const reports = await reportRepository.findByOfficer(officer);
     return reports.map(mapReportDAOToResponse);
+}
+
+export async function GetReportById(reportId: number):Promise<ReportResponseDTO> {
+    const report = await reportRepository.findById(reportId);
+    if (!report) throw appErr('REPORT_NOT_FOUND', 404);
+    return mapReportDAOToResponse(report);
 }

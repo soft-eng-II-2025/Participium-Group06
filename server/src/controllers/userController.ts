@@ -1,5 +1,6 @@
 import { ReportResponseDTO } from "../models/DTOs/ReportResponseDTO";
 import { UserResponseDTO } from "../models/DTOs/UserResponseDTO";
+import { UpdateUserRequestDTO } from "../models/DTOs/UpdateUserRequestDTO";
 import { CreateReportRequestDTO } from "../models/DTOs/CreateReportRequestDTO";
 import { CreateUserRequestDTO } from "../models/DTOs/CreateUserRequestDTO";
 import { LoginRequestDTO } from "../models/DTOs/LoginRequestDTO";
@@ -58,6 +59,24 @@ export async function createUser(userData: CreateUserRequestDTO): Promise<UserRe
 
     const addedUserDao = await userRepository.add(userDao);
     return mapUserDAOToResponse(addedUserDao); // password nulla in output
+}
+
+export async function updateUser(userId: number, updatedData:UpdateUserRequestDTO): Promise<UserResponseDTO> {
+    const user = await userRepository.findByid(userId);
+    if (!user) throw appErr("USER_NOT_FOUND", 404);
+
+    if (updatedData.photo !== undefined) {
+        await userRepository.changePhoto(user, updatedData.photo ? String(updatedData.photo) : "");
+    }
+    if (updatedData.telegramId !== undefined) {
+        await userRepository.changeTelegramId(user, updatedData.telegramId ? String(updatedData.telegramId) : "");
+    }
+    if (updatedData.flagEmail !== undefined) {
+        await userRepository.changeFlagEmail(user, Boolean(updatedData.flagEmail));
+    }
+    
+    const updatedUser = await userRepository.findByid(userId);
+    return mapUserDAOToResponse(updatedUser!); 
 }
 
 export async function loginUser(loginData: LoginRequestDTO) {

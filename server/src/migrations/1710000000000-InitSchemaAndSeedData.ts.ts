@@ -14,6 +14,11 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       'Resolved'
     )`);
 
+    await queryRunner.query(`CREATE TYPE "notification_type_enum" AS ENUM(
+      'Report Changed',
+      'New Message'
+    )`);
+
     // 2. Base tables
     await queryRunner.query(`CREATE TABLE "role" (
       "id" SERIAL PRIMARY KEY,
@@ -113,9 +118,24 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       "municipality_officer_id" INT NOT NULL,
       "user_id" INT NOT NULL,
       "content" TEXT NOT NULL,
-      "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP)
-    `);
+      "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "FK_message_municipality_officer"
+        FOREIGN KEY ("municipality_officer_id") REFERENCES "municipality_officer"("id"),
+      CONSTRAINT "FK_message_user"
+        FOREIGN KEY ("user_id") REFERENCES "app_user"("id")  
+    )`);
 
+    //4.75 Create Notification table
+    await queryRunner.query(`CREATE TABLE "notification" (
+      "id" SERIAL PRIMARY KEY,
+      "type" "notification_type_enum" NOT NULL,
+      "content" TEXT NOT NULL,
+      "is_read" BOOLEAN DEFAULT FALSE,
+      "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      "user_id" INT NOT NULL,
+      CONSTRAINT "FK_notification_user"
+        FOREIGN KEY ("user_id") REFERENCES "app_user"("id")
+    )`);  
     // 5. Seed categories
     await queryRunner.query(`INSERT INTO "category" ("id", "name") VALUES
       (1,'Water Supply – Drinking Water'),

@@ -21,6 +21,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    working_dir: /app
     environment:
       DB_HOST: postgres
       DB_PORT: 5432

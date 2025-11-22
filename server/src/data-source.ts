@@ -18,5 +18,5 @@ export const AppDataSource= new DataSource({
     synchronize: false,
     logging: false,
     entities: [User, Role, Category, Report, ReportPhoto, MunicipalityOfficer],
-    migrations: ['src/migrations/*.ts'],
+    migrations: ['dist/migrations/*.js'],
 });

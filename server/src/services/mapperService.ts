@@ -4,6 +4,7 @@ import type { ReportResponseDTO } from "../models/DTOs/ReportResponseDTO";
 import type { RoleResponseDTO } from "../models/DTOs/RoleResponseDTO";
 import type { UserResponseDTO } from "../models/DTOs/UserResponseDTO";
 import type { MessageDTO } from "../models/DTOs/MessageDTO";
+import type { NotificationDTO } from "../models/DTOs/NotificationDTO";
 
 import { CreateReportRequestDTO } from "../models/DTOs/CreateReportRequestDTO";
 
@@ -15,7 +16,8 @@ import { User } from "../models/User";
 import { ReportPhoto } from "../models/ReportPhoto";
 import { StatusType } from "../models/StatusType";
 import { Message } from "../models/Message";
-import { get } from "http";
+import { Notification } from "../models/Notification";
+import { NotificationType } from "../models/NotificationType";
 
 /* Helper */
 function removeNullAttributes<T extends Record<string, any>>(dto: T): Partial<T> {
@@ -42,13 +44,7 @@ export function createMunicipalityOfficerDTO(
     last_name?: string,
     role?: string | null
 ): MunicipalityOfficerResponseDTO {
-    return ({
-        username,
-        email,
-        first_name,
-        last_name,
-        role,
-    }) as MunicipalityOfficerResponseDTO;
+    return removeNullAttributes({ username, email, first_name, last_name, role }) as MunicipalityOfficerResponseDTO;
 }
 
 export function createReportDTO(
@@ -76,8 +72,6 @@ export function createReportDTO(
         photos,
     }) as ReportResponseDTO;
 }
-
-
 
 export function createRoleDTO(title?: string, officers?: MunicipalityOfficerResponseDTO[]): RoleResponseDTO {
     return removeNullAttributes({ title, officers }) as RoleResponseDTO;
@@ -110,13 +104,33 @@ export function createUserDTO(
 export function createMessageDTO(
     municipality_officer?: MunicipalityOfficerResponseDTO,
     user?: UserResponseDTO,
-    content?: string
+    content?: string,
+    created_at?: Date,
+    sender?: 'USER' | 'OFFICER'
 ): MessageDTO {
     return removeNullAttributes({
         municipality_officer,
         user,
         content,
+        created_at,
+        sender
     }) as MessageDTO;
+}
+
+export function createNotificationDTO(
+    user?: UserResponseDTO,
+    content?: string,
+    type?: NotificationType,
+    is_read?: boolean,
+    created_at?: Date
+): NotificationDTO {
+    return removeNullAttributes({
+        user,
+        content,
+        type,
+        is_read,
+        created_at
+    }) as NotificationDTO;
 }
 
 /* ----------- DAO -> Response mappers ----------- */
@@ -126,13 +140,6 @@ export function mapCategoryDAOToDTO(categoryDAO: Category): CategoryResponseDTO 
         id: categoryDAO.id,
         name: categoryDAO.name,
     };
-
-    // Se la relazione 'reports' è caricata, popola anche l'array e il conteggio
-    /*if (Array.isArray(categoryDAO.reports)) {
-        dto.reports = categoryDAO.reports.map((r: Report) => mapReportDAOToDTO(r));
-        dto.reportsCount = categoryDAO.reports.length; // opzionale
-    }*/
-
     return dto;
 }
 
@@ -147,7 +154,6 @@ export function mapMunicipalityOfficerDAOToDTO(officerDAO: MunicipalityOfficer):
 }
 
 export function mapReportDAOToDTO(reportDAO: Report): ReportResponseDTO {
-    
     return createReportDTO(
         reportDAO.longitude,
         reportDAO.latitude,
@@ -188,6 +194,18 @@ export function mapMessageDAOToDTO(messageDAO: Message): MessageDTO {
         messageDAO.municipality_officer ? mapMunicipalityOfficerDAOToDTO(messageDAO.municipality_officer) : undefined,
         messageDAO.user ? mapUserDAOToDTO(messageDAO.user) : undefined,
         messageDAO.content,
+        messageDAO.created_at,
+        messageDAO.sender
+    );
+}
+
+export function mapNotificationDAOToDTO(notificationDAO: Notification): NotificationDTO {
+    return createNotificationDTO(
+        mapUserDAOToDTO(notificationDAO.user),
+        notificationDAO.content,
+        notificationDAO.type,
+        notificationDAO.is_read,
+        notificationDAO.created_at
     );
 }
 
@@ -204,7 +222,7 @@ export function mapCreateReportRequestToDAO(dto: CreateReportRequestDTO): Report
     dao.user = new User();
     dao.user.id = dto.userId;
     dao.status = StatusType.PendingApproval;
-    dao.officer = undefined; // verrà assegnato successivamente
+    dao.officer = undefined;
     dao.explanation = "";
     dao.category = new Category();
     dao.category.id = dto.categoryId;

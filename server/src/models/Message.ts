@@ -17,6 +17,10 @@ export class Message {
   @JoinColumn({ name: 'user_id' })
   user?: User;
 
+  // Report linked to the message 
+  @Column({ name: 'report_id', nullable: false })
+  report_id!: number;
+
   // contenu du message
   @Column({ type: 'text', name: 'content' })
   content!: string;
@@ -24,4 +28,8 @@ export class Message {
   // date de création
   @CreateDateColumn({ name: 'created_at' })
   created_at!: Date;
+
+  @Column({ type: 'enum', enum: ['USER', 'OFFICER'] })
+  sender!: 'USER' | 'OFFICER';
+
 }

@@ -1,4 +1,4 @@
 export enum NotificationType {
-    ReportChanged = 'Report Changed',
-    NewMessage = 'New Message',
+    ReportChanged = 'report_changed',
+    NewMessage = 'new_message',
 }

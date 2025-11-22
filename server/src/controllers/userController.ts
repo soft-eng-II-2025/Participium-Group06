@@ -93,6 +93,12 @@ export async function getUserByUsername(username: string): Promise<UserResponseD
     return mapUserDAOToResponse(user);
 }
 
+export async function getUserById(userId: number): Promise<UserResponseDTO> {
+    const user = await userRepository.findByid(userId);
+    if (!user) throw appErr("USER_NOT_FOUND", 404);
+    return mapUserDAOToResponse(user);
+}
+
 export async function getUserIdByUsername(username: string): Promise<number> {
     const user = await userRepository.findByUsername(username);
     if (!user) throw appErr("USER_NOT_FOUND", 404);

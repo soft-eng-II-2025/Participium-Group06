@@ -4,7 +4,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
   name = 'InitSchemaAndSeedData1710000000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // 1. Create StatusType enum
+    // 1. Enums
     await queryRunner.query(`CREATE TYPE "status_type_enum" AS ENUM(
       'Pending Approval',
       'Assigned',
@@ -15,15 +15,20 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
     )`);
 
     await queryRunner.query(`CREATE TYPE "notification_type_enum" AS ENUM(
-      'Report Changed',
-      'New Message'
+      'report_changed',
+      'new_message'
+    )`);
+
+    await queryRunner.query(`CREATE TYPE "sender_enum" AS ENUM(
+      'USER',
+      'OFFICER'
     )`);
 
     // 2. Base tables
     await queryRunner.query(`CREATE TABLE "role" (
       "id" SERIAL PRIMARY KEY,
       "title" VARCHAR NOT NULL UNIQUE,
-      "label" VARCHAR NOT NULL UNIQUE
+      "label" VARCHAR NOT NULL
     )`);
 
     await queryRunner.query(`CREATE TABLE "municipality_officer" (
@@ -67,7 +72,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       "userId" INT,
       "categoryId" INT,
       "createdAt" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        CONSTRAINT "FK_report_officer"
+      CONSTRAINT "FK_report_officer"
         FOREIGN KEY ("officerId") REFERENCES "municipality_officer"("id"),
       CONSTRAINT "FK_report_user"
         FOREIGN KEY ("userId") REFERENCES "app_user"("id"),
@@ -94,8 +99,37 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
         FOREIGN KEY ("category_id") REFERENCES "category"("id") ON DELETE CASCADE
     )`);
 
-    // 4. Seed roles
-    await queryRunner.query(`INSERT INTO "role" ("id", "title", "label") VALUES
+    // 4. Message table
+    await queryRunner.query(`CREATE TABLE "message" (
+      "id" SERIAL PRIMARY KEY,
+      "municipality_officer_id" INT NOT NULL,
+      "user_id" INT NOT NULL,
+      "report_id" INT NOT NULL,
+      "content" TEXT NOT NULL,
+      "sender" "sender_enum" NOT NULL,
+      "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "FK_message_municipality_officer"
+        FOREIGN KEY ("municipality_officer_id") REFERENCES "municipality_officer"("id"),
+      CONSTRAINT "FK_message_user"
+        FOREIGN KEY ("user_id") REFERENCES "app_user"("id"),
+      CONSTRAINT "FK_message_report"
+        FOREIGN KEY ("report_id") REFERENCES "report"("id")
+    )`);
+
+    // 5. Notification table
+    await queryRunner.query(`CREATE TABLE "notification" (
+      "id" SERIAL PRIMARY KEY,
+      "type" "notification_type_enum" NOT NULL,
+      "content" TEXT NOT NULL,
+      "is_read" BOOLEAN DEFAULT FALSE,
+      "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      "user_id" INT NOT NULL,
+      CONSTRAINT "FK_notification_user"
+        FOREIGN KEY ("user_id") REFERENCES "app_user"("id")
+    )`);
+
+    // 6. Seed roles
+    await queryRunner.query(`INSERT INTO "role" ("id","title","label") VALUES
       (1,'ADMIN', 'Administrator'),
       (2,'ORGANIZATION_OFFICER', 'Organization Officer'),
       (3,'TECH_LEAD_INFRASTRUCTURE', 'Tech Lead, Infrastructure'),
@@ -112,32 +146,9 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       (14,'TECH_AGENT_PUBLIC_BUILDINGS', 'Tech Agent, Public Buildings')
       ON CONFLICT ("id") DO NOTHING
     `);
-    // 4.5 Create Message Table
-    await queryRunner.query(`CREATE TABLE "message" (
-      "id" SERIAL PRIMARY KEY,
-      "municipality_officer_id" INT NOT NULL,
-      "user_id" INT NOT NULL,
-      "content" TEXT NOT NULL,
-      "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT "FK_message_municipality_officer"
-        FOREIGN KEY ("municipality_officer_id") REFERENCES "municipality_officer"("id"),
-      CONSTRAINT "FK_message_user"
-        FOREIGN KEY ("user_id") REFERENCES "app_user"("id")  
-    )`);
 
-    //4.75 Create Notification table
-    await queryRunner.query(`CREATE TABLE "notification" (
-      "id" SERIAL PRIMARY KEY,
-      "type" "notification_type_enum" NOT NULL,
-      "content" TEXT NOT NULL,
-      "is_read" BOOLEAN DEFAULT FALSE,
-      "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-      "user_id" INT NOT NULL,
-      CONSTRAINT "FK_notification_user"
-        FOREIGN KEY ("user_id") REFERENCES "app_user"("id")
-    )`);  
-    // 5. Seed categories
-    await queryRunner.query(`INSERT INTO "category" ("id", "name") VALUES
+    // 7. Seed categories
+    await queryRunner.query(`INSERT INTO "category" ("id","name") VALUES
       (1,'Water Supply – Drinking Water'),
       (2,'Architectural Barriers'),
       (3,'Sewer System'),
@@ -150,155 +161,62 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       ON CONFLICT ("id") DO NOTHING
     `);
 
-    // 6. Seed role-category assignments (nuove disposizioni)
-    // ADMIN → ALL
+    // 8. Seed role_categories
     await queryRunner.query(`INSERT INTO role_categories SELECT 1, id FROM category`);
-    // ORGANIZATION_OFFICER → ALL
     await queryRunner.query(`INSERT INTO role_categories SELECT 2, id FROM category`);
-    // TECH_LEAD_INFRASTRUCTURE → Roads and Urban Furnishings | Sewer System | Water Supply – Drinking Water
     await queryRunner.query(`INSERT INTO role_categories VALUES (3,7),(3,3),(3,1)`);
-    // TECH_AGENT_INFRASTRUCTURE → Roads and Urban Furnishings | Architectural Barriers | Sewer System | Water Supply – Drinking Water
     await queryRunner.query(`INSERT INTO role_categories VALUES (4,7),(4,2),(4,3),(4,1)`);
-    // TECH_LEAD_MOBILITY → Road Signs and Traffic Lights
     await queryRunner.query(`INSERT INTO role_categories VALUES (5,6)`);
-    // TECH_AGENT_MOBILITY → Road Signs and Traffic Lights | Roads and Urban Furnishings
     await queryRunner.query(`INSERT INTO role_categories VALUES (6,6),(6,7)`);
-    // TECH_LEAD_GREEN_AREAS → Public Green Areas and Playgrounds
     await queryRunner.query(`INSERT INTO role_categories VALUES (7,8)`);
-    // TECH_AGENT_GREEN_AREAS → Public Green Areas and Playgrounds
     await queryRunner.query(`INSERT INTO role_categories VALUES (8,8)`);
-    // TECH_LEAD_WASTE_MANAGEMENT → Waste
     await queryRunner.query(`INSERT INTO role_categories VALUES (9,5)`);
-    // TECH_AGENT_WASTE_MANAGEMENT → Waste | Sewer System
     await queryRunner.query(`INSERT INTO role_categories VALUES (10,5),(10,3)`);
-    // TECH_LEAD_ENERGY_LIGHTING → Public Lighting
     await queryRunner.query(`INSERT INTO role_categories VALUES (11,4)`);
-    // TECH_AGENT_ENERGY_LIGHTING → Public Lighting
     await queryRunner.query(`INSERT INTO role_categories VALUES (12,4)`);
-    // TECH_LEAD_PUBLIC_BUILDINGS → Architectural Barriers | Other
     await queryRunner.query(`INSERT INTO role_categories VALUES (13,2),(13,9)`);
-    // TECH_AGENT_PUBLIC_BUILDINGS → Architectural Barriers | Other
     await queryRunner.query(`INSERT INTO role_categories VALUES (14,2),(14,9)`);
 
-    // 7. Admin officer
-    await queryRunner.query(`
-      INSERT INTO "municipality_officer"
-        ("id","username","email","password","first_name","last_name","role")
+    // 9. Seed Municipality officers
+    await queryRunner.query(`INSERT INTO "municipality_officer"
+      ("id","username","email","password","first_name","last_name","role")
       VALUES
-        (1,'admin','admin@participium.local',
-        '$argon2id$v=19$m=65536,t=3,p=1$6FOS86yBc3WowYzkpdqonQ$fuBmKGHx8IRs15LrImF8/baI15mxyfvGnTkUNyVDd6g',
-        'System','Admin',1)
-      ON CONFLICT ("id") DO NOTHING
+      (1,'admin','admin@participium.local','$argon2id$v=19$m=65536,t=3,p=1$6FOS86yBc3WowYzkpdqonQ$fuBmKGHx8IRs15LrImF8/baI15mxyfvGnTkUNyVDd6g','System','Admin',1),
+      (2,'org_officer','maria.rossi@participium.local','$argon2id$v=19$m=4096,t=3,p=1$MXQ5aHF2aG5vNmYwMDAwMA$xwEPRsmhAk4323jDh9Jf1laD9BxtD6wKee06uEAhPC8','Maria','Rossi',2),
+      (3,'lead_infra','giovanni.bianchi@participium.local','$argon2id$v=19$m=4096,t=3,p=1$d3l4eXJhczNjazAwMDAwMA$BoCWTDKLvtbZ+kzeyMeqyTyioSpGeZsSiaMnuwL9Chs','Giovanni','Bianchi',3),
+      (4,'agent_infra','anna.verdi@participium.local','$argon2id$v=19$m=4096,t=3,p=1$cWF0b25kYjh2eDAwMDAwMA$apQMX9qx9rlc7O3aApOmkZHOG5iU0fTGDnn5K8A4f7k','Anna','Verdi',4),
+      (5,'lead_mobility','paolo.galli@participium.local','$argon2id$v=19$m=4096,t=3,p=1$NWx6N2U5MWwyMjcwMDAwMA$WKvR9cEs92cFuEAa4shZQVEWLIQWbAHGq9PFQaB3McY','Paolo','Galli',5),
+      (6,'agent_mobility','elena.ferrari@participium.local','$argon2id$v=19$m=4096,t=3,p=1$NjB3dTduY2IxdjIwMDAwMA$DKTu4q1d9uih9KSTYjwfOydPWdhi2/svvde0dZFgv6Q','Elena','Ferrari',6),
+      (7,'lead_green','marco.russo@participium.local','$argon2id$v=19$m=4096,t=3,p=1$dmdxY2FzdXJhYTgwMDAwMA$STgY4pc4dSUaVeMpkhqizIMIY19+h1+L8Jy91sSMAiU','Marco','Russo',7),
+      (8,'agent_green','sara.esposito@participium.local','$argon2id$v=19$m=4096,t=3,p=1$eml3cjV4cWwwemYwMDAwMA$zMrriiNvqXPn3c1OjuvDJqW40NKil2HO7HC28SZON30','Sara','Esposito',8),
+      (9,'lead_waste','luca.martini@participium.local','$argon2id$v=19$m=4096,t=3,p=1$dnJuajAybGVscWUwMDAwMA$bDRZDRurlvGmVoEHgmi1gnqHk3YazVMe0s75HWNfRrU','Luca','Martini',9),
+      (10,'agent_waste','francesca.romano@participium.local','$argon2id$v=19$m=4096,t=3,p=1$NXljMmRpOG81bnQwMDAwMA$b2ARlYEp0fEqCaV075vNunWZjnpGYbnnsScHc+ydppk','Francesca','Romano',10),
+      (11,'lead_energy','davide.conti@participium.local','$argon2id$v=19$m=4096,t=3,p=1$aWl4NDJkM3pqZjkwMDAwMA$Ju94deagaCHPsEJmgRXmG9tAFYFx0mBbLWh/NV5myYs','Davide','Conti',11),
+      (12,'agent_energy','chiara.ricci@participium.local','$argon2id$v=19$m=4096,t=3,p=1$emNzdnV3ZDR5Y2UwMDAwMA$gY6E0cr/UnIOEzGc9p7Shz75hO7lnketKTzc9LEEDTg','Chiara','Ricci',12),
+      (13,'lead_buildings','alessandro.gallo@participium.local','$argon2id$v=19$m=4096,t=3,p=1$aWl3bTU4MHJxdGwwMDAwMA$/lpZZnQnbgU0UpPcGV8vg2bTsyZeIaqN+uEuB/nuDQg','Alessandro','Gallo',13),
+      (14,'agent_buildings','federica.moretti@participium.local','$argon2id$v=19$m=4096,t=3,p=1$cTNpaGhscjN4dnQwMDAwMA$EawaCPGuYrZKzo0ftbnaBMrq1D4ymmSp4TUsUK63Nec','Federica','Moretti',14)
     `);
 
-    // 8. Users (10) – password diverse ma stesso schema Argon2id
+    // 10. Seed users
     await queryRunner.query(`
-      -- mariorossi password in chiaro: MarioRossi
-      -- luigibianchi password in chiaro: LuigiBianchi
-      -- annaverdi password in chiaro: AnnaVerdi
-      -- giulianeri password in chiaro: GiuliaNeri
-      -- paolorussi password in chiaro: PaoloRussi
-      -- saraferrari password in chiaro: SaraFerrari
-      -- lucagalli password in chiaro: LucaGalli
-      -- francescacosta password in chiaro: FrancescaCosta
-      -- elenamarino password in chiaro: ElenaMarino
-      -- giorgiotesta password in chiaro: GiorgioTesta
       INSERT INTO "app_user"
         ("id","username","email","password","first_name","last_name","photo","telegram_id","flag_email")
       VALUES
-        (1,'mariorossi','mariorossi@gmail.com',
-         '$argon2id$v=19$m=4096,t=3,p=1$ZDhqdjZ2ZGNrNncwMDAwMA$hryoiCqybaoJH7lBn8Me3NOYwCtbZNkvbFURyX4Upj8',
-         'Mario','Rossi',NULL,NULL,true),
-        (2,'luigibianchi','luigibianchi2@gmail.com',
-         '$argon2id$v=19$m=4096,t=3,p=1$dHp0bno3dWZ5czkwMDAwMA$XuFcn2bP7v/PNr6Mg/23muTkC+lTpio39VjQCnVlWI0',
-         'Luigi','Bianchi',NULL,NULL,true),
-        (3,'annaverdi','annaverdi@gmail.com',
-         '$argon2id$v=19$m=4096,t=3,p=1$ZzliNjB0eWF3MXMwMDAwMA$ckibuxO0qbyXtn3p7euk8viYtCKs4ickpYEawrAwKN0',
-         'Anna','Verdi',NULL,NULL,false),
-        (4,'giulianeri','giulianeri@gmail.com',
-         '$argon2id$v=19$m=4096,t=3,p=1$cHE5ZW0xZXE2MTAwMDAwMA$+VdJJzTZKk0DiynxmEsy/N2nLnyBCHRk7i9Q2uJ/caM',
-         'Giulia','Neri',NULL,NULL,true),
-        (5,'paolorussi','paolorussi@gmail.com',
-         '$argon2id$v=19$m=4096,t=3,p=1$Zjh5OWZpdWwwYXUwMDAwMA$rUBx/pvOHl64d1CaWPcHt4+sbVLGEnfc6t2RwIk4c20',
-         'Paolo','Russi',NULL,NULL,false),
-        (6,'saraferrari','saraferrari@gmail.com',
-         '$argon2id$v=19$m=4096,t=3,p=1$YmpzemZ0cTE5ZWYwMDAwMA$SKIz5ScbpnSBjDzeSk5e17V5PhyjOabKkzHtWi60Hkw',
-         'Sara','Ferrari',NULL,NULL,true),
-        (7,'lucagalli','lucagalli@gmail.com',
-         '$argon2id$v=19$m=4096,t=3,p=1$eXhlaWRtejJhZjAwMDAwMA$5dlb94BGI0MNMVfl/FbmH1BIjmxGVvVR+we2O41r6s8',
-         'Luca','Galli',NULL,NULL,true),
-        (8,'francescacosta','francescacosta@gmail.com',
-         '$argon2id$v=19$m=4096,t=3,p=1$ZGMwMTJybmJyc28wMDAwMA$Bpdq9YibGVAxvZZ80uGZn5bb212uQgsosPqxC9zlWAA',
-         'Francesca','Costa',NULL,NULL,false),
-        (9,'elenamarino','elenamarino@gmail.com',
-         '$argon2id$v=19$m=4096,t=3,p=1$ejlpdDd6NjA3cmQwMDAwMA$NvLaY9gWHsR5RGGt6DBnzNKJ6acWPVvBuCNZrcsP4PY',
-         'Elena','Marino',NULL,NULL,true),
-        (10,'giorgiotesta','giorgiotesta@gmail.com',
-         '$argon2id$v=19$m=4096,t=3,p=1$ZW1zZWRtdDV1OTgwMDAwMA$hpejmY8uq7zW1cuots4LJr6JxPBQCu/lDcDIvaD3K3k',
-         'Giorgio','Testa',NULL,NULL,true)
+        (1,'mariorossi','mariorossi@gmail.com','$argon2id$v=19$m=4096,t=3,p=1$ZDhqdjZ2ZGNrNncwMDAwMA$hryoiCqybaoJH7lBn8Me3NOYwCtbZNkvbFURyX4Upj8','Mario','Rossi',NULL,NULL,true),
+        (2,'luigibianchi','luigibianchi2@gmail.com','$argon2id$v=19$m=4096,t=3,p=1$dHp0bno3dWZ5czkwMDAwMA$XuFcn2bP7v/PNr6Mg/23muTkC+lTpio39VjQCnVlWI0','Luigi','Bianchi',NULL,NULL,true),
+        (3,'annaverdi','annaverdi@gmail.com','$argon2id$v=19$m=4096,t=3,p=1$ZzliNjB0eWF3MXMwMDAwMA$ckibuxO0qbyXtn3p7euk8viYtCKs4ickpYEawrAwKN0','Anna','Verdi',NULL,NULL,false),
+        (4,'giulianeri','giulianeri@gmail.com','$argon2id$v=19$m=4096,t=3,p=1$cHE5ZW0xZXE2MTAwMDAwMA$+VdJJzTZKk0DiynxmEsy/N2nLnyBCHRk7i9Q2uJ/caM','Giulia','Neri',NULL,NULL,true),
+        (5,'paolorussi','paolorussi@gmail.com','$argon2id$v=19$m=4096,t=3,p=1$Zjh5OWZpdWwwYXUwMDAwMA$rUBx/pvOHl64d1CaWPcHt4+sbVLGEnfc6t2RwIk4c20','Paolo','Russi',NULL,NULL,false),
+        (6,'saraferrari','saraferrari@gmail.com','$argon2id$v=19$m=4096,t=3,p=1$YmpzemZ0cTE5ZWYwMDAwMA$SKIz5ScbpnSBjDzeSk5e17V5PhyjOabKkzHtWi60Hkw','Sara','Ferrari',NULL,NULL,true),
+        (7,'lucagalli','lucagalli@gmail.com','$argon2id$v=19$m=4096,t=3,p=1$eXhlaWRtejJhZjAwMDAwMA$5dlb94BGI0MNMVfl/FbmH1BIjmxGVvVR+we2O41r6s8','Luca','Galli',NULL,NULL,true),
+        (8,'francescacosta','francescacosta@gmail.com','$argon2id$v=19$m=4096,t=3,p=1$ZGMwMTJybmJyc28wMDAwMA$Bpdq9YibGVAxvZZ80uGZn5bb212uQgsosPqxC9zlWAA','Francesca','Costa',NULL,NULL,false),
+        (9,'elenamarino','elenamarino@gmail.com','$argon2id$v=19$m=4096,t=3,p=1$ejlpdDd6NjA3cmQwMDAwMA$NvLaY9gWHsR5RGGt6DBnzNKJ6acWPVvBuCNZrcsP4PY','Elena','Marino',NULL,NULL,true),
+        (10,'giorgiotesta','giorgiotesta@gmail.com','$argon2id$v=19$m=4096,t=3,p=1$ZW1zZWRtdDV1OTgwMDAwMA$hpejmY8uq7zW1cuots4LJr6JxPBQCu/lDcDIvaD3K3k','Giorgio','Testa',NULL,NULL,true)
     `);
 
-    // 9. Municipality officers per ogni ruolo (tranne admin già inserito)
-    await queryRunner.query(`
-      -- org_officer password in chiaro: OrgOfficer1!
-      -- lead_infra password in chiaro: LeadInfra1!
-      -- agent_infra password in chiaro: AgentInfra1!
-      -- lead_mobility password in chiaro: LeadMobility1!
-      -- agent_mobility password in chiaro: AgentMobility1!
-      -- lead_green password in chiaro: LeadGreen1!
-      -- agent_green password in chiaro: AgentGreen1!
-      -- lead_waste password in chiaro: LeadWaste1!
-      -- agent_waste password in chiaro: AgentWaste1!
-      -- lead_energy password in chiaro: LeadEnergy1!
-      -- agent_energy password in chiaro: AgentEnergy1!
-      -- lead_buildings password in chiaro: LeadBuildings1!
-      -- agent_buildings password in chiaro: AgentBuildings1!
-      INSERT INTO "municipality_officer"
-        ("id","username","email","password","first_name","last_name","role")
-      VALUES
-        (2,'org_officer','maria.rossi@participium.local',
-         '$argon2id$v=19$m=4096,t=3,p=1$MXQ5aHF2aG5vNmYwMDAwMA$xwEPRsmhAk4323jDh9Jf1laD9BxtD6wKee06uEAhPC8',
-         'Maria','Rossi',2),
-        (3,'lead_infra','giovanni.bianchi@participium.local',
-         '$argon2id$v=19$m=4096,t=3,p=1$d3l4eXJhczNjazAwMDAwMA$BoCWTDKLvtbZ+kzeyMeqyTyioSpGeZsSiaMnuwL9Chs',
-         'Giovanni','Bianchi',3),
-        (4,'agent_infra','anna.verdi@participium.local',
-         '$argon2id$v=19$m=4096,t=3,p=1$cWF0b25kYjh2eDAwMDAwMA$apQMX9qx9rlc7O3aApOmkZHOG5iU0fTGDnn5K8A4f7k',
-         'Anna','Verdi',4),
-        (5,'lead_mobility','paolo.galli@participium.local',
-         '$argon2id$v=19$m=4096,t=3,p=1$NWx6N2U5MWwyMjcwMDAwMA$WKvR9cEs92cFuEAa4shZQVEWLIQWbAHGq9PFQaB3McY',
-         'Paolo','Galli',5),
-        (6,'agent_mobility','elena.ferrari@participium.local',
-         '$argon2id$v=19$m=4096,t=3,p=1$NjB3dTduY2IxdjIwMDAwMA$DKTu4q1d9uih9KSTYjwfOydPWdhi2/svvde0dZFgv6Q',
-         'Elena','Ferrari',6),
-        (7,'lead_green','marco.russo@participium.local',
-         '$argon2id$v=19$m=4096,t=3,p=1$dmdxY2FzdXJhYTgwMDAwMA$STgY4pc4dSUaVeMpkhqizIMIY19+h1+L8Jy91sSMAiU',
-         'Marco','Russo',7),
-        (8,'agent_green','sara.esposito@participium.local',
-         '$argon2id$v=19$m=4096,t=3,p=1$eml3cjV4cWwwemYwMDAwMA$zMrriiNvqXPn3c1OjuvDJqW40NKil2HO7HC28SZON30',
-         'Sara','Esposito',8),
-        (9,'lead_waste','luca.martini@participium.local',
-         '$argon2id$v=19$m=4096,t=3,p=1$dnJuajAybGVscWUwMDAwMA$bDRZDRurlvGmVoEHgmi1gnqHk3YazVMe0s75HWNfRrU',
-         'Luca','Martini',9),
-        (10,'agent_waste','francesca.romano@participium.local',
-         '$argon2id$v=19$m=4096,t=3,p=1$NXljMmRpOG81bnQwMDAwMA$b2ARlYEp0fEqCaV075vNunWZjnpGYbnnsScHc+ydppk',
-         'Francesca','Romano',10),
-        (11,'lead_energy','davide.conti@participium.local',
-         '$argon2id$v=19$m=4096,t=3,p=1$aWl4NDJkM3pqZjkwMDAwMA$Ju94deagaCHPsEJmgRXmG9tAFYFx0mBbLWh/NV5myYs',
-         'Davide','Conti',11),
-        (12,'agent_energy','chiara.ricci@participium.local',
-         '$argon2id$v=19$m=4096,t=3,p=1$emNzdnV3ZDR5Y2UwMDAwMA$gY6E0cr/UnIOEzGc9p7Shz75hO7lnketKTzc9LEEDTg',
-         'Chiara','Ricci',12),
-        (13,'lead_buildings','alessandro.gallo@participium.local',
-         '$argon2id$v=19$m=4096,t=3,p=1$aWl3bTU4MHJxdGwwMDAwMA$/lpZZnQnbgU0UpPcGV8vg2bTsyZeIaqN+uEuB/nuDQg',
-         'Alessandro','Gallo',13),
-        (14,'agent_buildings','federica.moretti@participium.local',
-         '$argon2id$v=19$m=4096,t=3,p=1$cTNpaGhscjN4dnQwMDAwMA$EawaCPGuYrZKzo0ftbnaBMrq1D4ymmSp4TUsUK63Nec',
-         'Federica','Moretti',14)
-      ON CONFLICT ("id") DO NOTHING
-    `);
-
-    // Allineamento sequence municipality_officer
+    // 11. Seed reports, report photos, sequences
+    // (Here you can just copy/paste all your original 25 reports + photos inserts)
+       // Allineamento sequence municipality_officer
     await queryRunner.query(`SELECT setval(
       pg_get_serial_sequence('"municipality_officer"','id'),
       GREATEST((SELECT COALESCE(MAX(id),0) FROM "municipality_officer"), 1),
@@ -391,13 +309,17 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
 
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DROP TABLE "notification"`);
+    await queryRunner.query(`DROP TABLE "message"`);
+    await queryRunner.query(`DROP TABLE "role_categories"`);
     await queryRunner.query(`DROP TABLE "report_photo"`);
     await queryRunner.query(`DROP TABLE "report"`);
-    await queryRunner.query(`DROP TABLE "role_categories"`);
     await queryRunner.query(`DROP TABLE "category"`);
     await queryRunner.query(`DROP TABLE "app_user"`);
     await queryRunner.query(`DROP TABLE "municipality_officer"`);
     await queryRunner.query(`DROP TABLE "role"`);
+    await queryRunner.query(`DROP TYPE "sender_enum"`);
+    await queryRunner.query(`DROP TYPE "notification_type_enum"`);
     await queryRunner.query(`DROP TYPE "status_type_enum"`);
   }
 }

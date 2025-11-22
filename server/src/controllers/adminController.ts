@@ -166,3 +166,15 @@ export async function getTechLeadReports(OfficerId :number):Promise<ReportRespon
     }
     return reports;
 }
+
+export async function getOfficerById(OfficerId: number): Promise<MunicipalityOfficerResponseDTO> {
+    const officer = await municipalityOfficerRepository.findById(OfficerId);
+    if (!officer) throw appErr("OFFICER_NOT_FOUND", 404);
+    return mapMunicipalityOfficerDAOToResponse(officer);
+}
+
+export async function getOfficerIdByEmail(username: string): Promise<number> {
+    const officer = await municipalityOfficerRepository.findByEmail(username);
+    if (!officer) throw appErr("OFFICER_NOT_FOUND", 404);
+    return officer.id;
+}

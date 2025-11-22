@@ -11,6 +11,7 @@ import { router } from "./routes/routes";
 import { initializeUserRepositories } from './controllers/userController';
 import { initializeAdminRepositories } from './controllers/adminController';
 import {initializeReportRepositories} from './controllers/reportController';
+import {DataSource} from "typeorm";
 
 const PORT = Number(process.env.PORT ?? 3000);
 
@@ -35,8 +36,10 @@ app.use(passport.session());
 app.use("/api", router);
 app.use(errorHandler);
 
-export async function initializeApp(dataSource: any = AppDataSource) {
-    await dataSource.initialize();
+export async function initializeApp(dataSource: DataSource) {
+    if (!dataSource.isInitialized) {
+        await dataSource.initialize();
+    }
     console.log('Database connesso');
     initializeUserRepositories(dataSource);
     initializeAdminRepositories(dataSource);

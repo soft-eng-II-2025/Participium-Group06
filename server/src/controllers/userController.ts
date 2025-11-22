@@ -1,25 +1,20 @@
-import { ReportResponseDTO } from "../models/DTOs/ReportResponseDTO";
 import { UserResponseDTO } from "../models/DTOs/UserResponseDTO";
-import { CreateReportRequestDTO } from "../models/DTOs/CreateReportRequestDTO";
+import { UpdateUserRequestDTO } from "../models/DTOs/UpdateUserRequestDTO";
 import { CreateUserRequestDTO } from "../models/DTOs/CreateUserRequestDTO";
 import { LoginRequestDTO } from "../models/DTOs/LoginRequestDTO";
-import { ReportRepository } from "../repositories/ReportRepository";
 import { UserRepository } from "../repositories/UserRepository";
-import { AppDataSource } from "../data-source";
-//import { mapReportDAOToDTO as mapReportDAOToResponse, mapCreateReportRequestToDAO, mapUserDAOToDTO as mapUserDAOToResponse } from "../services/mapperService";
+import {
+    mapReportDAOToDTO as mapReportDAOToResponse,
+    mapCreateReportRequestToDAO,
+    mapUserDAOToDTO as mapUserDAOToResponse,
+    mapCategoryDAOToDTO
+} from "../services/mapperService";
 import { CategoryRepository } from "../repositories/CategoryRepository";
 import { CategoryResponseDTO } from "../models/DTOs/CategoryResponseDTO";
-import { mapReportDAOToDTO as mapReportDAOToResponse, mapCreateReportRequestToDAO, mapUserDAOToDTO as mapUserDAOToResponse, mapCategoryDAOToDTO } from "../services/mapperService";
 import { hashPassword, verifyPassword } from "../services/passwordService";
 import { User } from "../models/User";
-import { map } from "zod";
-import { ReportPhoto } from "../models/ReportPhoto";
 import { DataSource } from "typeorm";
-import { off } from "process";
-import { MunicipalityOfficerRepository } from "../repositories/MunicipalityOfficerRepository";
-import { StatusType } from "../models/StatusType";
-import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
-import {UpdateUserRequestDTO} from "../models/DTOs/UpdateUserRequestDTO";
+
 
 /*const userRepository: UserRepository = new UserRepository(AppDataSource);
 const reportRepository: ReportRepository = new ReportRepository(AppDataSource);
@@ -58,6 +53,24 @@ export async function createUser(userData: CreateUserRequestDTO): Promise<UserRe
 
     const addedUserDao = await userRepository.add(userDao);
     return mapUserDAOToResponse(addedUserDao); // password nulla in output
+}
+
+export async function updateUser(userId: number, updatedData:UpdateUserRequestDTO): Promise<UserResponseDTO> {
+    const user = await userRepository.findByid(userId);
+    if (!user) throw appErr("USER_NOT_FOUND", 404);
+
+    if (updatedData.photo !== undefined) {
+        await userRepository.changePhoto(user, updatedData.photo ? String(updatedData.photo) : "");
+    }
+    if (updatedData.telegram_id !== undefined) {
+        await userRepository.changeTelegramId(user, updatedData.telegram_id ? String(updatedData.telegram_id) : "");
+    }
+    if (updatedData.flag_email !== undefined) {
+        await userRepository.changeFlagEmail(user, Boolean(updatedData.flag_email));
+    }
+    
+    const updatedUser = await userRepository.findByid(userId);
+    return mapUserDAOToResponse(updatedUser!); 
 }
 
 export async function loginUser(loginData: LoginRequestDTO) {

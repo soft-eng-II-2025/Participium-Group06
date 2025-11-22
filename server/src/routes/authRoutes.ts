@@ -14,8 +14,25 @@ export const router = Router();
 // POST /api/register
 router.post('/register', validateDto(CreateUserRequestDTO), async (req, res: Response, next) => {
 
-    const newUser = await userController.createUser(req.body);
+    /*const newUser = await userController.createUser(req.body);
+    req.logIn(newUser, (err) => {
+        if (err) return next(err);
+        return res.status(201).json(newUser);
+    });
     res.status(201).json(newUser);
+
+     */
+    try {
+        const newUser = await userController.createUser(req.body);
+
+        req.logIn(newUser, (err) => {
+            if (err) return next(err);
+            return res.status(201).json(newUser);
+        });
+
+    } catch (err) {
+        next(err);
+    }
 });
 
 router.post('/login', validateDto(LoginRequestDTO), (req: Request, res: Response, next: NextFunction) => {

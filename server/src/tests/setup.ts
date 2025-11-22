@@ -1,9 +1,10 @@
+// test/setup.ts
 import { TestDataSource } from './test-data-source';
 import { initializeApp } from '../index';
 
 beforeAll(async () => {
   if (!TestDataSource.isInitialized) {
-    await initializeApp(TestDataSource);
+    await initializeApp(TestDataSource); // ora DataSource reale
   }
 });
 
@@ -14,11 +15,13 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-  await TestDataSource.query('PRAGMA foreign_keys = OFF;');
-  const entities = TestDataSource.entityMetadatas;
-  for (const entity of entities) {
-    const repository = TestDataSource.getRepository(entity.name);
-    await repository.clear();
-  }
-  await TestDataSource.query('PRAGMA foreign_keys = ON;');
+  if (!TestDataSource.isInitialized) throw new Error("DataSource not initialized");
+
+  // Prima le tabelle "figlie"
+  await TestDataSource.getRepository("ReportPhoto").clear();
+  await TestDataSource.getRepository("Report").clear();
+
+  // Poi tabelle principali
+  await TestDataSource.getRepository("User").clear();
+  await TestDataSource.getRepository("MunicipalityOfficer").clear();
 });

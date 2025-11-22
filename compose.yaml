@@ -63,18 +63,23 @@ services:
       DB_USER: ${POSTGRES_USER:-postgres}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       DB_NAME: ${POSTGRES_DB:-participium}
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: 3000
     ports:
       - "3000:3000"
     command: ["npm", "run", "start"]
+    volumes:
+      - ./server/src/uploads:/app/src/uploads
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        REACT_APP_API_BASE_URL: "http://localhost:3000/api"
     depends_on:
       api:
         condition: service_started
     ports:
-      - "5173:80"
+      - "8080:80"
+    restart: unless-stopped

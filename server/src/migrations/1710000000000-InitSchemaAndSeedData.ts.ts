@@ -107,6 +107,14 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       (14,'TECH_AGENT_PUBLIC_BUILDINGS', 'Tech Agent, Public Buildings')
       ON CONFLICT ("id") DO NOTHING
     `);
+    // 4.5 Create Message Table
+    await queryRunner.query(`CREATE TABLE "message" (
+      "id" SERIAL PRIMARY KEY,
+      "municipality_officer_id" INT NOT NULL,
+      "user_id" INT NOT NULL,
+      "content" TEXT NOT NULL,
+      "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP)
+    `);
 
     // 5. Seed categories
     await queryRunner.query(`INSERT INTO "category" ("id", "name") VALUES

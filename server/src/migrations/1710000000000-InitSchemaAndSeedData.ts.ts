@@ -61,7 +61,8 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       "officerId" INT,
       "userId" INT,
       "categoryId" INT,
-      CONSTRAINT "FK_report_officer"
+      "createdAt" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "FK_report_officer"
         FOREIGN KEY ("officerId") REFERENCES "municipality_officer"("id"),
       CONSTRAINT "FK_report_user"
         FOREIGN KEY ("userId") REFERENCES "app_user"("id"),
@@ -334,7 +335,32 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       (24,'uploads/1762946249248-Trash-scattered.jpg',24),
       (25,'uploads/1762946249248-Water-leakage.jpg',25)
     `);
+
+    // Allineamento sequence app_user
+    await queryRunner.query(`
+      SELECT setval(pg_get_serial_sequence('"app_user"', 'id'),
+                    (SELECT COALESCE(MAX(id), 0) FROM "app_user"),
+                    true
+             );
+    `);
+
+    // Allineamento sequence report
+    await queryRunner.query(`
+      SELECT setval(pg_get_serial_sequence('"report"', 'id'),
+                    (SELECT COALESCE(MAX(id), 0) FROM "report"),
+                    true
+             );
+    `);
+
+    // Allineamento sequence report_photo
+    await queryRunner.query(`
+      SELECT setval(pg_get_serial_sequence('"report_photo"', 'id'),
+                    (SELECT COALESCE(MAX(id), 0) FROM "report_photo"),
+                    true
+             );
+    `);
   }
+
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DROP TABLE "report_photo"`);

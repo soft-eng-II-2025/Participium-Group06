@@ -7,6 +7,7 @@ import { Category } from './models/Category';
 import { Report } from './models/Report';
 import { ReportPhoto } from './models/ReportPhoto';
 import { MunicipalityOfficer } from './models/MunicipalityOfficer';
+import { Message } from './models/Message';
 
 export const AppDataSource= new DataSource({
     type: 'postgres',
@@ -17,6 +18,6 @@ export const AppDataSource= new DataSource({
     database: process.env.DB_NAME ?? 'participium',
     synchronize: false,
     logging: false,
-    entities: [User, Role, Category, Report, ReportPhoto, MunicipalityOfficer],
+    entities: [User, Role, Category, Report, ReportPhoto, MunicipalityOfficer,Message],
     migrations: ['src/migrations/*.ts'],
 });

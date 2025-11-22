@@ -3,6 +3,7 @@ import type { MunicipalityOfficerResponseDTO } from "../models/DTOs/Municipality
 import type { ReportResponseDTO } from "../models/DTOs/ReportResponseDTO";
 import type { RoleResponseDTO } from "../models/DTOs/RoleResponseDTO";
 import type { UserResponseDTO } from "../models/DTOs/UserResponseDTO";
+import type { MessageDTO } from "../models/DTOs/MessageDTO";
 
 import { CreateReportRequestDTO } from "../models/DTOs/CreateReportRequestDTO";
 
@@ -13,6 +14,7 @@ import { Role } from "../models/Role";
 import { User } from "../models/User";
 import { ReportPhoto } from "../models/ReportPhoto";
 import { StatusType } from "../models/StatusType";
+import { Message } from "../models/Message";
 import { get } from "http";
 
 /* Helper */
@@ -105,6 +107,18 @@ export function createUserDTO(
     }) as UserResponseDTO;
 }
 
+export function createMessageDTO(
+    municipality_officer?: MunicipalityOfficerResponseDTO,
+    user?: UserResponseDTO,
+    content?: string
+): MessageDTO {
+    return removeNullAttributes({
+        municipality_officer,
+        user,
+        content,
+    }) as MessageDTO;
+}
+
 /* ----------- DAO -> Response mappers ----------- */
 
 export function mapCategoryDAOToDTO(categoryDAO: Category): CategoryResponseDTO {
@@ -166,6 +180,14 @@ export function mapUserDAOToDTO(userDAO: User): UserResponseDTO {
         userDAO.telegram_id,
         userDAO.flag_email,
         userDAO.reports?.map((r: Report) => mapReportDAOToDTO(r))
+    );
+}
+
+export function mapMessageDAOToDTO(messageDAO: Message): MessageDTO {
+    return createMessageDTO(
+        messageDAO.municipality_officer ? mapMunicipalityOfficerDAOToDTO(messageDAO.municipality_officer) : undefined,
+        messageDAO.user ? mapUserDAOToDTO(messageDAO.user) : undefined,
+        messageDAO.content,
     );
 }
 

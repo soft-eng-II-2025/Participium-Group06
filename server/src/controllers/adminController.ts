@@ -149,7 +149,8 @@ export async function getTechReports(OfficerId :number):Promise<ReportResponseDT
     if (!officer) {
         throw appErr("OFFICER_NOT_FOUND", 404);
     }
-    return officer.reports.map(mapReportDAOToResponse);
+    const reports = officer.reports || [];
+    return reports.map(mapReportDAOToResponse);
 }
 
 export async function getTechLeadReports(OfficerId :number):Promise<ReportResponseDTO[]> {

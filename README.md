@@ -170,6 +170,30 @@ The frontend will run on http://localhost:8080
   - Sucess: Return a list of reports
   - Error: Returns an error response
 
+### **Message Routes**
+- POST `/api/messages`
+  - Description: Sends a new message linked to a specific report. The sender is inferred from the authenticated user (regular user or municipality officer), while recipientId identifies the other party.
+  - Success: Returns the created message object
+  - Error: Returns an error response
+
+- GET `/api/messages/:reportId`
+    - Description: Retrieves all the messages associated with a specific report.
+    - Success: Returns a list of message objects.
+    - Error: Returns an error response
+
+
+### **Notification Routes**
+
+- GET `/api/notifications`
+    - Description: Retrieves all notifications for the currently authenticated user, ordered by creation date.
+    - Success: Returns a list of notification objects.
+    - Error: Returns an error response
+
+- DELETE `/api/notifications/:id`
+    - Description: Deletes a specific notification belonging to the authenticated user (used to mark it as read/handled).
+    - Success: Returns a confirmation object.
+    - Error: Returns an error response
+
 ## Frontend API 
 
 
@@ -218,6 +242,18 @@ function getTechLeadReports(techLeadId: number): Promise<ReportResponseDTO[]>;  
 **Tech API**
 ```ts
 function getTechReports(techAgentId: number): Promise<ReportResponseDTO[]>;  // GET /api/tech/:id/reports/list
+```
+
+**Message API**
+```ts
+function sendMessage(payload: SendMessageRequestDTO): Promise<MessageDTO>;  // POST /api/messages
+function getMessagesByReport(reportId: number): Promise<MessageDTO[]>;  // GET /api/messages/:reportId
+```
+
+**Notification API**
+```ts
+function getMyNotifications(): Promise<NotificationDTO[]>;  // GET /api/notifications
+function deleteNotification(notificationId: number): Promise<void>;  // DELETE /api/notifications/:id
 ```
 
 ### 👥 Municipality Officer Roles

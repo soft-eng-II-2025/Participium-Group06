@@ -25,9 +25,6 @@ The project is composed of:
 # Stop all containers
 docker compose down
 
-# Build images
-docker compose build
-
 # Start the environment (Postgres + Migration)
 docker compose up 
 

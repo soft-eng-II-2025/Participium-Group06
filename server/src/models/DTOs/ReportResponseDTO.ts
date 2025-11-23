@@ -4,6 +4,8 @@ import { MunicipalityOfficerResponseDTO } from "./MunicipalityOfficerResponseDTO
 import { UserResponseDTO } from "./UserResponseDTO";
 
 export class ReportResponseDTO {
+    id!: number;
+
     longitude!: number;
 
     latitude!: number;

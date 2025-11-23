@@ -18,6 +18,7 @@ import GuestRoute from './routes/GuestRoute';
 import NewReportPage from './pages/NewReportPage';
 import { useAuth } from './contexts/AuthContext';
 import {UserAccountPage} from "./pages/UserAccountPage";
+import ChatPlaygroundPage from './pages/ChatPlayGroundPage';
 
 
 const queryClient = new QueryClient();
@@ -73,6 +74,20 @@ function App() {
                                     <ProtectedRoute>
                                         <RequireRole role="USER">
                                             <UserAccountPage />
+                                        </RequireRole>
+                                    </ProtectedRoute>
+                                } />
+                                < Route path="/user/chat-playground" element={
+                                    <ProtectedRoute>
+                                        <RequireRole role="USER">
+                                            <ChatPlaygroundPage />
+                                        </RequireRole>
+                                    </ProtectedRoute>
+                                } />
+                                < Route path="/officer/chat-playground" element={
+                                    <ProtectedRoute>
+                                        <RequireRole role="OFFICER">
+                                            <ChatPlaygroundPage />
                                         </RequireRole>
                                     </ProtectedRoute>
                                 } />

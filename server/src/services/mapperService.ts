@@ -38,16 +38,18 @@ export function createCategoryDTO(name?: string, reports?: ReportResponseDTO[]):
 }
 
 export function createMunicipalityOfficerDTO(
+    id: number,
     username?: string,
     email?: string,
     first_name?: string,
     last_name?: string,
     role?: string | null
 ): MunicipalityOfficerResponseDTO {
-    return removeNullAttributes({ username, email, first_name, last_name, role }) as MunicipalityOfficerResponseDTO;
+    return removeNullAttributes({ id, username, email, first_name, last_name, role }) as MunicipalityOfficerResponseDTO;
 }
 
 export function createReportDTO(
+    id: number,
     longitude: number,
     latitude: number,
     title: string,
@@ -60,6 +62,7 @@ export function createReportDTO(
     photos?: string[]
 ): ReportResponseDTO {
     return removeNullAttributes({
+        id,
         longitude,
         latitude,
         title,
@@ -102,6 +105,7 @@ export function createUserDTO(
 }
 
 export function createMessageDTO(
+    report_id: number,
     municipality_officer?: MunicipalityOfficerResponseDTO,
     user?: UserResponseDTO,
     content?: string,
@@ -109,6 +113,7 @@ export function createMessageDTO(
     sender?: 'USER' | 'OFFICER'
 ): MessageDTO {
     return removeNullAttributes({
+        report_id,
         municipality_officer,
         user,
         content,
@@ -145,6 +150,7 @@ export function mapCategoryDAOToDTO(categoryDAO: Category): CategoryResponseDTO 
 
 export function mapMunicipalityOfficerDAOToDTO(officerDAO: MunicipalityOfficer): MunicipalityOfficerResponseDTO {
     return createMunicipalityOfficerDTO(
+        officerDAO.id,
         officerDAO.username,
         officerDAO.email,
         officerDAO.first_name,
@@ -155,6 +161,7 @@ export function mapMunicipalityOfficerDAOToDTO(officerDAO: MunicipalityOfficer):
 
 export function mapReportDAOToDTO(reportDAO: Report): ReportResponseDTO {
     return createReportDTO(
+        reportDAO.id,
         reportDAO.longitude,
         reportDAO.latitude,
         reportDAO.title,
@@ -191,6 +198,7 @@ export function mapUserDAOToDTO(userDAO: User): UserResponseDTO {
 
 export function mapMessageDAOToDTO(messageDAO: Message): MessageDTO {
     return createMessageDTO(
+        messageDAO.report_id,
         messageDAO.municipality_officer ? mapMunicipalityOfficerDAOToDTO(messageDAO.municipality_officer) : undefined,
         messageDAO.user ? mapUserDAOToDTO(messageDAO.user) : undefined,
         messageDAO.content,

@@ -4,6 +4,7 @@ import { MunicipalityOfficerResponseDTO } from "./MunicipalityOfficerResponseDTO
 import { UserResponseDTO } from "./UserResponseDTO";
 
 export interface MessageDTO {
+    report_id: number;
     municipality_officer?: MunicipalityOfficerResponseDTO; // valorizzato se sender = "OFFICER"
     user?: UserResponseDTO;                               // valorizzato se sender = "USER"
     content: string;

@@ -8,8 +8,7 @@ export const router = Router();
 
 router.put('/report/:reportId', requireTechLead, async (req, res: Response) => {
     const reportId = Number(req.params.reportId);
-
-    const username = (req.user as User).username;
+    const username = req.body.officerUsername;
     const updatedReport = await adminController.assignTechAgent(reportId, username);
     res.status(200).json(updatedReport);
 });

@@ -7,7 +7,7 @@ export interface CreateReportDTO { // Questa è la tua interfaccia esistente, pe
     latitude: number;
     title: string;
     description: string;
-    createdAt: Date;
+    createdAt?: Date;
     user: UserResponseDTO; // Questo sarà popolato dal backend
     categoryId: number;
     status: StatusType;

@@ -171,7 +171,7 @@ The frontend will run on http://localhost:8080
   - Error: Returns an error response
 
 ### **Message Routes**
-- POST `/api/messages`
+- POST `/api/messages/:reportId`
   - Description: Sends a new message linked to a specific report. The sender is inferred from the authenticated user (regular user or municipality officer), while recipientId identifies the other party.
   - Success: Returns the created message object
   - Error: Returns an error response
@@ -246,8 +246,8 @@ function getTechReports(techAgentId: number): Promise<ReportResponseDTO[]>;  // 
 
 **Message API**
 ```ts
-function sendMessage(payload: SendMessageRequestDTO): Promise<MessageDTO>;  // POST /api/messages
-function getMessagesByReport(reportId: number): Promise<MessageDTO[]>;  // GET /api/messages/:reportId
+function sendMessage(payload: SendMessageRequestDTO, reportId: number): Promise<MessageResponseDTO> // POST /api/messages
+function getMessagesByReport(reportId: number): Promise<MessageResponseDTO[]>;  // GET /api/messages/:reportId
 ```
 
 **Notification API**

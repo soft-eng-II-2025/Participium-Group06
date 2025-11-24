@@ -18,7 +18,7 @@ import {
   subscribeToNewMessages,
   unsubscribeFromNewMessages,
 } from "../services/socketClient";
-import { SendMessageRequestDTO } from "../api/messageApi";
+import { SendMessageRequestDTO } from "../DTOs/SendMessageRequestDTO";
 
 interface ChatProps {
   report: ReportResponseDTO;     // contiene id, user, officer

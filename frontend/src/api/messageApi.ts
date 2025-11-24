@@ -6,8 +6,8 @@ const BASE_URL = "messages";
 
 
 export class MessageApi {
-    async sendMessage(payload: SendMessageRequestDTO): Promise<MessageResponseDTO> {
-        const response = await api.post<MessageResponseDTO>(`${BASE_URL}`, {
+    async sendMessage(payload: SendMessageRequestDTO, reportId: number): Promise<MessageResponseDTO> {
+        const response = await api.post<MessageResponseDTO>(`${BASE_URL}/${reportId}`, {
             content: payload.content,
             senderType: payload.senderType
         });

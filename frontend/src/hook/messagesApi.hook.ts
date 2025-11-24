@@ -1,6 +1,7 @@
 // frontend: src/hook/messages.hook.ts
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MessageApi, SendMessageRequestDTO } from "../api/messageApi";
+import { MessageApi} from "../api/messageApi";
+import {SendMessageRequestDTO} from "../DTOs/SendMessageRequestDTO";
 import { MessageResponseDTO } from "../DTOs/MessageResponseDTO";
 
 const messageApi = new MessageApi();
@@ -19,7 +20,7 @@ export function useSendMessage(reportId: number) {
 
   return useMutation({
     mutationFn: (payload: SendMessageRequestDTO) =>
-      messageApi.sendMessage(payload),
+      messageApi.sendMessage(payload,reportId),
     onSuccess: (newMessage) => {
       qc.setQueryData<MessageResponseDTO[]>(
         ["messages", reportId],

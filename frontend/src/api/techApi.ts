@@ -8,8 +8,8 @@ export class TechApi {
      * GET /tech/:id/reports/list
      * Retrieve all reports of a specific tech agent
      */
-    async getTechReports(techAgentId: number): Promise<ReportResponseDTO[]> {
-        const response = await api.get<ReportResponseDTO[]>(`${BASE_URL}/${techAgentId}/reports/list`);
+    async getTechReports(): Promise<ReportResponseDTO[]> {
+        const response = await api.get<ReportResponseDTO[]>(`${BASE_URL}/reports/list`);
         return response.data;
     }
 }

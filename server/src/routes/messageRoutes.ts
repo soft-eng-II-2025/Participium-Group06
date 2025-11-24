@@ -12,23 +12,25 @@ import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
 export const router = Router();
 
 // Send a new message
-router.post("/", requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post("/:reportId", requireAuth, async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { content, reportId, senderType, recipientId } = req.body;
+        const { content, report_id, sender, recipientId } = req.body;
 
-        if (!content || !reportId || !senderType) {
+        if (!content || !report_id || !sender) {
+            console.log("Missing fields:", { content, report_id, sender });
             return res.status(400).json({ error: "Missing required fields" });
         }
 
         // Cast req.user to the expected type
-        if (senderType == "USER"){
+        if (sender == "USER"){
             const user = req.user as UserResponseDTO;
+            console.log("Authenticated user:", user);
         if (!user) return res.status(401).json({ error: "Not authenticated" });
 
         const message = await messageController.sendMessage(
             content,
-            reportId,
-            senderType,
+            report_id,
+            sender,
             user.userId,
             recipientId
         );
@@ -39,8 +41,8 @@ router.post("/", requireAuth, async (req: Request, res: Response, next: NextFunc
 
             const message = await messageController.sendMessage(
             content,
-            reportId,
-            senderType,
+            report_id,
+            sender,
             officerId,
             recipientId
         );

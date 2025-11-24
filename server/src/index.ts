@@ -11,6 +11,9 @@ import { router } from "./routes/routes";
 import { initializeUserRepositories } from './controllers/userController';
 import { initializeAdminRepositories } from './controllers/adminController';
 import {initializeReportRepositories} from './controllers/reportController';
+import { initializeMessageRepositories } from './controllers/messagingController';
+import { Server as SocketIOServer } from "socket.io";
+import http from "http";
 import {DataSource} from "typeorm";
 
 const PORT = Number(process.env.PORT ?? 3000);
@@ -36,6 +39,14 @@ app.use(passport.session());
 app.use("/api", router);
 app.use(errorHandler);
 
+const server = http.createServer(app);
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: true,       // o "http://localhost:8080"
+    credentials: true,
+  },
+});
+
 export async function initializeApp(dataSource: DataSource) {
     if (!dataSource.isInitialized) {
         await dataSource.initialize();
@@ -44,6 +55,7 @@ export async function initializeApp(dataSource: DataSource) {
     initializeUserRepositories(dataSource);
     initializeAdminRepositories(dataSource);
     initializeReportRepositories(dataSource);
+    initializeMessageRepositories(dataSource, io);
 }
 
 async function main() {

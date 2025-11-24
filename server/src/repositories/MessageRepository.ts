@@ -1,6 +1,7 @@
 // src/repositories/MessageRepository.ts
 import { Repository, DataSource } from "typeorm";
 import { Message } from "../models/Message";
+import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
 
 export class MessageRepository {
   protected ormRepository: Repository<Message>;
@@ -29,6 +30,16 @@ export class MessageRepository {
       relations: ['user', 'municipality_officer'],
       order: { created_at: 'ASC' },
     });
+  }
+
+  async findMunicipalityOfficerByReport(reportId: number): Promise<MunicipalityOfficer> {
+    return this.ormRepository
+      .createQueryBuilder("message")
+      .leftJoinAndSelect("message.municipality_officer", "municipality_officer")
+      .where("message.report_id = :reportId", { reportId })
+      .select(["municipality_officer.id", "municipality_officer.name", "municipality_officer.email"])
+      .getOne()
+      .then(msg => msg?.municipality_officer!);
   }
 
   async add(message: Message): Promise<Message> {

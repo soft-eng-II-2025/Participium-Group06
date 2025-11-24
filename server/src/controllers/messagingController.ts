@@ -8,6 +8,9 @@ import { NotificationType } from "../models/NotificationType";
 import { mapMessageDAOToDTO } from "../services/mapperService";
 import { User } from "../models/User";
 import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
+import { DataSource } from "typeorm";
+import { Server as SocketIoServer } from "socket.io";
+
 
 let messageRepository: MessageRepository;
 let notificationRepository: NotificationRepository;
@@ -16,7 +19,7 @@ let socketService: SocketService;
 /**
  * Initialize repositories and socket service
  */
-export function initializeMessageController(
+/*export function initializeMessageController(
     msgRepo: MessageRepository,
     notifRepo: NotificationRepository,
     socketSrv: SocketService
@@ -24,6 +27,15 @@ export function initializeMessageController(
     messageRepository = msgRepo;
     notificationRepository = notifRepo;
     socketService = socketSrv;
+}*/
+
+export function initializeMessageRepositories(
+    dataSource: DataSource,
+    io: SocketIoServer
+) {
+    messageRepository = new MessageRepository(dataSource);
+    notificationRepository = new NotificationRepository(dataSource);
+    socketService = new SocketService(io); // Assumes SocketService can be instantiated without parameters
 }
 
 /**
@@ -48,6 +60,7 @@ export async function sendMessage(
         const user = new User();
         user.id = senderId;
         message.user = user;
+        message.municipality_officer = await messageRepository.findMunicipalityOfficerByReport(reportId);
     } else {
         const officer = new MunicipalityOfficer();
         officer.id = senderId;

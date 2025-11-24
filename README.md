@@ -274,3 +274,32 @@ function deleteNotification(notificationId: number): Promise<void>;  // DELETE /
 | `TECH_AGENT_ENERGY_LIGHTING` | Public Lighting |
 | `TECH_LEAD_PUBLIC_BUILDINGS` | Architectural Barriers \| Other |
 | `TECH_AGENT_PUBLIC_BUILDINGS` | Architectural Barriers \| Other |
+
+
+### Username e Password Users
+
+    -- luigibianchi password in chiaro: LuigiBianchi
+    -- annaverdi password in chiaro: AnnaVerdi
+    -- giulianeri password in chiaro: GiuliaNeri
+    -- paolorussi password in chiaro: PaoloRussi
+    -- saraferrari password in chiaro: SaraFerrari
+    -- lucagalli password in chiaro: LucaGalli
+    -- francescacosta password in chiaro: FrancescaCosta
+    -- elenamarino password in chiaro: ElenaMarino
+    -- giorgiotesta password in chiaro: GiorgioTesta
+
+
+### Username e Password Officers
+
+    -- lead_infra password in chiaro: LeadInfra1!
+    -- agent_infra password in chiaro: AgentInfra1!
+    -- lead_mobility password in chiaro: LeadMobility1!
+    -- agent_mobility password in chiaro: AgentMobility1!
+    -- lead_green password in chiaro: LeadGreen1!
+    -- agent_green password in chiaro: AgentGreen1!
+    -- lead_waste password in chiaro: LeadWaste1!
+    -- agent_waste password in chiaro: AgentWaste1!
+    -- lead_energy password in chiaro: LeadEnergy1!
+    -- agent_energy password in chiaro: AgentEnergy1!
+    -- lead_buildings password in chiaro: LeadBuildings1!
+    -- agent_buildings password in chiaro: AgentBuildings1!

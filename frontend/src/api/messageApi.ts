@@ -1,29 +1,21 @@
 import api from "./api";
-import { MessageDTO } from "../DTOs/MessageDTO";
+import { MessageResponseDTO } from "../DTOs/MessageDTO";
+import { SendMessageRequestDTO } from "../DTOs/SendMessageRequestDTO";
 
 const BASE_URL = "messages";
 
-export interface SendMessageRequestDTO {
-    content: string;
-    reportId: number;
-    senderType: "USER" | "OFFICER";
-    recipientId?: number;
-}
-
 
 export class MessageApi {
-    async sendMessage(payload: SendMessageRequestDTO): Promise<MessageDTO> {
-        const response = await api.post<MessageDTO>(`${BASE_URL}`, {
+    async sendMessage(payload: SendMessageRequestDTO): Promise<MessageResponseDTO> {
+        const response = await api.post<MessageResponseDTO>(`${BASE_URL}`, {
             content: payload.content,
-            reportId: payload.reportId,
-            senderType: payload.senderType,
-            recipientId: payload.recipientId,
+            senderType: payload.senderType
         });
         return response.data;
     }
 
-    async getMessagesByReport(reportId: number): Promise<MessageDTO[]> {
-        const response = await api.get<MessageDTO[]>(`${BASE_URL}/${reportId}`);
+    async getMessagesByReport(reportId: number): Promise<MessageResponseDTO[]> {
+        const response = await api.get<MessageResponseDTO[]>(`${BASE_URL}/${reportId}`);
         return response.data;
     }
 }

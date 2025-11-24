@@ -1,4 +1,6 @@
 // src/DTOs/MessageResponseDTO.ts
+
+
 export interface MessageResponseDTO {
     role_label?: string; // Per definire l'officer come ruolo invece che come nome
     username?: string;                               // valorizzato se sender = "USER"

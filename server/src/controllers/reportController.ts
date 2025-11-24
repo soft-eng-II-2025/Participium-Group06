@@ -44,7 +44,6 @@ export async function addReport(reportData: CreateReportRequestDTO): Promise<Rep
 }
 
 export async function updateReportStatus(reportId: number, newStatus: StatusType, explanation: string): Promise<ReportResponseDTO> {
-    console.log(`Updating report ${reportId} to status ${newStatus}`);
     const report = await reportRepository.findById(reportId);
     if (!report) throw appErr('REPORT_NOT_FOUND', 404);
     

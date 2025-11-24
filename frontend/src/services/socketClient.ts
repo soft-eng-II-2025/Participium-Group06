@@ -1,6 +1,6 @@
 // frontend: src/services/socketClient.ts
 import { io, Socket } from "socket.io-client";
-import { MessageDTO } from "../DTOs/MessageDTO";
+import { MessageResponseDTO } from "../DTOs/MessageDTO";
 
 let socket: Socket | null = null;
 
@@ -34,12 +34,12 @@ export function initSocketClient({
   return socket;
 }
 
-export function subscribeToNewMessages(cb: (m: MessageDTO) => void) {
+export function subscribeToNewMessages(cb: (m: MessageResponseDTO) => void) {
   if (!socket) return;
   socket.on("newMessage", cb);
 }
 
-export function unsubscribeFromNewMessages(cb: (m: MessageDTO) => void) {
+export function unsubscribeFromNewMessages(cb: (m: MessageResponseDTO) => void) {
   if (!socket) return;
   socket.off("newMessage", cb);
 }

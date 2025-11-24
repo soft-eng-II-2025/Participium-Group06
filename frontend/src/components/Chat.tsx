@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import { ReportResponseDTO } from "../DTOs/ReportResponseDTO";
-import { MessageDTO } from "../DTOs/MessageDTO";
+import { MessageResponseDTO } from "../DTOs/MessageDTO";
 import { useMessagesByReport, useSendMessage } from "../hook/messagesApi.hook";
 import { useChatIdentity } from "../hook/useChatIdentity";
 import {
@@ -32,7 +32,7 @@ const Chat: React.FC<ChatProps> = ({ report, socketBaseUrl = "http://localhost:3
   const { data: messages = [], isLoading } = useMessagesByReport(reportId, !!reportId);
   const { mutateAsync: sendMessage, isPending: sending } = useSendMessage(reportId);
 
-  const [localMessages, setLocalMessages] = useState<MessageDTO[]>([]);
+  const [localMessages, setLocalMessages] = useState<MessageResponseDTO[]>([]);
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -63,7 +63,7 @@ const Chat: React.FC<ChatProps> = ({ report, socketBaseUrl = "http://localhost:3
       officerId: isOfficer ? currentId : undefined,
     });
 
-    const handleNewMessage = (m: MessageDTO) => {
+    const handleNewMessage = (m: MessageResponseDTO) => {
       if (m.report_id !== reportId) return;
       setLocalMessages((prev) => [...prev, m]);
     };
@@ -117,7 +117,7 @@ const Chat: React.FC<ChatProps> = ({ report, socketBaseUrl = "http://localhost:3
     }
   };
 
-  const isOwnMessage = (m: MessageDTO) => {
+  const isOwnMessage = (m: MessageResponseDTO) => {
     if (!senderType || !currentId) return false;
 
     if (senderType === "USER") {

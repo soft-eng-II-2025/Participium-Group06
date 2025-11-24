@@ -26,7 +26,7 @@ export class Message {
   content!: string;
 
   // date de création
-  @CreateDateColumn({ name: 'created_at' })
+  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   created_at!: Date;
 
   @Column({ type: 'enum', enum: ['USER', 'OFFICER'] })

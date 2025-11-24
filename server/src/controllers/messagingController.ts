@@ -10,11 +10,15 @@ import { User } from "../models/User";
 import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
 import { DataSource } from "typeorm";
 import { Server as SocketIoServer } from "socket.io";
+import { report } from "process";
+import { ReportRepository } from "../repositories/ReportRepository";
+import { CreateMessageDTO } from "../models/DTOs/CreateMessageDTO";
 
 
 let messageRepository: MessageRepository;
 let notificationRepository: NotificationRepository;
 let socketService: SocketService;
+let reportRepository: ReportRepository;
 
 /**
  * Initialize repositories and socket service
@@ -34,6 +38,7 @@ export function initializeMessageRepositories(
     io: SocketIoServer
 ) {
     messageRepository = new MessageRepository(dataSource);
+    reportRepository = new ReportRepository(dataSource);
     notificationRepository = new NotificationRepository(dataSource);
     socketService = new SocketService(io); // Assumes SocketService can be instantiated without parameters
 }
@@ -44,56 +49,59 @@ export function initializeMessageRepositories(
  * - recipientId: the other party’s ID (User.id or Officer.id)
  */
 export async function sendMessage(
-    content: string,
-    reportId: number,
-    senderType: "USER" | "OFFICER",
-    senderId: number,
-    recipientId?: number
+    reportId: number,         // comes from route params
+    dto: CreateMessageDTO     // contains content + sender only
 ) {
-    // Create message entity
-    const message = new Message();
-    message.content = content;
-    message.report_id = reportId;
-    message.sender = senderType;
+    const { sender, content } = dto;
 
-    if (senderType === "USER") {
-        const user = new User();
-        user.id = senderId;
+    // 1️⃣ Fetch report to get user + officer
+    const report = await reportRepository.findById(reportId);
+    if (!report) throw new Error("Report not found.");
+
+    const user = report.user;
+    const officer = report.officer;
+
+    if (!user) throw new Error("Report has no user assigned.");
+    if (!officer) throw new Error("Report has no officer assigned.");
+
+    // 2️⃣ Create message
+    const message = new Message();
+    message.report_id = reportId;
+    message.content = content;
+    message.sender = sender;
+    message.created_at = new Date(); // set here, not in DTO
+
+    if (sender === "USER") {
         message.user = user;
-        message.municipality_officer = await messageRepository.findMunicipalityOfficerByReport(reportId);
+        message.municipality_officer = officer;
     } else {
-        const officer = new MunicipalityOfficer();
-        officer.id = senderId;
+        message.user = user;
         message.municipality_officer = officer;
     }
 
     const savedMessage = await messageRepository.add(message);
 
-    // Sender is OFFICER → create notification for user
-    if (senderType === "OFFICER" && recipientId) {
-        const user = new User();
-        user.id = recipientId;
+    // 3️⃣ Notifications
+    if (sender === "OFFICER") {
+        const notif = new Notification();
+        notif.user = user;
+        notif.content = "New message from officer";
+        notif.type = NotificationType.NewMessage;
+        notif.is_read = false;
 
-        const notification = new Notification();
-        notification.user = user;
-        notification.content = "New message from officer";
-        notification.type = NotificationType.NewMessage;
-        notification.is_read = false;
+        const savedNotif = await notificationRepository.add(notif);
 
-        const savedNotification = await notificationRepository.add(notification);
-
-        // Emit via socket
-        socketService.sendMessageToUser(recipientId, savedMessage);
-        socketService.sendNotificationToUser(recipientId, savedNotification);
+        socketService.sendMessageToUser(user.id, savedMessage);
+        socketService.sendNotificationToUser(user.id, savedNotif);
     }
 
-    // Sender is USER → send to officer only, no notification
-    if (senderType === "USER" && recipientId) {
-        socketService.sendMessageToOfficer(recipientId, savedMessage);
+    if (sender === "USER") {
+        socketService.sendMessageToOfficer(officer.id, savedMessage);
     }
 
     return mapMessageDAOToDTO(savedMessage);
 }
+
 
 /**
  * Get all messages for a report

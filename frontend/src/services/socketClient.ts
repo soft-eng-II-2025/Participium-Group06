@@ -1,6 +1,6 @@
 // frontend: src/services/socketClient.ts
 import { io, Socket } from "socket.io-client";
-import { MessageResponseDTO } from "../DTOs/MessageDTO";
+import { MessageResponseDTO } from "../DTOs/MessageResponseDTO";
 
 let socket: Socket | null = null;
 

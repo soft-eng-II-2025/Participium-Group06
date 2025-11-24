@@ -14,44 +14,16 @@ export const router = Router();
 // Send a new message
 router.post("/:reportId", requireAuth, async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { content, report_id, sender, recipientId } = req.body;
+        const reportId = Number(req.params.reportId);
+        const dto = req.body; // CreateMessageDTO
 
-        if (!content || !report_id || !sender) {
-            console.log("Missing fields:", { content, report_id, sender });
-            return res.status(400).json({ error: "Missing required fields" });
-        }
-
-        // Cast req.user to the expected type
-        if (sender == "USER"){
-            const user = req.user as UserResponseDTO;
-            console.log("Authenticated user:", user);
-        if (!user) return res.status(401).json({ error: "Not authenticated" });
-
-        const message = await messageController.sendMessage(
-            content,
-            report_id,
-            sender,
-            user.userId,
-            recipientId
-        );
-        res.status(201).json(message);}
-        else{
-
-            const officerId: number = await adminController.getOfficerIdByEmail((req.user as MunicipalityOfficerResponseDTO).email);
-
-            const message = await messageController.sendMessage(
-            content,
-            report_id,
-            sender,
-            officerId,
-            recipientId
-        );
-        if (!officerId) return res.status(401).json({ error: "Not authenticated" });
-        res.status(201).json(message);}
-    } catch (err) {
-        next(err);
+        const result = await messageController.sendMessage(reportId, dto);
+        res.json(result);
+    } catch (err: any) {
+        res.status(400).json({ error: err.message });
     }
 });
+
 
 // Get all messages for a specific report
 router.get("/:reportId", requireAuth, async (req: Request, res: Response, next: NextFunction) => {

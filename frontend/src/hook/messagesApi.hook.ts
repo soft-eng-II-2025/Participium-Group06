@@ -1,7 +1,7 @@
 // frontend: src/hook/messages.hook.ts
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MessageApi, SendMessageRequestDTO } from "../api/messageApi";
-import { MessageResponseDTO } from "../DTOs/MessageDTO";
+import { MessageResponseDTO } from "../DTOs/MessageResponseDTO";
 
 const messageApi = new MessageApi();
 

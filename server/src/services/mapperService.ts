@@ -3,7 +3,7 @@ import type { MunicipalityOfficerResponseDTO } from "../models/DTOs/Municipality
 import type { ReportResponseDTO } from "../models/DTOs/ReportResponseDTO";
 import type { RoleResponseDTO } from "../models/DTOs/RoleResponseDTO";
 import type { UserResponseDTO } from "../models/DTOs/UserResponseDTO";
-import type { MessageDTO } from "../models/DTOs/MessageDTO";
+import type { MessageResponseDTO } from "../models/DTOs/MessageResponseDTO";
 import type { NotificationDTO } from "../models/DTOs/NotificationDTO";
 
 import { CreateReportRequestDTO } from "../models/DTOs/CreateReportRequestDTO";
@@ -104,22 +104,20 @@ export function createUserDTO(
     }) as UserResponseDTO;
 }
 
-export function createMessageDTO(
-    report_id: number,
-    municipality_officer?: MunicipalityOfficerResponseDTO,
-    user?: UserResponseDTO,
+export function createMessageResponseDTO(
+    role_label?: string,
+    username?: string,
     content?: string,
     created_at?: Date,
     sender?: 'USER' | 'OFFICER'
-): MessageDTO {
+): MessageResponseDTO {
     return removeNullAttributes({
-        report_id,
-        municipality_officer,
-        user,
+        role_label,
+        username,
         content,
         created_at,
         sender
-    }) as MessageDTO;
+    }) as MessageResponseDTO;
 }
 
 export function createNotificationDTO(
@@ -196,11 +194,12 @@ export function mapUserDAOToDTO(userDAO: User): UserResponseDTO {
     );
 }
 
-export function mapMessageDAOToDTO(messageDAO: Message): MessageDTO {
-    return createMessageDTO(
-        messageDAO.report_id,
-        messageDAO.municipality_officer ? mapMunicipalityOfficerDAOToDTO(messageDAO.municipality_officer) : undefined,
-        messageDAO.user ? mapUserDAOToDTO(messageDAO.user) : undefined,
+export function mapMessageDAOToDTO(messageDAO: Message): MessageResponseDTO {
+    let username = messageDAO.user ? messageDAO.user.username : messageDAO.municipality_officer ? messageDAO.municipality_officer.username : undefined;
+    let role_label = messageDAO.municipality_officer ? messageDAO.municipality_officer.role?.label : undefined;
+    return createMessageResponseDTO(
+        role_label,
+        username,
         messageDAO.content,
         messageDAO.created_at,
         messageDAO.sender

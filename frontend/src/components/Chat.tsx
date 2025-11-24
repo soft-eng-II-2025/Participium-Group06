@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import { ReportResponseDTO } from "../DTOs/ReportResponseDTO";
-import { MessageResponseDTO } from "../DTOs/MessageDTO";
+import { MessageResponseDTO } from "../DTOs/MessageResponseDTO";
 import { useMessagesByReport, useSendMessage } from "../hook/messagesApi.hook";
 import { useChatIdentity } from "../hook/useChatIdentity";
 import {

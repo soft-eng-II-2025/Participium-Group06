@@ -1,5 +1,5 @@
 import api from "./api";
-import { MessageResponseDTO } from "../DTOs/MessageDTO";
+import { MessageResponseDTO } from "../DTOs/MessageResponseDTO";
 import { SendMessageRequestDTO } from "../DTOs/SendMessageRequestDTO";
 
 const BASE_URL = "messages";

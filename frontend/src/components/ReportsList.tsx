@@ -108,11 +108,9 @@ export default function ReportsList({ reports, selectedIndex, onSelect, onLoadMo
                                     </Typography>
                                 }
                                 secondary={
-                                    <>
                                         <Typography variant="body2" color="text.secondary">
                                             {createdStr ?? r.user?.username ?? "Reported by unknown"}
                                         </Typography>
-                                    </>
                                 }
                             />
 

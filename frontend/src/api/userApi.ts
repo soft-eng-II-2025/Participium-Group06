@@ -40,4 +40,9 @@ export class UserApi {
         const response = await api.put<UserResponseDTO>(`${BASE_URL}/${userId}`, payload);
         return response.data;
     }
+
+    async getReportPhoto(url : string): Promise<Blob> {
+        const response = await api.get<Blob>(`${BASE_URL}/${url}`, { responseType: 'blob' });
+        return response.data;
+    }
 }

@@ -12,11 +12,13 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from './contexts/AuthContext';
 import AdminHomePage from "./pages/AdminHomePage";
 import AdminRegisterPage from "./pages/AdminRegisterPage";
+import OrganizationOfficerHomePage from './pages/OrganizationOfficerHomePage';
 import RequireRole from './routes/RequireRole';
 import ProtectedRoute from './routes/ProtectedRoute';
 import GuestRoute from './routes/GuestRoute';
 import NewReportPage from './pages/NewReportPage';
 import { useAuth } from './contexts/AuthContext';
+import TechLeadHomePage from './pages/TechLeadHomePage';
 import {UserAccountPage} from "./pages/UserAccountPage";
 
 
@@ -33,6 +35,8 @@ function App() {
         if (!isAuthenticated) return <HomePage />;
         if (role === 'ADMIN') return <AdminHomePage />;
         if (role === 'USER') return <Map />;
+        if (role === 'ORGANIZATION_OFFICER') return <OrganizationOfficerHomePage />;
+        if (role?.startsWith('TECH_LEAD')) return <TechLeadHomePage />;
         else return <HomePage />;
     };
     return (

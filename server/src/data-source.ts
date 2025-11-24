@@ -19,6 +19,6 @@ export const AppDataSource= new DataSource({
     database: process.env.DB_NAME ?? 'participium',
     synchronize: false,
     logging: false,
-    entities: [User, Role, Category, Report, ReportPhoto, MunicipalityOfficer,Message,Notification],
+    entities: [User, Role, Category, Report, ReportPhoto, MunicipalityOfficer, Message, Notification],
     migrations: ['src/migrations/*.ts'],
 });

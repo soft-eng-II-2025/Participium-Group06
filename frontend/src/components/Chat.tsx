@@ -1,4 +1,4 @@
-// frontend: src/components/Chat.tsx
+// frontend/src/components/Chat.tsx
 import React, { FormEvent, useEffect, useRef, useState } from "react";
 import {
   Box,
@@ -9,135 +9,74 @@ import {
   Paper,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
-import { ReportResponseDTO } from "../DTOs/ReportResponseDTO";
 import { MessageResponseDTO } from "../DTOs/MessageResponseDTO";
 import { useMessagesByReport, useSendMessage } from "../hook/messagesApi.hook";
 import { useChatIdentity } from "../hook/useChatIdentity";
-import {
-  initSocketClient,
-  subscribeToNewMessages,
-  unsubscribeFromNewMessages,
-} from "../services/socketClient";
-import { SendMessageRequestDTO } from "../DTOs/SendMessageRequestDTO";
+import { CreateMessageDTO } from "../api/messageApi";
 
 interface ChatProps {
-  report: ReportResponseDTO;     // contiene id, user, officer
-  socketBaseUrl?: string;
+  reportId: number;          // arriva dal componente che apre la chat
 }
 
-const Chat: React.FC<ChatProps> = ({ report, socketBaseUrl = "http://localhost:3000" }) => {
-  const reportId = report.id;
-  const { senderType, currentId, isUser, isOfficer } = useChatIdentity();
+const Chat: React.FC<ChatProps> = ({ reportId }) => {
+  const { senderType, displayName, isUser, isOfficer } = useChatIdentity();
 
   const { data: messages = [], isLoading } = useMessagesByReport(reportId, !!reportId);
-  const { mutateAsync: sendMessage, isPending: sending } = useSendMessage(reportId);
+  const { mutateAsync: sendMessage, isPending: sending } = useSendMessage();
 
-  const [localMessages, setLocalMessages] = useState<MessageResponseDTO[]>([]);
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
-
   const endRef = useRef<HTMLDivElement | null>(null);
 
-  // sync iniziale
-  useEffect(() => {
-    const sorted = [...messages].sort(
-      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    );
-    setLocalMessages(sorted);
-  }, [messages]);
+  const sortedMessages = React.useMemo(
+    () =>
+      [...messages].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      ),
+    [messages]
+  );
 
-  // scroll
   useEffect(() => {
     if (endRef.current) {
       endRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [localMessages]);
-
-  // socket
-  useEffect(() => {
-    if (!senderType || !currentId) return;
-
-    initSocketClient({
-      baseUrl: socketBaseUrl,
-      userId: isUser ? currentId : undefined,
-      officerId: isOfficer ? currentId : undefined,
-    });
-
-    const handleNewMessage = (m: MessageResponseDTO) => {
-      if (m.report_id !== reportId) return;
-      setLocalMessages((prev) => [...prev, m]);
-    };
-
-    subscribeToNewMessages(handleNewMessage);
-    return () => {
-      unsubscribeFromNewMessages(handleNewMessage);
-    };
-  }, [senderType, currentId, isUser, isOfficer, reportId, socketBaseUrl]);
-
-  // chi è il destinatario
-  const getRecipientId = (): number | undefined => {
-    if (!senderType) return undefined;
-
-    if (senderType === "USER") {
-      return report.officer?.id;      // user -> officer
-    }
-    if (senderType === "OFFICER") {
-      return report.user.userId;      // officer -> user
-    }
-    return undefined;
-  };
+  }, [sortedMessages]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !senderType || !currentId) return;
-
-    const recipientId = getRecipientId();
-
-    if (senderType === "USER" && !report.officer) {
-      setError("Nessun operatore assegnato al report al momento.");
-      return;
-    }
+    if (!input.trim() || !senderType) return;
 
     setError(null);
 
-    const payload: SendMessageRequestDTO = {
+    const dto: CreateMessageDTO = {
+      report_id: reportId,
       content: input.trim(),
-      reportId,
-      senderType,
-      recipientId,
+      sender: senderType,
     };
 
     try {
-      const msg = await sendMessage(payload);
+      await sendMessage(dto);
       setInput("");
-      setLocalMessages((prev) => [...prev, msg]);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Errore durante l'invio del messaggio");
+      setError(err.response?.data?.error || err.message || "Errore invio messaggio");
     }
   };
 
-  const isOwnMessage = (m: MessageResponseDTO) => {
-    if (!senderType || !currentId) return false;
-
-    if (senderType === "USER") {
-      return m.sender === "USER" && m.user?.userId === currentId;
-    }
-    if (senderType === "OFFICER") {
-      return m.sender === "OFFICER" && m.municipality_officer?.id === currentId;
-    }
-    return false;
-  };
-
-  const formatTime = (iso: string) => {
-    const d = new Date(iso);
+  const formatTime = (value: Date | string) => {
+    const d = new Date(value);
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  if (!senderType || !currentId) {
+  const isOwnMessage = (m: MessageResponseDTO) => {
+    if (!senderType || !displayName) return false;
+    return m.sender === senderType && m.username === displayName;
+  };
+
+  if (!senderType) {
     return (
       <Paper elevation={3} sx={{ p: 2 }}>
-        <Typography variant="body2">Caricamento utente...</Typography>
+        <Typography variant="body2">Caricamento identità utente...</Typography>
       </Paper>
     );
   }
@@ -153,10 +92,10 @@ const Chat: React.FC<ChatProps> = ({ report, socketBaseUrl = "http://localhost:3
         }}
       >
         <Typography variant="subtitle1" fontWeight={700}>
-          Chat report #{report.id}
+          Chat report #{reportId}
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          Stai chattando come {isUser ? "utente" : "operatore"}
+          Stai chattando come {isUser ? "utente" : isOfficer ? "operatore" : "sconosciuto"}
         </Typography>
       </Box>
 
@@ -181,13 +120,13 @@ const Chat: React.FC<ChatProps> = ({ report, socketBaseUrl = "http://localhost:3
           </Typography>
         )}
 
-        {!isLoading && !localMessages.length && !error && (
+        {!isLoading && !sortedMessages.length && !error && (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             Nessun messaggio ancora.
           </Typography>
         )}
 
-        {localMessages.map((m, idx) => {
+        {sortedMessages.map((m, idx) => {
           const own = isOwnMessage(m);
           return (
             <Box
@@ -217,7 +156,10 @@ const Chat: React.FC<ChatProps> = ({ report, socketBaseUrl = "http://localhost:3
                     opacity: 0.8,
                   }}
                 >
-                  <span>{m.sender === "USER" ? "Utente" : "Operatore"}</span>
+                  <span>
+                    {m.username ||
+                      (m.sender === "USER" ? "Utente" : m.role_label ?? "Operatore")}
+                  </span>
                   <span>{formatTime(m.created_at)}</span>
                 </Box>
                 <Typography variant="body2">{m.content}</Typography>

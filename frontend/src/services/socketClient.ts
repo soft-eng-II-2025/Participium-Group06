@@ -1,4 +1,4 @@
-// frontend: src/services/socketClient.ts
+// frontend/src/services/socketClient.ts
 import { io, Socket } from "socket.io-client";
 import { MessageResponseDTO } from "../DTOs/MessageResponseDTO";
 

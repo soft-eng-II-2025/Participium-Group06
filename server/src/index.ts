@@ -45,6 +45,7 @@ const io = new SocketIOServer(server, {
     origin: true,       // o "http://localhost:8080"
     credentials: true,
   },
+  path: "/socket.io/",
 });
 
 export async function initializeApp(dataSource: DataSource) {

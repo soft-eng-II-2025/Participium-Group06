@@ -1,4 +1,4 @@
-// src/routes/messageRoutes.ts
+// /server/src/routes/messageRoutes.ts
 import { Router, Request, Response, NextFunction } from "express";
 import { requireAuth } from "../middlewares/authMiddleware";
 import * as messageController from "../controllers/messagingController";

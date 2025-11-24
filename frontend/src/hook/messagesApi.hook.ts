@@ -1,29 +1,24 @@
-// frontend: src/hook/messages.hook.ts
+// frontend/src/hook/messagesApi.hook.ts
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MessageApi} from "../api/messageApi";
-import {SendMessageRequestDTO} from "../DTOs/SendMessageRequestDTO";
+import { messageApi, CreateMessageDTO } from "../api/messageApi";
 import { MessageResponseDTO } from "../DTOs/MessageResponseDTO";
-
-const messageApi = new MessageApi();
 
 export function useMessagesByReport(reportId: number, enabled = true) {
   return useQuery<MessageResponseDTO[]>({
     queryKey: ["messages", reportId],
     queryFn: () => messageApi.getMessagesByReport(reportId),
     enabled: !!reportId && enabled,
-    staleTime: 30_000,
   });
 }
 
-export function useSendMessage(reportId: number) {
+export function useSendMessage() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: SendMessageRequestDTO) =>
-      messageApi.sendMessage(payload,reportId),
-    onSuccess: (newMessage) => {
+    mutationFn: (dto: CreateMessageDTO) => messageApi.sendMessage(dto),
+    onSuccess: (newMessage, dto) => {
       qc.setQueryData<MessageResponseDTO[]>(
-        ["messages", reportId],
+        ["messages", dto.report_id],
         (old) => (old ? [...old, newMessage] : [newMessage])
       );
     },

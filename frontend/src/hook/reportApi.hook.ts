@@ -19,8 +19,8 @@ export function useUpdateReportStatus() {
         mutationFn: ({ reportId, payload }: { reportId: number; payload: UpdateStatusReportDTO }) =>
             reportsApi.updateReportStatus(reportId, payload),
         onSuccess: () => {
-            // Invalidate and refetch
-            queryClient.invalidateQueries({ queryKey: ["reports", "techReports"] });
+            queryClient.invalidateQueries({ queryKey: ["reports"] });
+            queryClient.invalidateQueries({ queryKey: ["techReports"] });
         },
     });
 }

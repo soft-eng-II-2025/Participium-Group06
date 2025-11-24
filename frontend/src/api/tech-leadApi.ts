@@ -9,8 +9,8 @@ export class TechLeadApi {
      * PUT tech-lead/:officerId/report/:reportId
      * Assign a tech agent to a report
      */
-    async assignTechAgent(reportId: number): Promise<ReportResponseDTO> {
-        const response = await api.put<ReportResponseDTO>(`${BASE_URL}/report/${reportId}`);
+    async assignTechAgent(reportId: number, officerUsername: string): Promise<ReportResponseDTO> {
+        const response = await api.put<ReportResponseDTO>(`${BASE_URL}/report/${reportId}`, { officerUsername });
         return response.data;
     }
     /*

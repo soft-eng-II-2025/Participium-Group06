@@ -3,6 +3,8 @@ import { Server, Socket } from "socket.io";
 import { Message } from "../models/Message";
 import { Notification } from "../models/Notification";
 import { mapMessageDAOToDTO, mapNotificationDAOToDTO } from "./mapperService";
+import { getUserIdByUsername } from "../controllers/userController";
+import { getOfficerIdByUsername } from "../controllers/adminController";
 
 type UserSocketMap = Map<number, Socket>; // userId -> socket
 type OfficerSocketMap = Map<number, Socket>; // officerId -> socket
@@ -19,15 +21,25 @@ export class SocketService {
             console.log(`Socket connected: ${socket.id}`);
 
             // Register user
-            socket.on("registerUser", (userId: number) => {
-                this.onlineUsers.set(userId, socket);
-                console.log(`User ${userId} connected via socket`);
+            socket.on("registerUser", (UserUsername: string) => {
+                // console.log("Registering user socket for", UserUsername);
+                getUserIdByUsername(UserUsername).then((userId) => {
+                    this.onlineUsers.set(userId, socket);
+                    console.log(`User ${UserUsername} (ID: ${userId}) connected via socket`);
+                }).catch((err) => {
+                    console.error(`Failed to register user ${UserUsername}:`, err);
+                });
             });
 
             // Register officer
-            socket.on("registerOfficer", (officerId: number) => {
-                this.onlineOfficers.set(officerId, socket);
-                console.log(`Officer ${officerId} connected via socket`);
+            socket.on("registerOfficer", (OfficerUsername: string) => {
+                console.log("Registering officer socket for", OfficerUsername);
+                getOfficerIdByUsername(OfficerUsername).then((officerId) => {
+                    this.onlineOfficers.set(officerId, socket);
+                    console.log(`Officer ${OfficerUsername} (ID: ${officerId}) connected via socket`);
+                }).catch((err) => {
+                    console.error(`Failed to register officer ${OfficerUsername}:`, err);
+                });
             });
 
             // Cleanup on disconnect

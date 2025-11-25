@@ -14,6 +14,7 @@ import { CategoryResponseDTO } from "../models/DTOs/CategoryResponseDTO";
 import { hashPassword, verifyPassword } from "../services/passwordService";
 import { User } from "../models/User";
 import { DataSource } from "typeorm";
+import { ReportResponseDTO } from "../models/DTOs/ReportResponseDTO";
 
 
 /*const userRepository: UserRepository = new UserRepository(AppDataSource);
@@ -117,3 +118,4 @@ export async function updateUserProfile(
     // TODO: implement updateUserProfile (carica utente, aggiorna campi, salva, ritorna DTO)
     throw new Error("updateUserProfile not implemented");
 }
+

@@ -186,3 +186,8 @@ export async function getOfficerIdByEmail(username: string): Promise<number> {
     if (!officer) throw appErr("OFFICER_NOT_FOUND", 404);
     return officer.id;
 }
+export async function getOfficerIdByUsername(username: string): Promise<number> {
+    const officer = await municipalityOfficerRepository.findByUsername(username);
+    if (!officer) throw appErr("OFFICER_NOT_FOUND", 404);
+    return officer.id;
+}

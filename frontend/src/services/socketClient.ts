@@ -6,14 +6,14 @@ let socket: Socket | null = null;
 
 interface InitSocketOptions {
   baseUrl?: string;
-  userId?: number;
-  officerId?: number;
+  UserUsername?: string;
+  OfficerUsername?: string;
 }
 
 export function initSocketClient({
   baseUrl = "http://localhost:3000",
-  userId,
-  officerId,
+  UserUsername,
+  OfficerUsername,
 }: InitSocketOptions = {}) {
   if (socket) return socket;
 
@@ -23,8 +23,8 @@ export function initSocketClient({
 
   socket.on("connect", () => {
     console.log("Socket connected:", socket?.id);
-    if (userId) socket?.emit("registerUser", userId);
-    if (officerId) socket?.emit("registerOfficer", officerId);
+    if (UserUsername) socket?.emit("registerUser", UserUsername);
+    if (OfficerUsername) socket?.emit("registerOfficer", OfficerUsername);
   });
 
   socket.on("disconnect", () => {

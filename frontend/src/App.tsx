@@ -22,6 +22,7 @@ import { useAuth } from './contexts/AuthContext';
 import TechLeadHomePage from './pages/TechLeadHomePage';
 import {UserAccountPage} from "./pages/UserAccountPage";
 import ChatPlaygroundPage from './pages/ChatPlayGroundPage';
+import UserReportsPage from './pages/UserReportsPage';
 
 
 const queryClient = new QueryClient();
@@ -57,7 +58,17 @@ function App() {
                                         <LoginPage />
                                     </GuestRoute>} />
                                 <Route path="/register" element={<RegisterPage />} />
- 
+
+                                
+                                <Route path="/my-reports" element={
+                                    <ProtectedRoute>
+                                        <RequireRole role="USER">
+                                            <UserReportsPage />
+                                        </RequireRole>
+                                    </ProtectedRoute>
+                                }
+                            />
+
                                 <Route path="/new-report" element={
                                     <ProtectedRoute>
                                         <RequireRole role="USER">

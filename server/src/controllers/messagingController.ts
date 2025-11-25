@@ -53,7 +53,7 @@ export async function sendMessage(
     dto: CreateMessageDTO     // contains content + sender only
 ) {
     const { sender, content } = dto;
-
+    console.log(`sendMessage called with reportId=${reportId}, sender=${sender}, content=${content}`);
     // 1️⃣ Fetch report to get user + officer
     const report = await reportRepository.findById(reportId);
     if (!report) throw new Error("Report not found.");
@@ -71,16 +71,12 @@ export async function sendMessage(
     message.sender = sender;
     message.created_at = new Date(); // set here, not in DTO
 
-    if (sender === "USER") {
-        message.user = user;
-        message.municipality_officer = officer;
-    } else {
-        message.user = user;
-        message.municipality_officer = officer;
-    }
+ 
+    message.user = user;
+    message.municipality_officer = officer;
+    
 
     const savedMessage = await messageRepository.add(message);
-
     // 3️⃣ Notifications
     if (sender === "OFFICER") {
         const notif = new Notification();
@@ -88,13 +84,11 @@ export async function sendMessage(
         notif.content = "New message from officer";
         notif.type = NotificationType.NewMessage;
         notif.is_read = false;
-
         const savedNotif = await notificationRepository.add(notif);
 
         socketService.sendMessageToUser(user.id, savedMessage);
         socketService.sendNotificationToUser(user.id, savedNotif);
     }
-
     if (sender === "USER") {
         socketService.sendMessageToOfficer(officer.id, savedMessage);
     }

@@ -1,5 +1,4 @@
 // frontend/src/components/Chat.tsx
-
 import React, { FormEvent, useEffect, useRef, useState } from "react";
 import {
   Box,
@@ -32,10 +31,11 @@ const Chat: React.FC<ChatProps> = ({
   socketBaseUrl = "http://localhost:3000",
 }) => {
   const { senderType, isUser, isOfficer } = useChatIdentity();
-  const { loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const { data: rawMessages = [], isLoading: messagesLoading } =
     useMessagesByReport(reportId, !!reportId);
+
   const { mutateAsync: sendMessage, isPending: sending } = useSendMessage();
 
   const [socketReceivedMessages, setSocketReceivedMessages] = useState<
@@ -45,7 +45,7 @@ const Chat: React.FC<ChatProps> = ({
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
 
-  // Unione messaggi da API + socket
+  // Merge API + socket messages, removing duplicates
   const allMessages = React.useMemo(() => {
     const uniqueSocketMessages = socketReceivedMessages.filter(
       (sm) =>
@@ -58,59 +58,44 @@ const Chat: React.FC<ChatProps> = ({
         )
     );
 
-    const combined = [...rawMessages, ...uniqueSocketMessages];
-
-    return combined.sort(
+    return [...rawMessages, ...uniqueSocketMessages].sort(
       (a, b) =>
-        new Date(a.created_at).getTime() -
-        new Date(b.created_at).getTime()
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
   }, [rawMessages, socketReceivedMessages]);
 
-  // Username dell'utente, usato SOLO quando sei officer
+  // Officer chat: get the other user's name
   const otherSideUsername = React.useMemo(() => {
-    if (!allMessages.length) return undefined;
-
-    if (isOfficer) {
-      /*const userMsg = allMessages.find(
-        (m) => m.sender === "USER" && m.username
-      );*/
-      return allMessages[0].username;
-    }
-
-    return undefined;
+    if (!allMessages.length || !isOfficer) return undefined;
+    return allMessages[0].username;
   }, [allMessages, isOfficer]);
 
-  // Scroll automatico in fondo
+  // Auto-scroll
   useEffect(() => {
-    if (endRef.current) {
-      endRef.current.scrollIntoView({ behavior: "smooth" });
-    }
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [allMessages]);
 
-  // Socket.IO
+  // Socket setup
   useEffect(() => {
-    if (!senderType) return;
-
-    initSocketClient({ baseUrl: socketBaseUrl });
+    if (!senderType || !user) return;
+    initSocketClient({
+      baseUrl: socketBaseUrl,
+      UserUsername: isUser ? user.username : undefined,
+      OfficerUsername: isOfficer ? user.username : undefined,
+    });
 
     const handleNewMessage = (m: MessageResponseDTO) => {
-      // Se non hai ancora reportId nel DTO lato backend, togli pure questo if
-      if ((m as any).reportId !== undefined && (m as any).reportId !== reportId) {
-        return;
-      }
+      if (m.reportId !== reportId) return;
       setSocketReceivedMessages((prev) => [...prev, m]);
     };
 
     subscribeToNewMessages(handleNewMessage);
-    return () => {
-      unsubscribeFromNewMessages(handleNewMessage);
-    };
-  }, [senderType, socketBaseUrl, reportId]);
+    return () => unsubscribeFromNewMessages(handleNewMessage);
+  }, [senderType, user, isUser, isOfficer, reportId, socketBaseUrl]);
 
-  const handleSubmit = async (e: FormEvent) => {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!input.trim() || !senderType) return;
+    if (!input.trim() || !senderType || isUser) return; // Users cannot send
 
     setError(null);
 
@@ -128,24 +113,21 @@ const Chat: React.FC<ChatProps> = ({
       setError(
         err.response?.data?.error ||
           err.message ||
-          "Errore invio messaggio"
+          "Failed to send message"
       );
     }
-  };
+  }
 
-  const formatTime = (value: Date | string) => {
-    const d = new Date(value);
-    return d.toLocaleTimeString([], {
+  function formatTime(v: Date | string) {
+    return new Date(v).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
+  }
 
-  const isOwnMessage = (m: MessageResponseDTO) => {
-    return m.sender === senderType;
-  };
+  const isOwn = (m: MessageResponseDTO) => m.sender === senderType;
 
-  // Stato auth
+  // AUTH loading screen
   if (authLoading) {
     return (
       <Paper
@@ -160,7 +142,7 @@ const Chat: React.FC<ChatProps> = ({
       >
         <CircularProgress />
         <Typography variant="body2" sx={{ ml: 2 }}>
-          Caricamento autenticazione...
+          Loading authentication...
         </Typography>
       </Paper>
     );
@@ -180,35 +162,30 @@ const Chat: React.FC<ChatProps> = ({
         }}
       >
         <Typography variant="body2" color="error">
-          Errore: Identità utente non definita o non autenticato.
-        </Typography>
-        <Typography variant="caption" sx={{ mt: 1 }}>
-          Assicurati di aver effettuato il login con un ruolo USER o OFFICER
-          valido.
+          Error: user identity not defined.
         </Typography>
       </Paper>
     );
   }
 
-  // Header: SOLO sottotitolo, niente "report #"
-  let headerSubtitle: string;
-
+  // Header subtitle
+  let subtitle = "";
   if (isOfficer) {
-    if (otherSideUsername) {
-      headerSubtitle = `Stai chattando con l'utente ${otherSideUsername}`;
-    } else {
-      headerSubtitle = "Stai chattando con l'utente del report";
-    }
+    subtitle = otherSideUsername
+      ? `Chat with user ${otherSideUsername}`
+      : `Chat with report user`;
   } else if (isUser) {
-    headerSubtitle = "Chat con l’operatore assegnato al report";
-  } else {
-    headerSubtitle = "";
+    subtitle = `Chat with the assigned officer`;
   }
 
   return (
     <Paper
       elevation={3}
-      sx={{ display: "flex", flexDirection: "column", height: "85vh" }}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "85vh",
+      }}
     >
       {/* Header */}
       <Box
@@ -219,14 +196,14 @@ const Chat: React.FC<ChatProps> = ({
           borderColor: "divider",
         }}
       >
-        {headerSubtitle && (
+        {subtitle && (
           <Typography variant="caption" color="text.secondary">
-            {headerSubtitle}
+            {subtitle}
           </Typography>
         )}
       </Box>
 
-      {/* Area messaggi */}
+      {/* Messages */}
       <Box
         sx={{
           flex: 1,
@@ -250,12 +227,12 @@ const Chat: React.FC<ChatProps> = ({
 
         {!messagesLoading && !allMessages.length && !error && (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Nessun messaggio ancora.
+            No messages yet.
           </Typography>
         )}
 
         {allMessages.map((m, idx) => {
-          const own = isOwnMessage(m);
+          const own = isOwn(m);
           return (
             <Box
               key={idx}
@@ -284,6 +261,7 @@ const Chat: React.FC<ChatProps> = ({
                     opacity: 0.8,
                   }}
                 >
+                  <span>{own ? "You" : m.username || m.sender}</span>
                   <span>{formatTime(m.created_at)}</span>
                 </Box>
                 <Typography variant="body2">{m.content}</Typography>
@@ -295,36 +273,38 @@ const Chat: React.FC<ChatProps> = ({
         <div ref={endRef} />
       </Box>
 
-      {/* Input */}
-      <Box
-        component="form"
-        onSubmit={handleSubmit}
-        sx={{
-          px: 1,
-          py: 1,
-          borderTop: "1px solid",
-          borderColor: "divider",
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-        }}
-      >
-        <TextField
-          size="small"
-          fullWidth
-          placeholder="Scrivi un messaggio..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          disabled={sending}
-        />
-        <IconButton
-          color="primary"
-          type="submit"
-          disabled={sending || !input.trim()}
+      {/* Input (officers only) */}
+      {!isUser && (
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{
+            px: 1,
+            py: 1,
+            borderTop: "1px solid",
+            borderColor: "divider",
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }}
         >
-          {sending ? <CircularProgress size={20} /> : <SendIcon />}
-        </IconButton>
-      </Box>
+          <TextField
+            size="small"
+            fullWidth
+            placeholder="Type a message..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            disabled={sending}
+          />
+          <IconButton
+            color="primary"
+            type="submit"
+            disabled={sending || !input.trim()}
+          >
+            {sending ? <CircularProgress size={20} /> : <SendIcon />}
+          </IconButton>
+        </Box>
+      )}
     </Paper>
   );
 };

@@ -129,4 +129,7 @@ export async function getReportsByCategoryIdAndStatus(categoryId :number, Status
     return filteredReports.map(mapReportDAOToResponse);
 }   
 
-
+export async function getUserReports(userId: number): Promise<ReportResponseDTO[]>{
+    const reports = await reportRepository.findByUserId(userId);
+    return reports.map(mapReportDAOToResponse);
+}

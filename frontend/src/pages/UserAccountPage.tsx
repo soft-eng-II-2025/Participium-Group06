@@ -7,29 +7,32 @@ import {
     useTheme,
     IconButton,
     Avatar,
-    Button
+    Button, CircularProgress
 } from "@mui/material";
-import React, {useRef, useState} from "react";
+import React, { useRef, useState} from "react";
 import {useAuth} from "../contexts/AuthContext";
 import {getInitials} from "../utils/stringUtilis";
 import {AddAPhotoOutlined} from "@mui/icons-material";
 import {NotificationCard} from "../components/NotificationCard";
 import {EmailTelegramCard} from "../components/EmailTelegramCard";
+import {useUserProfileUpdate} from "../hook/userApi.hook";
 
 export const UserAccountPage: React.FC = () => {
     const {user} = useAuth();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
     const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-    const [telegramUsername, setTelegramUsername] = useState(user?.telegram_id)
+    const {mutateAsync: updateProfile, isError, isPending} = useUserProfileUpdate();
+    const [telegramUsername, setTelegramUsername] = useState(user?.telegram_id ?? undefined)
     const [emailFlag, setEmailFlag] = useState(user?.flag_email || false)
-    const [photo, setPhoto] = useState(user?.photo)
+    const [photo, setPhoto] = useState(user && `http://localhost:3000/api/users/uploads/${user.photo}`)
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [isModified, setIsModified] = useState(false);
+
+
+
 
     if (!user) return <Typography>Error</Typography>;
-
-    // Controllo se qualcosa è stato modificato
-    const isModified = telegramUsername !== user.telegram_id || emailFlag !== user.flag_email || photo !== user.photo;
 
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,9 +43,44 @@ export const UserAccountPage: React.FC = () => {
 
         // Mostra anteprima subito
         setPhoto(previewUrl);
-
+        setIsModified(true);
+        // Salva file per l'upload
+        setSelectedFile(file);
+        e.target.value = "";
     };
 
+
+    const handleSave = async () => {
+
+        if (!isModified) return;
+
+
+        try {
+            const formData = new FormData();
+
+            if (selectedFile) {
+                formData.append("photo", selectedFile); // il campo deve corrispondere a multer
+            }
+
+            formData.append("telegram_id", telegramUsername || "");
+            formData.append("flag_email", String(emailFlag));
+
+            // Invia FormData al backend
+            const updatedUser = await updateProfile(formData);
+            if (updatedUser.photo) {
+                setPhoto(`http://localhost:3000/api/users/uploads/${updatedUser.photo}`);
+            }
+            console.log("Profilo aggiornato con successo");
+
+            // Dopo il salvataggio, resetto il selectedFile
+            setSelectedFile(null);
+            setIsModified(false)
+
+        } catch (err) {
+            console.error("Errore aggiornamento profilo:", err);
+        }
+
+    }
 
     return (
         <>
@@ -136,7 +174,10 @@ export const UserAccountPage: React.FC = () => {
                     <EmailTelegramCard user={user}
                                        status={telegramUsername}
                                        type={"telegram"}
-                                       onChange={(val) => setTelegramUsername(val)}
+                                       onChange={(val) => {
+                                           setTelegramUsername(val)
+                                           setIsModified(true)
+                                       }}
                     />
                 </Box>
 
@@ -147,8 +188,17 @@ export const UserAccountPage: React.FC = () => {
                 </Typography>
 
                 {/* Card notifiche */}
-                <NotificationCard onChange={(val) => setEmailFlag(val)} emailFlag={emailFlag}/>
+                <NotificationCard onChange={(val) => {
+                    setEmailFlag(val)
+                    setIsModified(true)
+                }} emailFlag={emailFlag}/>
 
+                {/* Mostra eventuale errore della mutation */}
+                {isError && (
+                    <Typography color="error" sx={{mt: 2}}>
+                        Error updating profile
+                    </Typography>
+                )}
 
             </Container>
             {/* Card Salva modifiche */}
@@ -163,8 +213,8 @@ export const UserAccountPage: React.FC = () => {
                     boxShadow: 3,
                     borderRadius: 3,
                     position: "absolute",
-                    bottom:0,
-                    width:"100%"
+                    bottom: 0,
+                    width: "100%"
                 }}>
                     <Button
                         className="partecipation-button"
@@ -173,7 +223,8 @@ export const UserAccountPage: React.FC = () => {
                         onClick={() => {
                             setTelegramUsername(user.telegram_id || "");
                             setEmailFlag(user?.flag_email || false);
-                            setPhoto(user?.photo)
+                            setPhoto(user && `http://localhost:3000/api/users/uploads/${user.photo}`)
+                            setIsModified(false)
                         }}>
                         Cancel
                     </Button>
@@ -181,15 +232,10 @@ export const UserAccountPage: React.FC = () => {
                         className="partecipation-button"
                         variant="contained"
                         color="primary"
-                        onClick={() => {
-                            // TODO: chiama API per salvare le modifiche
-                            // TODO: invia al backend
-                            // const formData = new FormData();
-                            // formData.append("photo", file);
-                            console.log("Salva telegram:", telegramUsername);
-                            console.log("Salva notifiche:", emailFlag);
-                        }}>
-                        Save Changes
+                        onClick={handleSave}
+
+                    >
+                        {isPending ? <CircularProgress size={22}/> : "Save Changes"}
                     </Button>
                 </Card>
             )}

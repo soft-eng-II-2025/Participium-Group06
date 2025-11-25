@@ -55,8 +55,8 @@ export async function createUser(userData: CreateUserRequestDTO): Promise<UserRe
     return mapUserDAOToResponse(addedUserDao); // password nulla in output
 }
 
-export async function updateUser(userId: number, updatedData:UpdateUserRequestDTO): Promise<UserResponseDTO> {
-    const user = await userRepository.findByid(userId);
+export async function updateUser(username: string, updatedData:UpdateUserRequestDTO): Promise<UserResponseDTO> {
+    const user = await userRepository.findByUsername(username)
     if (!user) throw appErr("USER_NOT_FOUND", 404);
 
     if (updatedData.photo !== undefined) {
@@ -69,7 +69,7 @@ export async function updateUser(userId: number, updatedData:UpdateUserRequestDT
         await userRepository.changeFlagEmail(user, Boolean(updatedData.flag_email));
     }
     
-    const updatedUser = await userRepository.findByid(userId);
+    const updatedUser = await userRepository.findByUsername(username);
     return mapUserDAOToResponse(updatedUser!); 
 }
 

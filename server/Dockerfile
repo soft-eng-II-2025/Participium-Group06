@@ -1,4 +1,3 @@
-# server/Dockerfile
 FROM node:20-alpine
 
 WORKDIR /app
@@ -10,8 +9,18 @@ RUN npm ci
 # Copia tutto il codice
 COPY . .
 
-# Compila TypeScript
+# Crea cartelle necessarie
+RUN mkdir -p /app/dist /app/uploads \
+    && chmod -R 755 /app/uploads
+
+# Compila TypeScript come root (perché node non ha ancora dist)
 RUN npm run build
 
-# Default command (può essere sovrascritto dal Compose)
-CMD ["node", "-v"]
+# Cambia proprietario per runtime
+RUN chown -R node:node /app/dist /app/uploads
+
+# Usa l’utente node per eseguire
+USER node
+
+# Default command
+CMD ["node", "dist/index.js"]

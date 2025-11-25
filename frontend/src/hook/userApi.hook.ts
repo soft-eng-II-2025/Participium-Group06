@@ -27,3 +27,11 @@ export function useReportCategories() {
         queryFn: userApi.getAllCategories, // Funzione che fa la chiamata API
     });
 }
+
+export function useGetReportPhoto(url?: string, enabled: boolean = !!url) {
+    return useQuery<Blob>({
+        queryKey: ['reportPhoto', url],
+        queryFn: () => userApi.getReportPhoto(url!),
+        enabled,
+    });
+}

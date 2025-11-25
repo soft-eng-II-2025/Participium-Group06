@@ -1,16 +1,16 @@
 // src/routes/userRoutes.ts
 
-import { Router, Response } from 'express';
-import { validateDto } from "../middlewares/validationMiddleware";
-import { CreateReportRequestDTO } from "../models/DTOs/CreateReportRequestDTO";
+import {Router, Response} from 'express';
+import {validateDto} from "../middlewares/validationMiddleware";
+import {CreateReportRequestDTO} from "../models/DTOs/CreateReportRequestDTO";
 import * as userController from "../controllers/userController";
-import * as reportController from "../controllers/reportController"; 
+import * as reportController from "../controllers/reportController";
 import multer from 'multer';
 import path from 'path'; // Importa path
-import { Request } from 'express';
+import {Request} from 'express';
 import express from 'express';
-import { requireAuth, requireUser } from '../middlewares/authMiddleware';
-import { UpdateUserRequestDTO } from "../models/DTOs/UpdateUserRequestDTO";
+import {requireAuth, requireUser} from '../middlewares/authMiddleware';
+import {UpdateUserRequestDTO} from "../models/DTOs/UpdateUserRequestDTO";
 
 export const router = Router();
 
@@ -120,11 +120,12 @@ router.get('/reports/categories', requireAuth, async (req, res: Response) => {
 
 
 // Update profilo utente loggato
-router.put(
-    "/users/me",
-    requireUser,
-    validateDto(UpdateUserRequestDTO),
+/*router.put('/me', (req, res, next) => {
+        console.log(">>> DEBUG Arrivata richiesta PUT /users/me");
+        next();
+    }, requireUser, validateDto(UpdateUserRequestDTO),
     async (req: Request, res: Response) => {
+        console.log(">>> DEBUG Entrato nella route vera");
         try {
             // Utente autenticato messo da requireUser (es. req.user = { id, username, ... })
             const authUser = (req as any).user;
@@ -132,12 +133,15 @@ router.put(
             // opzionale: loggare l'utente autenticato
             console.log("Authenticated user in /users/me:", authUser);
 
-            if (!authUser || !authUser.id) {
-                return res.status(401).json({ message: "Unauthorized" });
+            if (!authUser) {
+                return res.status(401).json({message: "Unauthorized"});
             }
 
-            const updatedUser = await userController.updateUserProfile(
-                authUser.id,
+            console.log(">>> DEBUG : dalla route backend chiamo il controller con i parametri: " +
+               `authUser: ${authUser.user}, username: ${authUser.username}, body: ${req.body}` )
+
+            const updatedUser = await userController.updateUser(
+                authUser.username,
                 req.body as UpdateUserRequestDTO
             );
 
@@ -146,7 +150,60 @@ router.put(
             console.error("Error updating user profile:", error);
             res
                 .status(error.status || 500)
-                .json({ message: error.message || "Failed to update user profile." });
+                .json({message: error.message || "Failed to update user profile."});
         }
     }
 );
+
+
+ */
+
+
+
+router.put("/me", requireUser, async (req: Request, res: Response) => {
+    try {
+        const authUser = (req as any).user;
+        if (!authUser) return res.status(401).json({ message: "Unauthorized" });
+
+        let telegram_id: string | undefined;
+        let flag_email = false;
+        let photo: string | undefined;
+
+        // Se Content-Type è multipart/form-data => multer
+        if (req.headers["content-type"]?.startsWith("multipart/form-data")) {
+            await new Promise<void>((resolve, reject) => {
+                const uploadMiddleware = upload.single("photo");
+                uploadMiddleware(req, res, (err) => {
+                    if (err) return reject(err);
+                    resolve();
+                });
+                console.log("File salvato in:", req.file?.path);
+            });
+
+            telegram_id = req.body.telegram_id || undefined;
+            flag_email = req.body.flag_email === "true";
+            photo = req.file?.filename;
+        } else {
+            // Content-Type application/json
+            telegram_id = req.body.telegram_id || undefined;
+            flag_email = req.body.flag_email || false;
+            photo = req.body.photo; // opzionale, probabilmente undefined
+        }
+
+        console.log("Payload PUT /me:", { telegram_id, flag_email, photo });
+
+        const updatedUser = await userController.updateUser(authUser.username, {
+            telegram_id,
+            flag_email,
+            photo,
+        });
+
+
+        res.status(200).json(updatedUser);
+    } catch (error: any) {
+        console.error("Errore interno PUT /me:", error);
+        res.status(error.status || 500).json({ message: error.message || "Failed to update user profile." });
+    }
+});
+
+

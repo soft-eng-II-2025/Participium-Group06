@@ -1,228 +1,367 @@
-// src/tests/integration/repositories/UserRepository.test.ts
-import { TestDataSource } from '../../test-data-source'; // Percorso relativo a test-data-source.ts
-import { UserRepository } from '../../../repositories/UserRepository'; // Percorso relativo a UserRepository
-import { User } from '../../../models/User';
+// src/tests/integration/repositories/UserRepository.int.test.ts
 
-describe('UserRepository (integration)', () => {
-  let userRepository: UserRepository;
+import { DataSource } from "typeorm";
+import { UserRepository } from "../../../repositories/UserRepository";
+import { TestDataSource } from "../../test-data-source";
+import { User } from "../../../models/User";
 
-  beforeEach(async () => {
-    // Pulisce tutte le entità prima di ogni test per garantire isolamento
-    const entities = TestDataSource.entityMetadatas;
-    for (const entity of entities) {
-      const repository = TestDataSource.getRepository(entity.name);
-      await repository.query(`DELETE FROM "${entity.tableName}"`); // Assicurati che i nomi delle tabelle siano corretti, o usa clear()
-      // Alternativa più sicura (ma richiede più chiamate):
-      // await repository.clear();
+describe("UserRepository (Integration Tests)", () => {
+  let repository: UserRepository;
+
+  // beforeAll: Eseguito una volta prima di tutti i test in questo describe.
+  // Inizializza il TestDataSource.
+  beforeAll(async () => {
+    if (!TestDataSource.isInitialized) {
+      await TestDataSource.initialize();
     }
-
-    // Inizializza UserRepository con il TestDataSource
-    userRepository = new UserRepository(TestDataSource);
   });
 
-  // --- Test per i metodi di UserRepository ---
-
-  it('dovrebbe aggiungere e trovare un utente per email', async () => {
-    const user = new User();
-    user.username = 'testuser1';
-    user.email = 'test1@example.com';
-    user.password = 'password123';
-    user.first_name = 'Nome';
-    user.last_name = 'Cognome';
-
-    const savedUser = await userRepository.add(user);
-
-    expect(savedUser).toBeDefined();
-    expect(savedUser.id).toBeDefined();
-    expect(savedUser.username).toBe('testuser1');
-
-    const foundUser = await userRepository.findByEmail('test1@example.com');
-    expect(foundUser).not.toBeNull();
-    expect(foundUser?.username).toBe('testuser1');
-    expect(foundUser?.email).toBe('test1@example.com');
+  // afterAll: Eseguito una volta dopo tutti i test in questo describe.
+  // Distrugge il TestDataSource.
+  afterAll(async () => {
+    if (TestDataSource.isInitialized) {
+      await TestDataSource.destroy();
+    }
   });
 
-  it('dovrebbe trovare un utente per username', async () => {
-    const user = new User();
-    user.username = 'testuser2';
-    user.email = 'test2@example.com';
-    user.password = 'password123';
-    user.first_name = 'Altro';
-    user.last_name = 'Utente';
-
-    await userRepository.add(user);
-
-    const foundUser = await userRepository.findByUsername('testuser2');
-    expect(foundUser).not.toBeNull();
-    expect(foundUser?.email).toBe('test2@example.com');
+  // beforeEach: Eseguito prima di ogni singolo test (it).
+  // 1. Ricrea lo schema del DB (drop e create) per garantire isolamento.
+  // 2. Istanzia il UserRepository.
+  beforeEach(async () => {
+    // La riga sotto non è strettamente necessaria qui se beforeAll è configurato correttamente,
+    // ma può rimanere come ulteriore garanzia/debug.
+    if (!TestDataSource.isInitialized) {
+      throw new Error("TestDataSource should be initialized in beforeAll.");
+    }
+    await TestDataSource.synchronize(true); // Drop e ricrea lo schema del DB
+    repository = new UserRepository(TestDataSource);
   });
 
-  it('dovrebbe trovare tutti gli utenti', async () => {
-    const user1 = new User();
-    user1.username = 'alluser1';
-    user1.email = 'all1@example.com';
-    user1.password = 'pass1';
-    user1.first_name = 'Primo';
-    user1.last_name = 'Utente';
-    await userRepository.add(user1);
+  describe("findAll", () => {
+    it("should return all users", async () => {
+      await TestDataSource.getRepository(User).save([
+        {
+          username: "user1",
+          email: "user1@example.com",
+          password: "pass1",
+          first_name: "John",
+          last_name: "Doe",
+          photo: "photo1.jpg",
+          telegram_id: "tg1",
+          flag_email: true,
+        },
+        {
+          username: "user2",
+          email: "user2@example.com",
+          password: "pass2",
+          first_name: "Jane",
+          last_name: "Smith",
+          photo: "photo2.jpg",
+          telegram_id: "tg2",
+          flag_email: false,
+        },
+      ]);
 
-    const user2 = new User();
-    user2.username = 'alluser2';
-    user2.email = 'all2@example.com';
-    user2.password = 'pass2';
-    user2.first_name = 'Secondo';
-    user2.last_name = 'Utente';
-    await userRepository.add(user2);
+      const users = await repository.findAll();
 
-    const users = await userRepository.findAll();
-    expect(users).toBeDefined();
-    expect(users.length).toBe(2);
-    expect(users.some(u => u.username === 'alluser1')).toBe(true);
-    expect(users.some(u => u.username === 'alluser2')).toBe(true);
+      expect(users).toHaveLength(2);
+      expect(users[0].username).toBe("user1");
+      expect(users[1].username).toBe("user2");
+    });
+
+    it("should return an empty array if no users exist", async () => {
+      const users = await repository.findAll();
+      expect(users).toHaveLength(0);
+    });
   });
 
-  it('dovrebbe aggiornare la password di un utente', async () => {
-    const user = new User();
-    user.username = 'passuser';
-    user.email = 'pass@example.com';
-    user.password = 'oldpass';
-    user.first_name = 'Pass';
-    user.last_name = 'User';
+  describe("findByUsername", () => {
+    it("should return a user by username", async () => {
+      const userData = {
+        username: "testuser",
+        email: "test@example.com",
+        password: "password",
+        first_name: "Test",
+        last_name: "User",
+        photo: "photo.jpg",
+        telegram_id: "tg_test",
+        flag_email: true,
+      };
+      await TestDataSource.getRepository(User).save(userData);
 
-    const savedUser = await userRepository.add(user);
-    const updatedUser = await userRepository.changePassword(savedUser, 'newpass');
+      const foundUser = await repository.findByUsername("testuser");
 
-    expect(updatedUser.password).toBe('newpass');
-    // Verifica anche recuperando dal DB per sicurezza
-    const foundUser = await userRepository.findByEmail('pass@example.com');
-    expect(foundUser?.password).toBe('newpass');
+      expect(foundUser).toBeDefined();
+      expect(foundUser?.username).toBe("testuser");
+    });
+
+    it("should return null if user by username does not exist", async () => {
+      const foundUser = await repository.findByUsername("nonexistent");
+      expect(foundUser).toBeNull();
+    });
   });
 
-  it('dovrebbe aggiornare l\'email di un utente', async () => {
-    const user = new User();
-    user.username = 'emailuser';
-    user.email = 'old@example.com';
-    user.password = 'pass';
-    user.first_name = 'Email';
-    user.last_name = 'User';
+  describe("findById", () => {
+    it("should return a user by id", async () => {
+      const userData = {
+        username: "testuser",
+        email: "test@example.com",
+        password: "password",
+        first_name: "Test",
+        last_name: "User",
+        photo: "photo.jpg",
+        telegram_id: "tg_test",
+        flag_email: true,
+      };
+      const savedUser = await TestDataSource.getRepository(User).save(userData);
 
-    const savedUser = await userRepository.add(user);
-    const updatedUser = await userRepository.changeEmail(savedUser, 'new@example.com');
+      const foundUser = await repository.findByid(savedUser.id);
 
-    expect(updatedUser.email).toBe('new@example.com');
-    const foundUser = await userRepository.findByUsername('emailuser');
-    expect(foundUser?.email).toBe('new@example.com');
-    // Assicurati che la vecchia email non trovi più l'utente
-    const oldEmailFound = await userRepository.findByEmail('old@example.com');
-    expect(oldEmailFound).toBeNull();
+      expect(foundUser).toBeDefined();
+      expect(foundUser?.id).toBe(savedUser.id);
+    });
+
+    it("should return null if user by id does not exist", async () => {
+      const foundUser = await repository.findByid(999);
+      expect(foundUser).toBeNull();
+    });
   });
 
-  it('dovrebbe aggiornare lo username di un utente', async () => {
-    const user = new User();
-    user.username = 'oldusername';
-    user.email = 'user@example.com';
-    user.password = 'pass';
-    user.first_name = 'User';
-    user.last_name = 'Name';
+  describe("findByEmail", () => {
+    it("should return a user by email", async () => {
+      const userData = {
+        username: "testuser",
+        email: "test@example.com",
+        password: "password",
+        first_name: "Test",
+        last_name: "User",
+        photo: "photo.jpg",
+        telegram_id: "tg_test",
+        flag_email: true,
+      };
+      await TestDataSource.getRepository(User).save(userData);
 
-    const savedUser = await userRepository.add(user);
-    const updatedUser = await userRepository.changeUsername(savedUser, 'newusername');
+      const foundUser = await repository.findByEmail("test@example.com");
 
-    expect(updatedUser.username).toBe('newusername');
-    const foundUser = await userRepository.findByEmail('user@example.com');
-    expect(foundUser?.username).toBe('newusername');
-    // Assicurati che il vecchio username non trovi più l'utente
-    const oldUsernameFound = await userRepository.findByUsername('oldusername');
-    expect(oldUsernameFound).toBeNull();
+      expect(foundUser).toBeDefined();
+      expect(foundUser?.email).toBe("test@example.com");
+    });
+
+    it("should return null if user by email does not exist", async () => {
+      const foundUser = await repository.findByEmail("nonexistent@example.com");
+      expect(foundUser).toBeNull();
+    });
   });
 
-  it('dovrebbe aggiornare il cognome di un utente', async () => {
-    const user = new User();
-    user.username = 'lnameuser';
-    user.email = 'lname@example.com';
-    user.password = 'pass';
-    user.first_name = 'FName';
-    user.last_name = 'OldLName';
+  describe("add", () => {
+    it("should add a new user", async () => {
+      const newUser = new User();
+      newUser.username = "newuser";
+      newUser.email = "newuser@example.com";
+      newUser.password = "newpass";
+      newUser.first_name = "New";
+      newUser.last_name = "User";
+      newUser.photo = "newphoto.jpg";
+      newUser.telegram_id = "new_tg";
+      newUser.flag_email = false;
 
-    const savedUser = await userRepository.add(user);
-    const updatedUser = await userRepository.changeLastName(savedUser, 'NewLName');
+      const addedUser = await repository.add(newUser);
 
-    expect(updatedUser.last_name).toBe('NewLName');
-    const foundUser = await userRepository.findByEmail('lname@example.com');
-    expect(foundUser?.last_name).toBe('NewLName');
+      expect(addedUser).toBeDefined();
+      expect(addedUser.id).toBeDefined();
+      expect(addedUser.username).toBe("newuser");
+
+      const found = await repository.findByid(addedUser.id);
+      expect(found).toBeDefined();
+      expect(found?.email).toBe("newuser@example.com");
+    });
   });
 
-  it('dovrebbe aggiornare il nome di un utente', async () => {
-    const user = new User();
-    user.username = 'fnameuser';
-    user.email = 'fname@example.com';
-    user.password = 'pass';
-    user.first_name = 'OldFName';
-    user.last_name = 'LName';
+  describe("remove", () => {
+    it("should remove a user", async () => {
+      const userToRemove = await TestDataSource.getRepository(User).save({
+        username: "toremove",
+        email: "toremove@example.com",
+        password: "pass",
+        first_name: "To",
+        last_name: "Remove",
+        photo: "p.jpg",
+        telegram_id: "tg_r",
+        flag_email: true,
+      });
 
-    const savedUser = await userRepository.add(user);
-    const updatedUser = await userRepository.changeFirstName(savedUser, 'NewFName');
+      await repository.remove(userToRemove);
 
-    expect(updatedUser.first_name).toBe('NewFName');
-    const foundUser = await userRepository.findByEmail('fname@example.com');
-    expect(foundUser?.first_name).toBe('NewFName');
+      const found = await repository.findByid(userToRemove.id);
+      expect(found).toBeNull();
+    });
   });
 
-  it('dovrebbe rimuovere un utente', async () => {
-    const user = new User();
-    user.username = 'removeuser';
-    user.email = 'remove@example.com';
-    user.password = 'pass';
-    user.first_name = 'Remove';
-    user.last_name = 'User';
+  describe("changePassword", () => {
+    it("should change user's password", async () => {
+      const userToUpdate = await TestDataSource.getRepository(User).save({
+        username: "chpass",
+        email: "chpass@example.com",
+        password: "oldpass",
+        first_name: "Ch",
+        last_name: "Pass",
+        photo: "p.jpg",
+        telegram_id: "tg_ch",
+        flag_email: true,
+      });
 
-    const savedUser = await userRepository.add(user);
-    expect(await userRepository.findByEmail('remove@example.com')).toBeDefined(); // Verifica che sia stato aggiunto
+      const updatedUser = await repository.changePassword(userToUpdate, "newpass");
 
-    await userRepository.remove(savedUser);
-
-    const foundUser = await userRepository.findByEmail('remove@example.com');
-    expect(foundUser).toBeNull();
+      expect(updatedUser.password).toBe("newpass");
+      const found = await repository.findByid(userToUpdate.id);
+      expect(found?.password).toBe("newpass");
+    });
   });
 
-  // Test per i vincoli di unicità (se un utente tenta di aggiungere un utente con email/username duplicati)
-  it('dovrebbe lanciare un errore se si tenta di aggiungere un utente con email duplicata', async () => {
-    const user1 = new User();
-    user1.username = 'uniqueuser1';
-    user1.email = 'unique@example.com';
-    user1.password = 'pass';
-    user1.first_name = 'U1';
-    user1.last_name = 'U1';
-    await userRepository.add(user1);
+  describe("changeEmail", () => {
+    it("should change user's email", async () => {
+      const userToUpdate = await TestDataSource.getRepository(User).save({
+        username: "chemail",
+        email: "old@example.com",
+        password: "pass",
+        first_name: "Ch",
+        last_name: "Email",
+        photo: "p.jpg",
+        telegram_id: "tg_ch",
+        flag_email: true,
+      });
 
-    const user2 = new User();
-    user2.username = 'uniqueuser2'; // Username diverso
-    user2.email = 'unique@example.com'; // Email duplicata
-    user2.password = 'pass';
-    user2.first_name = 'U2';
-    user2.last_name = 'U2';
+      const updatedUser = await repository.changeEmail(userToUpdate, "new@example.com");
 
-    // TypeORM lancerà un errore per violazione di UNIQUE constraint
-    await expect(userRepository.add(user2)).rejects.toThrow();
+      expect(updatedUser.email).toBe("new@example.com");
+      const found = await repository.findByid(userToUpdate.id);
+      expect(found?.email).toBe("new@example.com");
+    });
   });
 
-  it('dovrebbe lanciare un errore se si tenta di aggiungere un utente con username duplicato', async () => {
-    const user1 = new User();
-    user1.username = 'uniqueusername';
-    user1.email = 'unique1@example.com';
-    user1.password = 'pass';
-    user1.first_name = 'U1';
-    user1.last_name = 'U1';
-    await userRepository.add(user1);
+  describe("changeUsername", () => {
+    it("should change user's username", async () => {
+      const userToUpdate = await TestDataSource.getRepository(User).save({
+        username: "olduser",
+        email: "user@example.com",
+        password: "pass",
+        first_name: "Ch",
+        last_name: "User",
+        photo: "p.jpg",
+        telegram_id: "tg_ch",
+        flag_email: true,
+      });
 
-    const user2 = new User();
-    user2.username = 'uniqueusername'; // Username duplicato
-    user2.email = 'unique2@example.com'; // Email diversa
-    user2.password = 'pass';
-    user2.first_name = 'U2';
-    user2.last_name = 'U2';
+      const updatedUser = await repository.changeUsername(userToUpdate, "newuser");
 
-    // TypeORM lancerà un errore per violazione di UNIQUE constraint
-    await expect(userRepository.add(user2)).rejects.toThrow();
+      expect(updatedUser.username).toBe("newuser");
+      const found = await repository.findByid(userToUpdate.id);
+      expect(found?.username).toBe("newuser");
+    });
+  });
+
+  describe("changeLastName", () => {
+    it("should change user's last name", async () => {
+      const userToUpdate = await TestDataSource.getRepository(User).save({
+        username: "user",
+        email: "user@example.com",
+        password: "pass",
+        first_name: "Test",
+        last_name: "Old",
+        photo: "p.jpg",
+        telegram_id: "tg_ch",
+        flag_email: true,
+      });
+
+      const updatedUser = await repository.changeLastName(userToUpdate, "New");
+
+      expect(updatedUser.last_name).toBe("New");
+      const found = await repository.findByid(userToUpdate.id);
+      expect(found?.last_name).toBe("New");
+    });
+  });
+
+  describe("changeFirstName", () => {
+    it("should change user's first name", async () => {
+      const userToUpdate = await TestDataSource.getRepository(User).save({
+        username: "user",
+        email: "user@example.com",
+        password: "pass",
+        first_name: "Old",
+        last_name: "Test",
+        photo: "p.jpg",
+        telegram_id: "tg_ch",
+        flag_email: true,
+      });
+
+      const updatedUser = await repository.changeFirstName(userToUpdate, "New");
+
+      expect(updatedUser.first_name).toBe("New");
+      const found = await repository.findByid(userToUpdate.id);
+      expect(found?.first_name).toBe("New");
+    });
+  });
+
+  describe("changePhoto", () => {
+    it("should change user's photo", async () => {
+      const userToUpdate = await TestDataSource.getRepository(User).save({
+        username: "user",
+        email: "user@example.com",
+        password: "pass",
+        first_name: "Test",
+        last_name: "Test",
+        photo: "old.jpg",
+        telegram_id: "tg_ch",
+        flag_email: true,
+      });
+
+      const updatedUser = await repository.changePhoto(userToUpdate, "new.jpg");
+
+      expect(updatedUser.photo).toBe("new.jpg");
+      const found = await repository.findByid(userToUpdate.id);
+      expect(found?.photo).toBe("new.jpg");
+    });
+  });
+
+  describe("changeTelegramId", () => {
+    it("should change user's telegram ID", async () => {
+      const userToUpdate = await TestDataSource.getRepository(User).save({
+        username: "user",
+        email: "user@example.com",
+        password: "pass",
+        first_name: "Test",
+        last_name: "Test",
+        photo: "p.jpg",
+        telegram_id: "old_tg",
+        flag_email: true,
+      });
+
+      const updatedUser = await repository.changeTelegramId(userToUpdate, "new_tg");
+
+      expect(updatedUser.telegram_id).toBe("new_tg");
+      const found = await repository.findByid(userToUpdate.id);
+      expect(found?.telegram_id).toBe("new_tg");
+    });
+  });
+
+  describe("changeFlagEmail", () => {
+    it("should change user's flag_email", async () => {
+      const userToUpdate = await TestDataSource.getRepository(User).save({
+        username: "user",
+        email: "user@example.com",
+        password: "pass",
+        first_name: "Test",
+        last_name: "Test",
+        photo: "p.jpg",
+        telegram_id: "tg_ch",
+        flag_email: false,
+      });
+
+      const updatedUser = await repository.changeFlagEmail(userToUpdate, true);
+
+      expect(updatedUser.flag_email).toBe(true);
+      const found = await repository.findByid(userToUpdate.id);
+      expect(found?.flag_email).toBe(true);
+    });
   });
 });

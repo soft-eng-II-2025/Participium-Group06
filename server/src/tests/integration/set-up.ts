@@ -1,5 +1,5 @@
 // src/tests/integration/setup-db.ts
-import { TestDataSource } from "./test-data-source";
+import { TestDataSource } from "../test-data-source";
 
 beforeAll(async () => {
   if (!TestDataSource.isInitialized) {
@@ -14,6 +14,6 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-  // drop schema e ricrealo da zero prima di ogni test di integrazione
+  // Drop schema e ricrealo da zero prima di OGNI test di integrazione
   await TestDataSource.synchronize(true);
 });

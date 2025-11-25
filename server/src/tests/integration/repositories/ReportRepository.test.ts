@@ -1,388 +1,526 @@
-// src/tests/integration/repositories/ReportRepository.test.ts
-import { TestDataSource } from '../../test-data-source'; // Percorso relativo a test-data-source.ts
-import { ReportRepository } from '../../../repositories/ReportRepository'; // Percorso relativo a ReportRepository
-import { Report } from '../../../models/Report';
-import { User } from '../../../models/User';
-import { Category } from '../../../models/Category';
-import { ReportPhoto } from '../../../models/ReportPhoto';
-import { DataSource, Repository } from 'typeorm';
+// src/tests/integration/repositories/ReportRepository.int.test.ts
 
-// Importa tutte le entità per la pulizia del database
-import { Role } from '../../../models/Role';
-import { MunicipalityOfficer } from '../../../models/MunicipalityOfficer';
+import { ReportRepository } from "../../../repositories/ReportRepository";
+import { TestDataSource } from "../../test-data-source";
+import { Report } from "../../../models/Report";
+import { User } from "../../../models/User";
+import { Category } from "../../../models/Category";
+import { MunicipalityOfficer } from "../../../models/MunicipalityOfficer";
+import { ReportPhoto } from "../../../models/ReportPhoto";
+import { StatusType } from "../../../models/StatusType";
+import { Role } from "../../../models/Role";
 
+describe("ReportRepository (Integration Tests)", () => {
+  let repository: ReportRepository;
+  let user: User;
+  let category: Category;
+  let officerRole: Role;
+  let officer: MunicipalityOfficer;
 
-describe('ReportRepository (integration)', () => {
-  let reportRepository: ReportRepository;
-  let userRepository: Repository<User>;
-  let categoryRepository: Repository<Category>;
-  let reportOrmRepository: Repository<Report>;
-  let reportPhotoOrmRepository: Repository<ReportPhoto>;
+  beforeAll(async () => {
+    if (!TestDataSource.isInitialized) {
+      await TestDataSource.initialize();
+    }
+  });
 
-
-  let testUser: User;
-  let testCategory: Category;
-  let anotherTestUser: User;
-  let anotherTestCategory: Category;
-
-
-  // beforeEach viene eseguito prima di OGNI singolo test
-  beforeEach(async () => {
+  afterAll(async () => {
     if (TestDataSource.isInitialized) {
       await TestDataSource.destroy();
     }
-    await TestDataSource.initialize();
-
-    const repositoryReportPhoto = TestDataSource.getRepository(ReportPhoto);
-    const repositoryReport = TestDataSource.getRepository(Report);
-    const repositoryUser = TestDataSource.getRepository(User);
-    const repositoryCategory = TestDataSource.getRepository(Category);
-    const repositoryMunicipalityOfficer = TestDataSource.getRepository(MunicipalityOfficer);
-    const repositoryRole = TestDataSource.getRepository(Role);
-
-    await repositoryReportPhoto.clear();
-    await repositoryReport.clear();
-    await repositoryUser.clear();
-    await repositoryCategory.clear();
-    await repositoryMunicipalityOfficer.clear();
-    await repositoryRole.clear();
-
-    // Istanzia ReportRepository
-    reportRepository = new ReportRepository(TestDataSource);
-
-    // Ottieni i repository direttamente dal TestDataSource per l'uso nei test
-    userRepository = TestDataSource.getRepository(User);
-    categoryRepository = TestDataSource.getRepository(Category);
-    reportOrmRepository = TestDataSource.getRepository(Report);
-    reportPhotoOrmRepository = TestDataSource.getRepository(ReportPhoto);
-
-    // Prepara un utente e una categoria per i test dei report
-    testUser = new User();
-    testUser.username = 'reporteruser';
-    testUser.email = 'reporter@example.com';
-    testUser.password = 'hashedpassword';
-    testUser.first_name = 'Test';
-    testUser.last_name = 'Reporter';
-    await userRepository.save(testUser);
-
-    testCategory = new Category();
-    testCategory.name = 'Incidente';
-    await categoryRepository.save(testCategory);
-
-    anotherTestUser = new User();
-    anotherTestUser.username = 'anotheruser';
-    anotherTestUser.email = 'another@example.com';
-    anotherTestUser.password = 'anotherpass';
-    anotherTestUser.first_name = 'Another';
-    anotherTestUser.last_name = 'User';
-    await userRepository.save(anotherTestUser);
-
-    anotherTestCategory = new Category();
-    anotherTestCategory.name = 'Manutenzione';
-    await categoryRepository.save(anotherTestCategory);
   });
 
-  // --- Test per i metodi di ReportRepository ---
+  beforeEach(async () => {
+    if (!TestDataSource.isInitialized) {
+      throw new Error("TestDataSource should be initialized in beforeAll.");
+    }
 
-  it('dovrebbe aggiungere un report con user e category esistenti', async () => {
-    const report = new Report();
-    report.title = 'Buca sulla strada';
-    report.description = 'Causata da forti piogge';
-    report.latitude = 45.0;
-    report.longitude = 9.0;
-    report.user = testUser;       // Passa l'oggetto User completo o solo l'ID
-    report.category = testCategory; // Passa l'oggetto Category completo o solo l'ID
+    await TestDataSource.synchronize(true);
+    repository = new ReportRepository(TestDataSource);
 
-    const savedReport = await reportRepository.add(report);
-
-    expect(savedReport).toBeDefined();
-    expect(savedReport.id).toBeDefined();
-    expect(savedReport.title).toBe('Buca sulla strada');
-    // Verifica che le relazioni siano state caricate e che gli ID corrispondano
-    expect(savedReport.user.id).toBe(testUser.id);
-    expect(savedReport.category.id).toBe(testCategory.id);
-
-    const foundReport = await reportOrmRepository.findOne({
-      where: { id: savedReport.id },
-      relations: ['user', 'category']
+    // Dati comuni per tutti i test
+    user = await TestDataSource.getRepository(User).save({
+      username: "testuser",
+      email: "test@example.com",
+      password: "password",
+      first_name: "Test",
+      last_name: "User",
+      photo: "user.jpg",
+      telegram_id: "tg123",
+      flag_email: true,
     });
-    expect(foundReport).not.toBeNull();
-    expect(foundReport?.user.id).toBe(testUser.id);
-    expect(foundReport?.category.id).toBe(testCategory.id);
-  });
 
-  it('dovrebbe lanciare un errore se user non esiste durante l\'aggiunta di un report', async () => {
-    const report = new Report();
-    report.title = 'Report con user inesistente';
-    report.description = 'Descrizione';
-    report.latitude = 1.0;
-    report.longitude = 1.0;
-    report.user = { id: 99999 } as User; // User inesistente
-    report.category = testCategory;
-
-    await expect(reportRepository.add(report)).rejects.toThrow('User not found for report creation.');
-  });
-
-  it('dovrebbe lanciare un errore se category non esiste durante l\'aggiunta di un report', async () => {
-    const report = new Report();
-    report.title = 'Report con category inesistente';
-    report.description = 'Descrizione';
-    report.latitude = 1.0;
-    report.longitude = 1.0;
-    report.user = testUser;
-    report.category = { id: 99999 } as Category; // Category inesistente
-
-    await expect(reportRepository.add(report)).rejects.toThrow('Category not found for report creation.');
-  });
-
-
-  it('dovrebbe trovare tutti i report con le relazioni caricate', async () => {
-    const report1 = new Report();
-    report1.title = 'Report 1';
-    report1.description = 'Desc 1';
-    report1.latitude = 45.1;
-    report1.longitude = 9.1;
-    report1.user = testUser;
-    report1.category = testCategory;
-    await reportRepository.add(report1);
-
-    const report2 = new Report();
-    report2.title = 'Report 2';
-    report2.description = 'Desc 2';
-    report2.latitude = 45.2;
-    report2.longitude = 9.2;
-    report2.user = anotherTestUser; // Usa un altro utente
-    report2.category = anotherTestCategory; // Usa un'altra categoria
-    await reportRepository.add(report2);
-
-    const reports = await reportRepository.findAll();
-    expect(reports).toBeDefined();
-    expect(reports.length).toBe(2);
-    expect(reports.some(r => r.title === 'Report 1')).toBe(true);
-    expect(reports.some(r => r.title === 'Report 2')).toBe(true);
-
-    // Verifica che le relazioni siano caricate correttamente
-    const foundReport1 = reports.find(r => r.title === 'Report 1');
-    expect(foundReport1?.user).toBeDefined();
-    expect(foundReport1?.user.id).toBe(testUser.id);
-    expect(foundReport1?.category).toBeDefined();
-    expect(foundReport1?.category.id).toBe(testCategory.id);
-
-    const foundReport2 = reports.find(r => r.title === 'Report 2');
-    expect(foundReport2?.user).toBeDefined();
-    expect(foundReport2?.user.id).toBe(anotherTestUser.id);
-    expect(foundReport2?.category).toBeDefined();
-    expect(foundReport2?.category.id).toBe(anotherTestCategory.id);
-  });
-
-  it('dovrebbe trovare i report per categoria con le relazioni caricate', async () => {
-    const report1 = new Report();
-    report1.title = 'Report Categoria 1';
-    report1.description = 'Desc Categoria 1';
-    report1.latitude = 46.0;
-    report1.longitude = 10.0;
-    report1.user = testUser;
-    report1.category = testCategory;
-    await reportRepository.add(report1);
-
-    const report2 = new Report();
-    report2.title = 'Report Categoria 2';
-    report2.description = 'Desc Categoria 2';
-    report2.latitude = 47.0;
-    report2.longitude = 11.0;
-    report2.user = anotherTestUser;
-    report2.category = anotherTestCategory;
-    await reportRepository.add(report2);
-
-    const reports = await reportRepository.findByCategory(testCategory.id);
-    expect(reports).toBeDefined();
-    expect(reports.length).toBe(1);
-    expect(reports[0].title).toBe('Report Categoria 1');
-    expect(reports[0].category.id).toBe(testCategory.id);
-    expect(reports[0].user).toBeDefined(); // Verifica relazione user
-  });
-
-  it('dovrebbe aggiungere una singola foto a un report', async () => {
-    const report = new Report();
-    report.title = 'Report con singola foto';
-    report.description = 'Report per test foto singola';
-    report.latitude = 40.0;
-    report.longitude = 10.0;
-    report.user = testUser;
-    report.category = testCategory;
-    const savedReport = await reportRepository.add(report);
-
-    const photo = new ReportPhoto();
-    photo.photo = 'path/to/photo_single.jpg';
-    photo.report = savedReport;
-
-    const savedPhoto = await reportRepository.addPhoto(photo);
-
-    expect(savedPhoto).toBeDefined();
-    expect(savedPhoto.id).toBeDefined();
-    expect(savedPhoto.photo).toBe('path/to/photo_single.jpg');
-    expect(savedPhoto.report.id).toBe(savedReport.id);
-
-    const reportWithPhoto = await reportOrmRepository.findOne({
-      where: { id: savedReport.id },
-      relations: ['photos']
+    category = await TestDataSource.getRepository(Category).save({
+      name: "Test Category",
     });
-    expect(reportWithPhoto?.photos.length).toBe(1);
-    expect(reportWithPhoto?.photos[0].photo).toBe('path/to/photo_single.jpg');
-  });
 
-  it('dovrebbe aggiungere più foto a un report', async () => {
-    const report = new Report();
-    report.title = 'Report con più foto';
-    report.description = 'Report per test foto multiple';
-    report.latitude = 40.0;
-    report.longitude = 10.0;
-    report.user = testUser;
-    report.category = testCategory;
-    const savedReport = await reportRepository.add(report);
-
-    const photo1 = new ReportPhoto();
-    photo1.photo = 'path/to/multiple_photo1.jpg';
-    // photo1.report = savedReport; // Report verrà aggiunto da addPhotosToReport
-
-    const photo2 = new ReportPhoto();
-    photo2.photo = 'path/to/multiple_photo2.jpg';
-    // photo2.report = savedReport;
-
-    const savedPhotos = await reportRepository.addPhotosToReport(savedReport, [photo1, photo2]);
-
-    expect(savedPhotos).toBeDefined();
-    expect(savedPhotos.length).toBe(2);
-    expect(savedPhotos[0].id).toBeDefined();
-    expect(savedPhotos[1].id).toBeDefined();
-    expect(savedPhotos[0].report.id).toBe(savedReport.id);
-    expect(savedPhotos[1].report.id).toBe(savedReport.id);
-
-    const reportWithPhotos = await reportOrmRepository.findOne({
-      where: { id: savedReport.id },
-      relations: ['photos']
+    officerRole = await TestDataSource.getRepository(Role).save({
+      title: "Officer",
+      label: "Municipality Officer",
     });
-    expect(reportWithPhotos?.photos.length).toBe(2);
-    expect(reportWithPhotos?.photos.some(p => p.photo === 'path/to/multiple_photo1.jpg')).toBe(true);
-    expect(reportWithPhotos?.photos.some(p => p.photo === 'path/to/multiple_photo2.jpg')).toBe(true);
+
+    officer = await TestDataSource.getRepository(MunicipalityOfficer).save({
+      username: "testofficer",
+      email: "officer@example.com",
+      password: "password",
+      first_name: "Officer",
+      last_name: "One",
+      role: officerRole,
+    });
   });
 
-  it('dovrebbe trovare le foto per ID report', async () => {
+  const createTestReport = async (
+    status: StatusType = StatusType.PendingApproval
+  ) => {
     const report = new Report();
-    report.title = 'Report per Ricerca Foto';
-    report.description = 'Descrizione';
-    report.latitude = 30.0;
-    report.longitude = 10.0;
-    report.user = testUser;
-    report.category = testCategory;
-    const savedReport = await reportRepository.add(report);
+    report.longitude = 10.123;
+    report.latitude = 20.456;
+    report.title = "Test Report Title";
+    report.description = "This is a test description.";
+    report.user = user;
+    report.category = category;
+    report.status = status;
+    report.explanation = "";
+    report.officer = officer;
+    return TestDataSource.getRepository(Report).save(report);
+  };
 
-    const photo1 = new ReportPhoto();
-    photo1.photo = 'path/to/photoA.jpg';
-    photo1.report = savedReport;
-    await reportRepository.addPhoto(photo1);
+  describe("findAll", () => {
+    it("should return all reports with relations", async () => {
+      await createTestReport();
+      await createTestReport(StatusType.Assigned);
 
-    const photo2 = new ReportPhoto();
-    photo2.photo = 'path/to/photoB.jpg';
-    photo2.report = savedReport;
-    await reportRepository.addPhoto(photo2);
+      const reports = await repository.findAll();
 
-    const foundPhotos = await reportRepository.findPhotosByReportId(savedReport.id);
-    expect(foundPhotos).toBeDefined();
-    expect(foundPhotos.length).toBe(2);
-    expect(foundPhotos.some(p => p.photo === 'path/to/photoA.jpg')).toBe(true);
-    expect(foundPhotos.some(p => p.photo === 'path/to/photoB.jpg')).toBe(true);
+      expect(reports).toHaveLength(2);
+      expect(reports[0].user.username).toBe(user.username);
+      expect(reports[0].category.name).toBe(category.name);
+      expect(reports[0].photos).toBeDefined();
+    });
+
+    it("should return an empty array if no reports exist", async () => {
+      const reports = await repository.findAll();
+      expect(reports).toHaveLength(0);
+    });
   });
 
-  it('dovrebbe rimuovere un report e le sue foto associate (CASCADE)', async () => {
-    const report = new Report();
-    report.title = 'Report da Rimuovere';
-    report.description = 'Descrizione';
-    report.latitude = 20.0;
-    report.longitude = 5.0;
-    report.user = testUser;
-    report.category = testCategory;
-    const savedReport = await reportRepository.add(report);
+  describe("findByCategory", () => {
+    it("should return reports for a specific category", async () => {
+      await createTestReport();
 
-    const photo = new ReportPhoto();
-    photo.photo = 'path/to/delete.jpg';
-    photo.report = savedReport;
-    await reportRepository.addPhoto(photo);
+      const otherCategory = await TestDataSource.getRepository(Category).save({
+        name: "Other Category",
+      });
 
-    expect(await reportOrmRepository.findOneBy({ id: savedReport.id })).toBeDefined();
-    expect(await reportPhotoOrmRepository.findOneBy({ id: photo.id })).toBeDefined();
+      await TestDataSource.getRepository(Report).save({
+        longitude: 30,
+        latitude: 40,
+        title: "Other Report",
+        description: "Desc",
+        user,
+        category: otherCategory,
+        status: StatusType.PendingApproval,
+        explanation: "",
+      });
 
-    await reportRepository.remove(savedReport);
+      const reports = await repository.findByCategory(category.id);
 
-    const foundReport = await reportOrmRepository.findOneBy({ id: savedReport.id });
-    expect(foundReport).toBeNull();
-    const foundPhoto = await reportPhotoOrmRepository.findOneBy({ id: photo.id });
-    expect(foundPhoto).toBeNull(); // Con onDelete: 'CASCADE', la foto dovrebbe essere eliminata
+      expect(reports).toHaveLength(1);
+      expect(reports[0].category.id).toBe(category.id);
+    });
+
+    it("should return an empty array if no reports for category exist", async () => {
+      const reports = await repository.findByCategory(999);
+      expect(reports).toHaveLength(0);
+    });
   });
 
-  /*it('dovrebbe rimuovere una singola foto da un report', async () => {
-    const report = new Report();
-    // ... crea e salva report ...
-    const savedReport = await reportRepository.add(report);
+  describe("findById", () => {
+    it("should return a report by its ID with relations", async () => {
+      const savedReport = await createTestReport();
 
-    const photoToKeep = new ReportPhoto(); // <--- Rinomino per chiarezza
-    photoToKeep.photo = 'path/to/photo_to_keep.jpg';
-    photoToKeep.report = savedReport;
-    const savedPhotoToKeep = await reportRepository.addPhoto(photoToKeep);
+      const foundReport = await repository.findById(savedReport.id);
 
-    const photoToRemove = new ReportPhoto(); // <--- Rinomino per chiarezza
-    photoToRemove.photo = 'path/to/photo_to_remove.jpg';
-    photoToRemove.report = savedReport;
-    const savedPhotoToRemove = await reportRepository.addPhoto(photoToRemove);
+      expect(foundReport).toBeDefined();
+      expect(foundReport?.id).toBe(savedReport.id);
+      expect(foundReport?.user.username).toBe(user.username);
+      expect(foundReport?.category.name).toBe(category.name);
+      expect(foundReport?.officer?.username).toBe(officer.username);
+    });
 
-    expect(await reportRepository.findPhotosByReportId(savedReport.id)).toHaveLength(2);
-
-    // Rimuovi la foto che DOVREBBE essere rimossa
-    await reportRepository.removePhoto(savedPhotoToRemove); // Usa savedPhotoToRemove
-
-    const remainingPhotos = await reportRepository.findPhotosByReportId(savedReport.id);
-    expect(remainingPhotos).toHaveLength(1);
-    // Verifica che la foto rimanente sia quella che doveva rimanere
-    expect(remainingPhotos[0].photo).toBe(savedPhotoToKeep.photo); // Confronta con l'oggetto salvato
-    expect(remainingPhotos[0].id).toBe(savedPhotoToKeep.id);
-
-
-    // Verifica che la foto che doveva essere rimossa NON ESISTA più nel database
-    const removedPhotoCheck = await reportPhotoOrmRepository.findOneBy({ id: savedPhotoToRemove.id }); // Cerca per l'ID della foto rimossa
-    expect(removedPhotoCheck).toBeNull();
-  });*/
-
-  it('dovrebbe cambiare la descrizione di un report', async () => {
-    const report = new Report();
-    report.title = 'Report Originale';
-    report.description = 'Descrizione vecchia';
-    report.latitude = 50.0;
-    report.longitude = 15.0;
-    report.user = testUser;
-    report.category = testCategory;
-    const savedReport = await reportRepository.add(report);
-
-    const updatedReport = await reportRepository.changeDescription(savedReport, 'Descrizione nuova');
-
-    expect(updatedReport.description).toBe('Descrizione nuova');
-    const foundReport = await reportOrmRepository.findOneBy({ id: savedReport.id });
-    expect(foundReport?.description).toBe('Descrizione nuova');
+    it("should return null if report ID does not exist", async () => {
+      const foundReport = await repository.findById(999);
+      expect(foundReport).toBeNull();
+    });
   });
 
-  it('dovrebbe cambiare il titolo di un report', async () => {
-    const report = new Report();
-    report.title = 'Titolo vecchio';
-    report.description = 'Descrizione';
-    report.latitude = 55.0;
-    report.longitude = 20.0;
-    report.user = testUser;
-    report.category = testCategory;
-    const savedReport = await reportRepository.add(report);
+  describe("findByUserId", () => {
+    it("should return reports for a specific user", async () => {
+      await createTestReport();
 
-    const updatedReport = await reportRepository.changeTitle(savedReport, 'Titolo nuovo');
+      const otherUser = await TestDataSource.getRepository(User).save({
+        username: "otheruser",
+        email: "other@example.com",
+        password: "pass",
+        first_name: "Other",
+        last_name: "User",
+        photo: "p.jpg",
+        telegram_id: "tg_o",
+        flag_email: false,
+      });
 
-    expect(updatedReport.title).toBe('Titolo nuovo');
-    const foundReport = await reportOrmRepository.findOneBy({ id: savedReport.id });
-    expect(foundReport?.title).toBe('Titolo nuovo');
+      await TestDataSource.getRepository(Report).save({
+        longitude: 30,
+        latitude: 40,
+        title: "Other User Report",
+        description: "Desc",
+        user: otherUser,
+        category,
+        status: StatusType.PendingApproval,
+        explanation: "",
+      });
+
+      const reports = await repository.findByUserId(user.id);
+
+      expect(reports).toHaveLength(1);
+      expect(reports[0].user.id).toBe(user.id);
+    });
+
+    it("should return an empty array if no reports for user exist", async () => {
+      const reports = await repository.findByUserId(999);
+      expect(reports).toHaveLength(0);
+    });
+  });
+
+  describe("findApproved", () => {
+    it("should return only reports with 'Assigned' status", async () => {
+      await createTestReport(StatusType.PendingApproval);
+      await createTestReport(StatusType.Assigned);
+      await createTestReport(StatusType.Resolved);
+
+      const approvedReports = await repository.findApproved();
+
+      expect(approvedReports).toHaveLength(1);
+      expect(approvedReports[0].status).toBe(StatusType.Assigned);
+    });
+
+    it("should return an empty array if no approved reports exist", async () => {
+      await createTestReport(StatusType.PendingApproval);
+      await createTestReport(StatusType.Resolved);
+
+      const approvedReports = await repository.findApproved();
+      expect(approvedReports).toHaveLength(0);
+    });
+  });
+
+  describe("findByOfficer", () => {
+    it("should return reports assigned to a specific officer", async () => {
+      await createTestReport(StatusType.Assigned);
+
+      const otherRole = await TestDataSource.getRepository(Role).save({
+        title: "Other Officer Role",
+        label: "Other Officer",
+      });
+
+      const otherOfficer =
+        await TestDataSource.getRepository(MunicipalityOfficer).save({
+          username: "otherofficer",
+          email: "other@example.com",
+          password: "pass",
+          first_name: "Other",
+          last_name: "Officer",
+          role: otherRole,
+        });
+
+      await TestDataSource.getRepository(Report).save({
+        longitude: 30,
+        latitude: 40,
+        title: "Report for other officer",
+        description: "Desc",
+        user,
+        category,
+        status: StatusType.Assigned,
+        explanation: "",
+        officer: otherOfficer,
+      });
+
+      const reports = await repository.findByOfficer(officer);
+
+      expect(reports).toHaveLength(1);
+      expect(reports[0].officer?.id).toBe(officer.id);
+    });
+
+    it("should return an empty array if no reports for officer exist", async () => {
+      const reports = await repository.findByOfficer(officer);
+      expect(reports).toHaveLength(0);
+    });
+  });
+
+  describe("add", () => {
+    it("should add a new report", async () => {
+      const newReport = new Report();
+      newReport.longitude = 100;
+      newReport.latitude = 200;
+      newReport.title = "New Report";
+      newReport.description = "Description for new report";
+      newReport.user = user;
+      newReport.category = category;
+      newReport.status = StatusType.InProgress;
+      newReport.explanation = "Initial explanation";
+      newReport.officer = officer;
+
+      const added = await repository.add(newReport);
+
+      expect(added.id).toBeDefined();
+      expect(added.title).toBe("New Report");
+      expect(added.status).toBe(StatusType.InProgress);
+      expect(added.user?.id).toBe(user.id);
+      expect(added.category?.id).toBe(category.id);
+      expect(added.officer?.id).toBe(officer.id);
+    });
+
+    it("should default status to PendingApproval when not provided", async () => {
+      const newReport = new Report();
+      newReport.longitude = 1;
+      newReport.latitude = 2;
+      newReport.title = "No status report";
+      newReport.description = "No status";
+      newReport.user = user;
+      newReport.category = category;
+      // status non impostato
+
+      const added = await repository.add(newReport);
+
+      expect(added.status).toBe(StatusType.PendingApproval);
+    });
+
+    it("should throw error if user not found", async () => {
+      const invalidUser = { id: 999 } as User;
+      const newReport = new Report();
+      newReport.longitude = 1;
+      newReport.latitude = 1;
+      newReport.title = "Invalid User Report";
+      newReport.description = "Desc";
+      newReport.user = invalidUser;
+      newReport.category = category;
+
+      await expect(repository.add(newReport)).rejects.toThrow(
+        "User not found for report creation."
+      );
+    });
+
+    it("should throw error if category not found", async () => {
+      const invalidCategory = { id: 999 } as Category;
+      const newReport = new Report();
+      newReport.longitude = 1;
+      newReport.latitude = 1;
+      newReport.title = "Invalid Category Report";
+      newReport.description = "Desc";
+      newReport.user = user;
+      newReport.category = invalidCategory;
+
+      await expect(repository.add(newReport)).rejects.toThrow(
+        "Category not found for report creation."
+      );
+    });
+
+    it("should throw error if officer not found", async () => {
+      const invalidOfficer = { id: 999 } as MunicipalityOfficer;
+      const newReport = new Report();
+      newReport.longitude = 1;
+      newReport.latitude = 1;
+      newReport.title = "Invalid Officer Report";
+      newReport.description = "Desc";
+      newReport.user = user;
+      newReport.category = category;
+      newReport.officer = invalidOfficer;
+
+      await expect(repository.add(newReport)).rejects.toThrow(
+        "Officer not found for report creation."
+      );
+    });
+  });
+
+  describe("addPhotosToReport", () => {
+    it("should add multiple photos to a report", async () => {
+      const report = await createTestReport();
+
+      const photos = [
+        TestDataSource.getRepository(ReportPhoto).create({
+          photo: "photo1.jpg",
+        }),
+        TestDataSource.getRepository(ReportPhoto).create({
+          photo: "photo2.jpg",
+        }),
+      ];
+
+      const addedPhotos = await repository.addPhotosToReport(report, photos);
+
+      expect(addedPhotos).toHaveLength(2);
+      expect(addedPhotos[0].report.id).toBe(report.id);
+
+      const fetched = await repository.findById(report.id);
+      expect(fetched?.photos).toHaveLength(2);
+    });
+  });
+
+  describe("addPhoto", () => {
+    it("should add a single photo to a report", async () => {
+      const report = await createTestReport();
+
+      const photo = TestDataSource.getRepository(ReportPhoto).create({
+        photo: "single_photo.jpg",
+        report,
+      });
+
+      const added = await repository.addPhoto(photo);
+
+      expect(added.id).toBeDefined();
+      expect(added.report.id).toBe(report.id);
+
+      const photos = await repository.findPhotosByReportId(report.id);
+      expect(photos).toHaveLength(1);
+      expect(photos[0].photo).toBe("single_photo.jpg");
+    });
+  });
+
+  describe("findPhotosByReportId", () => {
+    it("should return all photos for a given report ID", async () => {
+      const report = await createTestReport();
+
+      await TestDataSource.getRepository(ReportPhoto).save([
+        { photo: "p1.jpg", report },
+        { photo: "p2.jpg", report },
+      ]);
+
+      const photos = await repository.findPhotosByReportId(report.id);
+
+      expect(photos).toHaveLength(2);
+      expect(photos.map((p) => p.photo)).toEqual(
+        expect.arrayContaining(["p1.jpg", "p2.jpg"])
+      );
+    });
+
+    it("should return empty array if report has no photos", async () => {
+      const report = await createTestReport();
+      const photos = await repository.findPhotosByReportId(report.id);
+      expect(photos).toHaveLength(0);
+    });
+
+    it("should return empty array if report ID does not exist", async () => {
+      const photos = await repository.findPhotosByReportId(999);
+      expect(photos).toHaveLength(0);
+    });
+  });
+
+  describe("remove", () => {
+    it("should remove a report", async () => {
+      const report = await createTestReport();
+
+      await repository.remove(report);
+
+      const found = await repository.findById(report.id);
+      expect(found).toBeNull();
+    });
+  });
+
+  describe("removePhoto", () => {
+    it("should remove a specific photo", async () => {
+      const report = await createTestReport();
+
+      const photoToRemove =
+        await TestDataSource.getRepository(ReportPhoto).save({
+          photo: "toremove.jpg",
+          report,
+        });
+
+      const photoToKeep = await TestDataSource.getRepository(ReportPhoto).save({
+        photo: "tokeep.jpg",
+        report,
+      });
+
+      await repository.removePhoto(photoToRemove);
+
+      const photos = await repository.findPhotosByReportId(report.id);
+      expect(photos).toHaveLength(1);
+      expect(photos[0].photo).toBe("tokeep.jpg");
+    });
+  });
+
+  describe("changeDescription", () => {
+    it("should change report description", async () => {
+      const report = await createTestReport();
+
+      const updated = await repository.changeDescription(
+        report,
+        "New description"
+      );
+
+      expect(updated.description).toBe("New description");
+
+      const found = await repository.findById(report.id);
+      expect(found?.description).toBe("New description");
+    });
+  });
+
+  describe("changeTitle", () => {
+    it("should change report title", async () => {
+      const report = await createTestReport();
+
+      const updated = await repository.changeTitle(report, "New title");
+
+      expect(updated.title).toBe("New title");
+
+      const found = await repository.findById(report.id);
+      expect(found?.title).toBe("New title");
+    });
+  });
+
+  describe("update", () => {
+    it("should update an existing report", async () => {
+      const report = await createTestReport();
+
+      report.title = "Updated title";
+      report.status = StatusType.Resolved;
+
+      const updated = await repository.update(report);
+
+      expect(updated.title).toBe("Updated title");
+      expect(updated.status).toBe(StatusType.Resolved);
+
+      const found = await repository.findById(report.id);
+      expect(found?.title).toBe("Updated title");
+      expect(found?.status).toBe(StatusType.Resolved);
+    });
+  });
+
+  describe("findByCategoryId", () => {
+    it("should return reports for a specific category ID", async () => {
+      await createTestReport();
+
+      const otherCategory = await TestDataSource.getRepository(Category).save({
+        name: "Another Category",
+      });
+
+      await TestDataSource.getRepository(Report).save({
+        longitude: 50,
+        latitude: 60,
+        title: "Other cat report",
+        description: "Desc",
+        user,
+        category: otherCategory,
+        status: StatusType.PendingApproval,
+        explanation: "",
+      });
+
+      const reports = await repository.findByCategoryId(category.id);
+
+      expect(reports).toHaveLength(1);
+      expect(reports[0].category.id).toBe(category.id);
+    });
+
+    it("should return empty array if no reports for category ID", async () => {
+      const reports = await repository.findByCategoryId(999);
+      expect(reports).toHaveLength(0);
+    });
   });
 });

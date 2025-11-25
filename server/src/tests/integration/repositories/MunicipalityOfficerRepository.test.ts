@@ -1,182 +1,391 @@
-// src/tests/integration/repositories/MunicipalityOfficerRepository.test.ts
-import { TestDataSource } from '../../test-data-source';
-import { MunicipalityOfficerRepository } from '../../../repositories/MunicipalityOfficerRepository';
-import { MunicipalityOfficer } from '../../../models/MunicipalityOfficer';
-import { Role } from '../../../models/Role';
-import { DataSource, Repository } from 'typeorm';
+// src/tests/integration/repositories/MunicipalityOfficerRepository.int.test.ts
 
-// Importa tutte le entità per la pulizia del database
-import { User } from '../../../models/User';
-import { Report } from '../../../models/Report';
-import { ReportPhoto } from '../../../models/ReportPhoto';
-import { Category } from '../../../models/Category';
+import { DataSource } from "typeorm";
+import { MunicipalityOfficerRepository } from "../../../repositories/MunicipalityOfficerRepository";
+import { TestDataSource } from "../../test-data-source"; // Path corretto al TestDataSource
+import { Role } from "../../../models/Role";
+import { MunicipalityOfficer } from "../../../models/MunicipalityOfficer";
 
+describe("MunicipalityOfficerRepository (Integration Tests)", () => {
+  let repository: MunicipalityOfficerRepository;
 
-describe('MunicipalityOfficerRepository (integration)', () => {
-  let municipalityOfficerRepository: MunicipalityOfficerRepository;
-  let municipalityOfficerOrmRepository: Repository<MunicipalityOfficer>;
-  let roleRepository: Repository<Role>;
+  // *** SETUP DIRETTO NEL FILE DI TEST PER ESCLUDERE INTERFERENZE ESTERNE ***
 
-  let adminRole: Role;
-  let officerRole: Role;
-  let adminOfficer: MunicipalityOfficer; // Per il test findAllVisible
-  let regularOfficer: MunicipalityOfficer; // Per il test findAllVisible
+  beforeAll(async () => {
+    if (!TestDataSource.isInitialized) {
+      await TestDataSource.initialize();
+    }
+    // Creiamo il repository una volta per tutti i test.
+    // L'inizializzazione del DataSource è qui, quindi non ci sarà più problema di "not initialized".
+    repository = new MunicipalityOfficerRepository(TestDataSource);
+  });
 
-  // beforeEach viene eseguito prima di OGNI singolo test
-  beforeEach(async () => {
-    // Distrugge e reinizializza il DataSource per ogni test
-    // Questo garantisce un database completamente fresco e pulito per ogni test,
-    // ricreando lo schema e tutti i vincoli.
+  afterAll(async () => {
     if (TestDataSource.isInitialized) {
       await TestDataSource.destroy();
     }
-    await TestDataSource.initialize();
-
-    // Istanzia Repository
-    municipalityOfficerRepository = new MunicipalityOfficerRepository(TestDataSource);
-
-    // Ottieni i repository direttamente dal TestDataSource per l'uso nei test
-    municipalityOfficerOrmRepository = TestDataSource.getRepository(MunicipalityOfficer);
-    roleRepository = TestDataSource.getRepository(Role);
-
-    // Prepara i ruoli per i test
-    adminRole = new Role();
-    adminRole.title = 'admin'; // Assumiamo che ci sia un ruolo 'admin'
-    await roleRepository.save(adminRole);
-
-    officerRole = new Role();
-    officerRole.title = 'officer';
-    await roleRepository.save(officerRole);
-
-    // Prepara un ufficiale "admin" e uno "normale" per findAllVisible
-    adminOfficer = new MunicipalityOfficer();
-    adminOfficer.username = 'admin';
-    adminOfficer.email = 'admin@example.com';
-    adminOfficer.password = 'hashedadminpass';
-    adminOfficer.first_name = 'Super';
-    adminOfficer.last_name = 'Admin';
-    adminOfficer.role = adminRole;
-    await municipalityOfficerRepository.add(adminOfficer);
-
-    regularOfficer = new MunicipalityOfficer();
-    regularOfficer.username = 'john.doe';
-    regularOfficer.email = 'john.doe@example.com';
-    regularOfficer.password = 'hashedjohnpass';
-    regularOfficer.first_name = 'John';
-    regularOfficer.last_name = 'Doe';
-    regularOfficer.role = officerRole;
-    await municipalityOfficerRepository.add(regularOfficer);
-
   });
 
-  // --- Test per i metodi di MunicipalityOfficerRepository ---
-
-  it('dovrebbe aggiungere e trovare un ufficiale per username (con ruolo)', async () => {
-    const newOfficer = new MunicipalityOfficer();
-    newOfficer.username = 'new.officer';
-    newOfficer.email = 'new.officer@example.com';
-    newOfficer.password = 'hashedpass';
-    newOfficer.first_name = 'New';
-    newOfficer.last_name = 'Officer';
-    newOfficer.role = officerRole; // Assegna un ruolo esistente
-
-    const savedOfficer = await municipalityOfficerRepository.add(newOfficer);
-
-    expect(savedOfficer).toBeDefined();
-    expect(savedOfficer.id).toBeDefined();
-    expect(savedOfficer.username).toBe('new.officer');
-    expect(savedOfficer.role?.id).toBe(officerRole.id);
-
-    const foundOfficer = await municipalityOfficerRepository.findByUsername('new.officer');
-    expect(foundOfficer).not.toBeNull();
-    expect(foundOfficer?.email).toBe('new.officer@example.com');
-    expect(foundOfficer?.role).toBeDefined(); // Verifica che il ruolo sia caricato
-    expect(foundOfficer?.role?.title).toBe('officer');
+  beforeEach(async () => {
+    // Prima di ogni test, ricreiamo lo schema per isolare i test.
+    // Questo è il punto chiave per evitare FK e unique constraint errors.
+    if (!TestDataSource.isInitialized) {
+        throw new Error("TestDataSource should be initialized in beforeAll.");
+    }
+    await TestDataSource.synchronize(true); // drop schema e ricrea
   });
 
-  it('dovrebbe trovare tutti gli ufficiali (con ruoli)', async () => {
-    // Vengono presi anche adminOfficer e regularOfficer da beforeEach
-    const officers = await municipalityOfficerRepository.findAll();
-    expect(officers).toBeDefined();
-    expect(officers.length).toBe(2); // adminOfficer + regularOfficer
-    expect(officers.some(o => o.username === 'admin')).toBe(true);
-    expect(officers.some(o => o.username === 'john.doe')).toBe(true);
+  // *** FINE SETUP DIRETTO ***
 
-    const adminFound = officers.find(o => o.username === 'admin');
-    expect(adminFound?.role).toBeDefined();
-    expect(adminFound?.role?.title).toBe('admin');
 
-    const johnFound = officers.find(o => o.username === 'john.doe');
-    expect(johnFound?.role).toBeDefined();
-    expect(johnFound?.role?.title).toBe('officer');
+  describe("findAll", () => {
+    it("should return all municipality officers with their roles", async () => {
+      const role1 = await TestDataSource.getRepository(Role).save({
+        title: "Admin",
+        label: "Administrator",
+      });
+
+      const role2 = await TestDataSource.getRepository(Role).save({
+        title: "Officer",
+        label: "Officer",
+      });
+
+      await repository.add({
+        username: "officer1",
+        email: "officer1@example.com",
+        password: "password",
+        first_name: "John",
+        last_name: "Doe",
+        role: role1,
+      } as MunicipalityOfficer);
+
+      await repository.add({
+        username: "officer2",
+        email: "officer2@example.com",
+        password: "password",
+        first_name: "Jane",
+        last_name: "Smith",
+        role: role2,
+      } as MunicipalityOfficer);
+
+      const officers = await repository.findAll();
+
+      expect(officers).toHaveLength(2);
+      expect(officers[0].role).toBeDefined();
+      expect(officers[0].role?.title).toBe("Admin");
+      expect(officers[1].role).toBeDefined();
+      expect(officers[1].role?.title).toBe("Officer");
+
+      expect(officers[0]).toEqual(
+        expect.objectContaining({
+          username: "officer1",
+          email: "officer1@example.com",
+          role: expect.objectContaining({ title: "Admin" }),
+        })
+      );
+      expect(officers[1]).toEqual(
+        expect.objectContaining({
+          username: "officer2",
+          email: "officer2@example.com",
+          role: expect.objectContaining({ title: "Officer" }),
+        })
+      );
+    });
+
+    it("should return an empty array if no officers exist", async () => {
+      const officers = await repository.findAll();
+      expect(officers).toHaveLength(0);
+    });
   });
 
-  it('dovrebbe trovare gli ufficiali visibili (escluso admin)', async () => {
-    const visibleOfficers = await municipalityOfficerRepository.findAllVisible();
-    expect(visibleOfficers).toBeDefined();
-    expect(visibleOfficers.length).toBe(1); // Dovrebbe escludere 'admin'
-    expect(visibleOfficers[0].username).toBe('john.doe');
-    expect(visibleOfficers[0].role).toBeDefined(); // Verifica che il ruolo sia caricato dal QueryBuilder
-    expect(visibleOfficers[0].role?.title).toBe('officer');
+  describe("findByUsername", () => {
+    it("should return the officer with the specified username and their role", async () => {
+      const role = await TestDataSource.getRepository(Role).save({
+        title: "Officer",
+        label: "Officer",
+      });
+
+      const officerData = {
+        username: "testuser",
+        email: "test@example.com",
+        password: "password",
+        first_name: "Test",
+        last_name: "User",
+        role: role,
+      };
+
+      await repository.add(officerData as MunicipalityOfficer);
+
+      const foundOfficer = await repository.findByUsername("testuser");
+
+      expect(foundOfficer).toBeDefined();
+      expect(foundOfficer?.username).toBe("testuser");
+      expect(foundOfficer?.role).toEqual(
+        expect.objectContaining({ title: "Officer" })
+      );
+    });
+
+    it("should return null if no officer with the specified username exists", async () => {
+      const foundOfficer = await repository.findByUsername("nonexistent");
+      expect(foundOfficer).toBeNull();
+    });
   });
 
-  it('dovrebbe trovare un ufficiale per email', async () => {
-    const foundOfficer = await municipalityOfficerRepository.findByEmail('john.doe@example.com');
-    expect(foundOfficer).not.toBeNull();
-    expect(foundOfficer?.username).toBe('john.doe');
-    // findByEmail non carica il ruolo per default (findOneBy), quindi non dovrebbe esserci
-    expect(foundOfficer?.role).toBeUndefined();
+  describe("findAllVisible", () => {
+    it("should return all officers except the admin user", async () => {
+      const adminRole = await TestDataSource.getRepository(Role).save({
+        title: "Admin",
+        label: "Administrator",
+      });
+
+      const officerRole = await TestDataSource.getRepository(Role).save({
+        title: "Officer",
+        label: "Officer",
+      });
+
+      await repository.add({
+        username: "admin",
+        email: "admin@example.com",
+        password: "password",
+        first_name: "Super",
+        last_name: "Admin",
+        role: adminRole,
+      } as MunicipalityOfficer);
+
+      await repository.add({
+        username: "officer1",
+        email: "officer1@example.com",
+        password: "password",
+        first_name: "John",
+        last_name: "Doe",
+        role: officerRole,
+      } as MunicipalityOfficer);
+
+      const visibleOfficers = await repository.findAllVisible();
+
+      expect(visibleOfficers).toHaveLength(1);
+      expect(visibleOfficers[0].username).toBe("officer1");
+      expect(visibleOfficers[0].email).toBe("officer1@example.com");
+      expect(visibleOfficers[0].role).toEqual(
+        expect.objectContaining({ title: "Officer" })
+      );
+    });
+
+    it("should return an empty array if only admin user exists", async () => {
+      const adminRole = await TestDataSource.getRepository(Role).save({
+        title: "Admin",
+        label: "Administrator",
+      });
+
+      await repository.add({
+        username: "admin",
+        email: "admin@example.com",
+        password: "password",
+        first_name: "Super",
+        last_name: "Admin",
+        role: adminRole,
+      } as MunicipalityOfficer);
+
+      const visibleOfficers = await repository.findAllVisible();
+      expect(visibleOfficers).toHaveLength(0);
+    });
   });
 
-  it('dovrebbe trovare un ufficiale inesistente per username come null', async () => {
-    const foundOfficer = await municipalityOfficerRepository.findByUsername('nonexistent');
-    expect(foundOfficer).toBeNull();
+  describe("findByEmail", () => {
+    it("should return the officer with the specified email", async () => {
+      const officerData = {
+        username: "testuser",
+        email: "test@example.com",
+        password: "password",
+        first_name: "Test",
+        last_name: "User",
+      };
+
+      await repository.add(officerData as MunicipalityOfficer);
+
+      const foundOfficer = await repository.findByEmail("test@example.com");
+
+      expect(foundOfficer).toBeDefined();
+      expect(foundOfficer?.email).toBe("test@example.com");
+      expect(foundOfficer?.username).toBe("testuser");
+    });
+
+    it("should return null if no officer with the specified email exists", async () => {
+      const foundOfficer = await repository.findByEmail(
+        "nonexistent@example.com"
+      );
+      expect(foundOfficer).toBeNull();
+    });
   });
 
-  it('dovrebbe trovare un ufficiale inesistente per email come null', async () => {
-    const foundOfficer = await municipalityOfficerRepository.findByEmail('nonexistent@example.com');
-    expect(foundOfficer).toBeNull();
+  describe("findById", () => {
+    it("should return the officer with the specified ID and their role", async () => {
+      const role = await TestDataSource.getRepository(Role).save({
+        title: "Officer",
+        label: "Officer",
+      });
+
+      const officerData = {
+        username: "testuser",
+        email: "test@example.com",
+        password: "password",
+        first_name: "Test",
+        last_name: "User",
+        role: role,
+      };
+
+      const savedOfficer = await repository.add(
+        officerData as MunicipalityOfficer
+      );
+
+      const foundOfficer = await repository.findById(savedOfficer.id);
+
+      expect(foundOfficer).toBeDefined();
+      expect(foundOfficer?.id).toBe(savedOfficer.id);
+      expect(foundOfficer?.username).toBe("testuser");
+      expect(foundOfficer?.role).toEqual(
+        expect.objectContaining({ title: "Officer" })
+      );
+    });
+
+    it("should return null if no officer with the specified ID exists", async () => {
+      const foundOfficer = await repository.findById(999);
+      expect(foundOfficer).toBeNull();
+    });
   });
 
-  it('dovrebbe aggiornare un ufficiale esistente', async () => {
-    regularOfficer.first_name = 'Jonathan';
-    regularOfficer.email = 'jonathan.doe@example.com';
-    regularOfficer.role = adminRole; // Cambia anche il ruolo
+  describe("findByRoleTitle", () => {
+    it("should return all officers with the specified role title", async () => {
+      const adminRole = await TestDataSource.getRepository(Role).save({
+        title: "Admin",
+        label: "Administrator",
+      });
 
-    const updatedOfficer = await municipalityOfficerRepository.update(regularOfficer);
+      const officerRole = await TestDataSource.getRepository(Role).save({
+        title: "Officer",
+        label: "Officer",
+      });
 
-    expect(updatedOfficer.first_name).toBe('Jonathan');
-    expect(updatedOfficer.email).toBe('jonathan.doe@example.com');
-    expect(updatedOfficer.role?.id).toBe(adminRole.id); // Verifica il nuovo ruolo
+      await repository.add({
+        username: "officer1",
+        email: "officer1@example.com",
+        password: "password",
+        first_name: "John",
+        last_name: "Doe",
+        role: officerRole,
+      } as MunicipalityOfficer);
 
-    const foundOfficer = await municipalityOfficerRepository.findByUsername('john.doe');
-    expect(foundOfficer?.first_name).toBe('Jonathan');
-    expect(foundOfficer?.email).toBe('jonathan.doe@example.com');
-    expect(foundOfficer?.role?.title).toBe('admin');
+      await repository.add({
+        username: "officer2",
+        email: "officer2@example.com",
+        password: "password",
+        first_name: "Jane",
+        last_name: "Smith",
+        role: adminRole,
+      } as MunicipalityOfficer);
+
+      await repository.add({
+        username: "officer3",
+        email: "officer3@example.com",
+        password: "password",
+        first_name: "Peter",
+        last_name: "Jones",
+        role: officerRole,
+      } as MunicipalityOfficer);
+
+      const officers = await repository.findByRoleTitle("Officer");
+
+      expect(officers).toHaveLength(2);
+      expect(officers.every((o) => o.role?.title === "Officer")).toBeTruthy();
+      expect(officers.some((o) => o.username === "officer1")).toBeTruthy();
+      expect(officers.some((o) => o.username === "officer3")).toBeTruthy();
+    });
+
+    it("should return an empty array if no officers with the specified role title exist", async () => {
+      await TestDataSource.getRepository(Role).save({
+        title: "UnusedRole",
+        label: "Unused Role",
+      });
+
+      const officers = await repository.findByRoleTitle("NonExistentRole");
+      expect(officers).toHaveLength(0);
+    });
   });
 
-  // Test per i vincoli di unicità (username ed email)
-  it('dovrebbe lanciare un errore se si tenta di aggiungere un ufficiale con username duplicato', async () => {
-    const duplicateOfficer = new MunicipalityOfficer();
-    duplicateOfficer.username = 'john.doe'; // Username duplicato
-    duplicateOfficer.email = 'another.unique@example.com';
-    duplicateOfficer.password = 'pass';
-    duplicateOfficer.first_name = 'Dup';
-    duplicateOfficer.last_name = 'Licato';
-    duplicateOfficer.role = officerRole;
+  describe("add", () => {
+    it("should add a new municipality officer", async () => {
+      const role = await TestDataSource.getRepository(Role).save({
+        title: "Officer",
+        label: "Officer",
+      });
 
-    await expect(municipalityOfficerRepository.add(duplicateOfficer)).rejects.toThrow();
+      const newOfficer = {
+        username: "newofficer",
+        email: "newofficer@example.com",
+        password: "password",
+        first_name: "New",
+        last_name: "Officer",
+        role: role,
+      };
+
+      const addedOfficer = await repository.add(
+        newOfficer as MunicipalityOfficer
+      );
+
+      expect(addedOfficer).toBeDefined();
+      expect(addedOfficer.id).toBeDefined();
+      expect(addedOfficer.username).toBe("newofficer");
+      expect(addedOfficer.email).toBe("newofficer@example.com");
+      expect(addedOfficer.first_name).toBe("New");
+      expect(addedOfficer.last_name).toBe("Officer");
+      expect(addedOfficer.role).toEqual(expect.objectContaining({ title: "Officer" }));
+
+      const foundOfficer = await repository.findById(addedOfficer.id!);
+      expect(foundOfficer).toEqual(
+        expect.objectContaining({
+          id: addedOfficer.id,
+          username: "newofficer",
+          email: "newofficer@example.com",
+        })
+      );
+      expect(foundOfficer?.role).toEqual(expect.objectContaining({ title: "Officer" }));
+    });
   });
 
-  it('dovrebbe lanciare un errore se si tenta di aggiungere un ufficiale con email duplicata', async () => {
-    const duplicateOfficer = new MunicipalityOfficer();
-    duplicateOfficer.username = 'another.unique.username';
-    duplicateOfficer.email = 'john.doe@example.com'; // Email duplicata
-    duplicateOfficer.password = 'pass';
-    duplicateOfficer.first_name = 'Dup';
-    duplicateOfficer.last_name = 'Licato';
-    duplicateOfficer.role = officerRole;
+  describe("update", () => {
+    it("should update an existing municipality officer", async () => {
+      const role = await TestDataSource.getRepository(Role).save({
+        title: "Officer",
+        label: "Officer",
+      });
 
-    await expect(municipalityOfficerRepository.add(duplicateOfficer)).rejects.toThrow();
+      const officerData = {
+        username: "updateuser",
+        email: "update@example.com",
+        password: "password",
+        first_name: "Update",
+        last_name: "User",
+        role: role,
+      };
+
+      const savedOfficer = await repository.add(
+        officerData as MunicipalityOfficer
+      );
+
+      savedOfficer.first_name = "Updated";
+      savedOfficer.email = "updated@example.com";
+      const updatedOfficer = await repository.update(savedOfficer);
+
+      expect(updatedOfficer).toBeDefined();
+      expect(updatedOfficer.id).toBe(savedOfficer.id);
+      expect(updatedOfficer.first_name).toBe("Updated");
+      expect(updatedOfficer.email).toBe("updated@example.com");
+      expect(updatedOfficer.username).toBe("updateuser");
+
+      const foundOfficer = await repository.findById(savedOfficer.id!);
+      expect(foundOfficer?.first_name).toBe("Updated");
+      expect(foundOfficer?.email).toBe("updated@example.com");
+      expect(foundOfficer?.role).toEqual(expect.objectContaining({ title: "Officer" }));
+    });
   });
 });

@@ -1,3 +1,5 @@
+
+
 import { CreateReportRequestDTO } from "../models/DTOs/CreateReportRequestDTO";
 import { mapReportDAOToDTO as mapReportDAOToResponse, mapCreateReportRequestToDAO } from "../services/mapperService";
 import { ReportResponseDTO } from "../models/DTOs/ReportResponseDTO";
@@ -7,12 +9,23 @@ import { DataSource } from "typeorm";
 import { getMunicipalityOfficerDAOForNewRequest,getMunicipalityOfficerDAOByUsername } from "./adminController";
 import { ReportPhoto } from "../models/ReportPhoto";
 import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
-
+import { Notification } from "../models/Notification";
+import { NotificationType } from "../models/NotificationType";
+import { NotificationRepository } from "../repositories/NotificationRepository";
+import { SocketService } from "../services/socketService";
+import { Server } from "socket.io";
 let reportRepository: ReportRepository;
+let notificationRepository: NotificationRepository;
+let socketService: SocketService;
 
-export function initializeReportRepositories(dataSource: DataSource) {
+
+
+export function initializeReportRepositories(dataSource: DataSource, io: Server) {
     reportRepository = new ReportRepository(dataSource);
+    notificationRepository = new NotificationRepository(dataSource);
+    socketService = new SocketService(io);
 }
+
 
 function appErr(code: string, status = 400) { const e: any = new Error(code); e.status = status; return e; }
 
@@ -43,15 +56,39 @@ export async function addReport(reportData: CreateReportRequestDTO): Promise<Rep
     return mapReportDAOToResponse(addedReport);
 }
 
-export async function updateReportStatus(reportId: number, newStatus: StatusType, explanation: string): Promise<ReportResponseDTO> {
+
+
+export async function updateReportStatus(
+    reportId: number,
+    newStatus: StatusType,
+    explanation: string
+): Promise<ReportResponseDTO> {
     const report = await reportRepository.findById(reportId);
     if (!report) throw appErr('REPORT_NOT_FOUND', 404);
-    
+
+    // Update report
     report.status = newStatus;
     report.explanation = explanation;
     const updatedReport = await reportRepository.update(report);
+
+    // Create & save notification for the user
+    if (report.user) {
+        const notification = new Notification();
+        notification.user = report.user;
+        notification.content = `Your report "${report.title}" has been updated to status: ${newStatus}`;
+        notification.type = NotificationType.ReportChanged;
+        notification.is_read = false;
+        notification.created_at = new Date();
+
+        const savedNotif = await notificationRepository.add(notification);
+
+        // Send notification via socket if user is online
+        socketService.sendNotificationToUser(report.user.id, savedNotif);
+    }
+
     return mapReportDAOToResponse(updatedReport);
 }
+
 
 export async function updateReportOfficer(reportId: number, MunicipalityOfficer: MunicipalityOfficer): Promise<ReportResponseDTO> {
     console.log(`Updating report ${reportId} to officer ${MunicipalityOfficer.username}`);

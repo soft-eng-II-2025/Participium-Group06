@@ -1,11 +1,12 @@
 import { NotificationRepository } from "../repositories/NotificationRepository";
 import { Notification } from "../models/Notification";
 import { mapNotificationDAOToDTO } from "../services/mapperService";
+import { DataSource } from "typeorm";
 
 let notificationRepository: NotificationRepository;
 
-export function initializeNotificationController(repo: NotificationRepository) {
-    notificationRepository = repo;
+export function initializeNotificationController(dataSource: DataSource) {
+    notificationRepository = new NotificationRepository(dataSource);
 }
 
 export async function getMyNotifications(userId: number) {

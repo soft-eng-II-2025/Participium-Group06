@@ -119,47 +119,6 @@ router.get('/reports/categories', requireAuth, async (req, res: Response) => {
 
 
 
-// Update profilo utente loggato
-/*router.put('/me', (req, res, next) => {
-        console.log(">>> DEBUG Arrivata richiesta PUT /users/me");
-        next();
-    }, requireUser, validateDto(UpdateUserRequestDTO),
-    async (req: Request, res: Response) => {
-        console.log(">>> DEBUG Entrato nella route vera");
-        try {
-            // Utente autenticato messo da requireUser (es. req.user = { id, username, ... })
-            const authUser = (req as any).user;
-
-            // opzionale: loggare l'utente autenticato
-            console.log("Authenticated user in /users/me:", authUser);
-
-            if (!authUser) {
-                return res.status(401).json({message: "Unauthorized"});
-            }
-
-            console.log(">>> DEBUG : dalla route backend chiamo il controller con i parametri: " +
-               `authUser: ${authUser.user}, username: ${authUser.username}, body: ${req.body}` )
-
-            const updatedUser = await userController.updateUser(
-                authUser.username,
-                req.body as UpdateUserRequestDTO
-            );
-
-            res.status(200).json(updatedUser);
-        } catch (error: any) {
-            console.error("Error updating user profile:", error);
-            res
-                .status(error.status || 500)
-                .json({message: error.message || "Failed to update user profile."});
-        }
-    }
-);
-
-
- */
-
-
-
 router.put("/me", requireUser, async (req: Request, res: Response) => {
     try {
         const authUser = (req as any).user;

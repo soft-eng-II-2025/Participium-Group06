@@ -9,19 +9,21 @@ import {
     getAllRoles,
     getMunicipalityOfficerByUsername,
     assignTechAgent,
-    getAgentsByTechLeadId,
+    getAgentsByTechLeadUsername,
     getTechReports,
     getTechLeadReports,
 } from "../../../controllers/adminController";
 
 import { MunicipalityOfficerRepository } from "../../../repositories/MunicipalityOfficerRepository";
 import { RoleRepository } from "../../../repositories/RoleRepository";
+import { CategoryRepository } from "../../../repositories/CategoryRepository";
+import { ReportRepository } from "../../../repositories/ReportRepository";
+
 import {
     mapMunicipalityOfficerDAOToDTO as mapMunicipalityOfficerDAOToResponse,
     mapReportDAOToDTO as mapReportDAOToResponse,
 } from "../../../services/mapperService";
 import { verifyPassword, hashPassword } from "../../../services/passwordService";
-import { StatusType } from "../../../models/StatusType";
 
 // mock di reportController per le funzioni richiamate da adminController
 jest.mock("../../../controllers/reportController", () => ({
@@ -37,18 +39,23 @@ import {
 // mock repository e servizi
 jest.mock("../../../repositories/MunicipalityOfficerRepository");
 jest.mock("../../../repositories/RoleRepository");
+jest.mock("../../../repositories/CategoryRepository");
+jest.mock("../../../repositories/ReportRepository");
 jest.mock("../../../services/mapperService");
 jest.mock("../../../services/passwordService");
 
-describe("adminController - unit test (solo mock)", () => {
+describe("adminController - Unit Test (mock)", () => {
     let officerRepoMock: any;
     let roleRepoMock: any;
+    let categoryRepoMock: any;
+    let reportRepoMock: any;
 
     beforeEach(() => {
         officerRepoMock = {
             add: jest.fn(),
             findAllVisible: jest.fn(),
             findByUsername: jest.fn(),
+            findByusername: jest.fn(), // notare la 'u' minuscola, come nel controller
             update: jest.fn(),
             findById: jest.fn(),
             findByRoleTitle: jest.fn(),
@@ -59,11 +66,25 @@ describe("adminController - unit test (solo mock)", () => {
             findAssignable: jest.fn(),
         };
 
+        categoryRepoMock = {
+            findByRoleId: jest.fn(),
+        };
+
+        reportRepoMock = {
+            findByOfficer: jest.fn(),
+        };
+
         (MunicipalityOfficerRepository as unknown as jest.Mock).mockImplementation(
-            () => officerRepoMock
+            () => officerRepoMock,
         );
         (RoleRepository as unknown as jest.Mock).mockImplementation(
-            () => roleRepoMock
+            () => roleRepoMock,
+        );
+        (CategoryRepository as unknown as jest.Mock).mockImplementation(
+            () => categoryRepoMock,
+        );
+        (ReportRepository as unknown as jest.Mock).mockImplementation(
+            () => reportRepoMock,
         );
 
         // inizializza i repo interni del controller con un dataSource finto
@@ -142,7 +163,7 @@ describe("adminController - unit test (solo mock)", () => {
             ];
             officerRepoMock.findAllVisible.mockResolvedValue(daoList);
             (mapMunicipalityOfficerDAOToResponse as jest.Mock)
-                .mockImplementation(dao => ({ username: dao.username }));
+                .mockImplementation((dao: any) => ({ username: dao.username }));
 
             const officers = await getAllMunicipalityOfficer();
 
@@ -365,44 +386,46 @@ describe("adminController - unit test (solo mock)", () => {
     describe("assignTechAgent", () => {
         it("assegna un tech agent a un report", async () => {
             const officer = { id: 10, username: "tech.agent1" };
-            officerRepoMock.findById.mockResolvedValue(officer);
+            officerRepoMock.findByUsername.mockResolvedValue(officer);
 
             (updateReportOfficer as jest.Mock).mockResolvedValue({
                 id: 123,
                 officer: { username: "tech.agent1" },
             });
 
-            const result = await assignTechAgent(123, 10);
+            const result = await assignTechAgent(123, "tech.agent1");
 
-            expect(officerRepoMock.findById).toHaveBeenCalledWith(10);
+            expect(officerRepoMock.findByUsername).toHaveBeenCalledWith("tech.agent1");
             expect(updateReportOfficer).toHaveBeenCalledWith(123, officer);
             expect(result.officer.username).toBe("tech.agent1");
         });
 
         it("lancia OFFICER_NOT_FOUND se il tech agent non esiste", async () => {
-            officerRepoMock.findById.mockResolvedValue(null);
+            officerRepoMock.findByUsername.mockResolvedValue(null);
 
-            await expect(assignTechAgent(123, 99999)).rejects.toThrow("OFFICER_NOT_FOUND");
+            await expect(
+                assignTechAgent(123, "missing.agent"),
+            ).rejects.toThrow("OFFICER_NOT_FOUND");
         });
     });
 
     // ------------------------------------------------------------------
-    // getAgentsByTechLeadId
+    // getAgentsByTechLeadUsername
     // ------------------------------------------------------------------
-    describe("getAgentsByTechLeadId", () => {
+    describe("getAgentsByTechLeadUsername", () => {
         it("restituisce tutti i tech agent per un tech lead valido", async () => {
-            const techLead = { id: 1, role: { title: "TECH_LEAD_AREA1" } };
-            officerRepoMock.findById.mockResolvedValue(techLead);
+            const techLead = { id: 1, username: "tech.lead1", role: { title: "TECH_LEAD_AREA1" } };
+            officerRepoMock.findByUsername.mockResolvedValue(techLead);
 
             const agents = [{ username: "tech.agent1" }, { username: "tech.agent2" }];
             officerRepoMock.findByRoleTitle.mockResolvedValue(agents);
 
             (mapMunicipalityOfficerDAOToResponse as jest.Mock)
-                .mockImplementation(o => ({ username: o.username }));
+                .mockImplementation((o: any) => ({ username: o.username }));
 
-            const result = await getAgentsByTechLeadId(1);
+            const result = await getAgentsByTechLeadUsername("tech.lead1");
 
-            expect(officerRepoMock.findById).toHaveBeenCalledWith(1);
+            expect(officerRepoMock.findByUsername).toHaveBeenCalledWith("tech.lead1");
             expect(officerRepoMock.findByRoleTitle).toHaveBeenCalledWith("TECH_AGENT_AREA1");
             expect(result).toEqual([
                 { username: "tech.agent1" },
@@ -411,20 +434,23 @@ describe("adminController - unit test (solo mock)", () => {
         });
 
         it("lancia OFFICER_NOT_FOUND se il tech lead non esiste", async () => {
-            officerRepoMock.findById.mockResolvedValue(null);
+            officerRepoMock.findByUsername.mockResolvedValue(null);
 
-            await expect(getAgentsByTechLeadId(99999)).rejects.toThrow("OFFICER_NOT_FOUND");
+            await expect(
+                getAgentsByTechLeadUsername("missing.lead"),
+            ).rejects.toThrow("OFFICER_NOT_FOUND");
         });
 
         it("lancia INVALID_TECH_LEAD_LABEL se il ruolo non è TECH_LEAD", async () => {
-            officerRepoMock.findById.mockResolvedValue({
+            officerRepoMock.findByUsername.mockResolvedValue({
                 id: 2,
+                username: "not.lead",
                 role: { title: "Officer" },
             });
 
-            await expect(getAgentsByTechLeadId(2)).rejects.toThrow(
-                "INVALID_TECH_LEAD_LABEL",
-            );
+            await expect(
+                getAgentsByTechLeadUsername("not.lead"),
+            ).rejects.toThrow("INVALID_TECH_LEAD_LABEL");
         });
     });
 
@@ -435,18 +461,25 @@ describe("adminController - unit test (solo mock)", () => {
         it("restituisce i report assegnati al tech agent", async () => {
             const officer = {
                 id: 1,
-                reports: [{ id: 1, title: "R1" }, { id: 2, title: "R2" }],
+                username: "tech.agent1",
             };
-            officerRepoMock.findById.mockResolvedValue(officer);
+            officerRepoMock.findByusername.mockResolvedValue(officer);
 
-            (mapReportDAOToResponse as jest.Mock).mockImplementation(r => ({
+            const reportsDao = [
+                { id: 1, title: "R1" },
+                { id: 2, title: "R2" },
+            ];
+            reportRepoMock.findByOfficer.mockResolvedValue(reportsDao);
+
+            (mapReportDAOToResponse as jest.Mock).mockImplementation((r: any) => ({
                 id: r.id,
                 title: r.title,
             }));
 
-            const res = await getTechReports(1);
+            const res = await getTechReports("tech.agent1");
 
-            expect(officerRepoMock.findById).toHaveBeenCalledWith(1);
+            expect(officerRepoMock.findByusername).toHaveBeenCalledWith("tech.agent1");
+            expect(reportRepoMock.findByOfficer).toHaveBeenCalledWith(officer);
             expect(res).toEqual([
                 { id: 1, title: "R1" },
                 { id: 2, title: "R2" },
@@ -454,9 +487,11 @@ describe("adminController - unit test (solo mock)", () => {
         });
 
         it("lancia OFFICER_NOT_FOUND se il tech agent non esiste", async () => {
-            officerRepoMock.findById.mockResolvedValue(null);
+            officerRepoMock.findByusername.mockResolvedValue(null);
 
-            await expect(getTechReports(99999)).rejects.toThrow("OFFICER_NOT_FOUND");
+            await expect(
+                getTechReports("missing.agent"),
+            ).rejects.toThrow("OFFICER_NOT_FOUND");
         });
     });
 
@@ -467,27 +502,34 @@ describe("adminController - unit test (solo mock)", () => {
         it("restituisce tutti i report delle categorie del tech lead con status validi", async () => {
             const officer = {
                 id: 1,
+                username: "tech.lead1",
                 role: {
-                    categories: [{ id: 10 }, { id: 20 }],
+                    id: 99,
                 },
             };
-            officerRepoMock.findById.mockResolvedValue(officer);
+            officerRepoMock.findByUsername.mockResolvedValue(officer);
+
+            // categorie collegate al ruolo del tech lead
+            categoryRepoMock.findByRoleId.mockResolvedValue([{ id: 10 }, { id: 20 }]);
 
             (getReportsByCategoryIdAndStatus as jest.Mock)
                 .mockResolvedValueOnce([{ id: 100 }, { id: 101 }]) // cat 10
                 .mockResolvedValueOnce([{ id: 200 }]);             // cat 20
 
-            const res = await getTechLeadReports(1);
+            const res = await getTechLeadReports("tech.lead1");
 
-            expect(officerRepoMock.findById).toHaveBeenCalledWith(1);
+            expect(officerRepoMock.findByUsername).toHaveBeenCalledWith("tech.lead1");
+            expect(categoryRepoMock.findByRoleId).toHaveBeenCalledWith(99);
             expect(getReportsByCategoryIdAndStatus).toHaveBeenCalledTimes(2);
             expect(res).toEqual([{ id: 100 }, { id: 101 }, { id: 200 }]);
         });
 
         it("lancia OFFICER_NOT_FOUND se il tech lead non esiste", async () => {
-            officerRepoMock.findById.mockResolvedValue(null);
+            officerRepoMock.findByUsername.mockResolvedValue(null);
 
-            await expect(getTechLeadReports(99999)).rejects.toThrow("OFFICER_NOT_FOUND");
+            await expect(
+                getTechLeadReports("missing.lead"),
+            ).rejects.toThrow("OFFICER_NOT_FOUND");
         });
     });
 });

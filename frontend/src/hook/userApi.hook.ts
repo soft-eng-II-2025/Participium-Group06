@@ -34,5 +34,13 @@ export function useUserProfileUpdate() {
     return useMutation({
         mutationFn: (updatedUser: FormData) =>
             userApi.updateUserProfile(updatedUser),
+     });
+ }
+
+export function useGetReportPhoto(url?: string, enabled: boolean = !!url) {
+    return useQuery<Blob>({
+        queryKey: ['reportPhoto', url],
+        queryFn: () => userApi.getReportPhoto(url!),
+        enabled,
     });
 }

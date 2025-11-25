@@ -18,6 +18,7 @@ describe("getAllAcceptedReports - unit test puro", () => {
 
     const mockMappedReports: ReportResponseDTO[] = [
         {
+            id: 1,
             longitude: 12.34,
             latitude: 56.78,
             title: "Report 1",
@@ -33,7 +34,7 @@ describe("getAllAcceptedReports - unit test puro", () => {
                 flag_email: true,
                 reports: [],
             } as UserResponseDTO,
-            categoryId: 101,
+            category: "Road",
             status: "Approved",
             explanation: "",
             officer: {
@@ -47,6 +48,7 @@ describe("getAllAcceptedReports - unit test puro", () => {
             createdAt: new Date("2025-01-01"),
         },
         {
+            id: 2,
             longitude: 23.45,
             latitude: 67.89,
             title: "Report 2",
@@ -62,7 +64,7 @@ describe("getAllAcceptedReports - unit test puro", () => {
                 flag_email: false,
                 reports: [],
             } as UserResponseDTO,
-            categoryId: 102,
+            category: "Pothole",
             status: "Approved",
             explanation: "",
             officer: {

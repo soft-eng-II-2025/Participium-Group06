@@ -50,29 +50,33 @@ export function createMunicipalityOfficerDTO(
 }
 
 export function createReportDTO(
+    id: number | undefined,
     longitude: number,
     latitude: number,
     title: string,
     description: string,
     user: User, 
-    categoryId: number,
-    status: string,
-    explanation: string,
+    category?: CategoryResponseDTO,
+    status?: string,
+    explanation?: string,
     officer?: MunicipalityOfficerResponseDTO,
-    photos?: string[]
+    photos?: string[],
+    createdAt?: Date,
 ): ReportResponseDTO {
     return removeNullAttributes({
+        id,
         longitude,
         latitude,
         title,
         description,
         user: mapUserDAOToDTO(user),
-        categoryId,
+        category: category?.name,
         status,
         explanation,
         officer,
         photos,
-    }) as ReportResponseDTO;
+        createdAt,
+    }) as unknown as ReportResponseDTO;
 }
 
 
@@ -133,18 +137,19 @@ export function mapMunicipalityOfficerDAOToDTO(officerDAO: MunicipalityOfficer):
 }
 
 export function mapReportDAOToDTO(reportDAO: Report): ReportResponseDTO {
-    
     return createReportDTO(
+        reportDAO.id,
         reportDAO.longitude,
         reportDAO.latitude,
         reportDAO.title,
         reportDAO.description,
         reportDAO.user,
-        reportDAO.category?.id,
+        reportDAO.category ? mapCategoryDAOToDTO(reportDAO.category) : undefined,
         reportDAO.status,
         reportDAO.explanation,
         reportDAO.officer ? mapMunicipalityOfficerDAOToDTO(reportDAO.officer) : undefined,
-        reportDAO.photos?.map((p: ReportPhoto) => p.photo)
+        reportDAO.photos?.map((p: ReportPhoto) => p.photo),
+        reportDAO.createdAt
     );
 }
 

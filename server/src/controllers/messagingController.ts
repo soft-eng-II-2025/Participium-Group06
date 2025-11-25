@@ -53,7 +53,6 @@ export async function sendMessage(
     dto: CreateMessageDTO     // contains content + sender only
 ) {
     const { sender, content } = dto;
-    console.log(`sendMessage called with reportId=${reportId}, sender=${sender}, content=${content}`);
     // 1️⃣ Fetch report to get user + officer
     const report = await reportRepository.findById(reportId);
     if (!report) throw new Error("Report not found.");

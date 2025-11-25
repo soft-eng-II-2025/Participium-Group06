@@ -46,7 +46,7 @@ export const UserAccountPage: React.FC = () => {
         setIsModified(true);
         // Salva file per l'upload
         setSelectedFile(file);
-
+        e.target.value = "";
     };
 
 

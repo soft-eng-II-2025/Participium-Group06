@@ -44,7 +44,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 // --- FINE CONFIGURAZIONE MULTER ---*/
-const UPLOAD_DIR = "/uploads";
+const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {

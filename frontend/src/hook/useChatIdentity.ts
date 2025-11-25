@@ -7,7 +7,8 @@ export function useChatIdentity() {
   const { user, role } = useAuth();
 
   const isUser = role === "USER";
-  const isOfficer = role === "OFFICER";
+  const isOfficer = role === "TECH_AGENT_INFRASTRUCTURE" || role === "TECH_AGENT_MOBILITY" || role === "TECH_AGENT_GREEN_AREAS" || 
+                    role === "TECH_AGENT_WASTE_MANAGEMENT" || role === "TECH_AGENT_ENERGY_LIGHTING" || role === "TECH_AGENT_PUBLIC_BUILDINGS";
   const isAdmin = role === "ADMIN";
 
   let senderType: "USER" | "OFFICER" | null = null;

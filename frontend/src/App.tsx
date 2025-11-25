@@ -72,20 +72,6 @@ function App() {
                                         </RequireRole>
                                     </ProtectedRoute>
                                 } />
-                                < Route path="/user/chat-playground" element={
-                                    <ProtectedRoute>
-                                        <RequireRole role="USER">
-                                            <ChatPlaygroundPage />
-                                        </RequireRole>
-                                    </ProtectedRoute>
-                                } />
-                                {/*< Route path="/officer/chat-playground" element={
-                                    <ProtectedRoute>
-                                        <RequireRole role="OFFICER">
-                                            <ChatPlaygroundPage />
-                                        </RequireRole>
-                                    </ProtectedRoute>
-                                } /> */}
                                 <Route path="/admin/register" element={
                                     <ProtectedRoute>
                                         <RequireRole role="ADMIN">

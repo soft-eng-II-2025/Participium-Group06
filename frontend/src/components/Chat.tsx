@@ -1,4 +1,5 @@
 // frontend/src/components/Chat.tsx
+
 import React, { FormEvent, useEffect, useRef, useState } from "react";
 import {
   Box,
@@ -9,38 +10,103 @@ import {
   Paper,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
+
 import { MessageResponseDTO } from "../DTOs/MessageResponseDTO";
 import { useMessagesByReport, useSendMessage } from "../hook/messagesApi.hook";
 import { useChatIdentity } from "../hook/useChatIdentity";
 import { CreateMessageDTO } from "../api/messageApi";
+import { useAuth } from "../contexts/AuthContext";
+import {
+  initSocketClient,
+  subscribeToNewMessages,
+  unsubscribeFromNewMessages,
+} from "../services/socketClient";
 
 interface ChatProps {
-  reportId: number;          // arriva dal componente che apre la chat
+  reportId: number;
+  socketBaseUrl?: string;
 }
 
-const Chat: React.FC<ChatProps> = ({ reportId }) => {
-  const { senderType, displayName, isUser, isOfficer } = useChatIdentity();
+const Chat: React.FC<ChatProps> = ({
+  reportId,
+  socketBaseUrl = "http://localhost:3000",
+}) => {
+  const { senderType, isUser, isOfficer } = useChatIdentity();
+  const { loading: authLoading } = useAuth();
 
-  const { data: messages = [], isLoading } = useMessagesByReport(reportId, !!reportId);
+  const { data: rawMessages = [], isLoading: messagesLoading } =
+    useMessagesByReport(reportId, !!reportId);
   const { mutateAsync: sendMessage, isPending: sending } = useSendMessage();
 
+  const [socketReceivedMessages, setSocketReceivedMessages] = useState<
+    MessageResponseDTO[]
+  >([]);
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
 
-  const sortedMessages = React.useMemo(
-    () =>
-      [...messages].sort(
-        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      ),
-    [messages]
-  );
+  // Unione messaggi da API + socket
+  const allMessages = React.useMemo(() => {
+    const uniqueSocketMessages = socketReceivedMessages.filter(
+      (sm) =>
+        !rawMessages.some(
+          (rm) =>
+            rm.content === sm.content &&
+            rm.sender === sm.sender &&
+            new Date(rm.created_at).getTime() ===
+              new Date(sm.created_at).getTime()
+        )
+    );
 
+    const combined = [...rawMessages, ...uniqueSocketMessages];
+
+    return combined.sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() -
+        new Date(b.created_at).getTime()
+    );
+  }, [rawMessages, socketReceivedMessages]);
+
+  // Username dell'utente, usato SOLO quando sei officer
+  const otherSideUsername = React.useMemo(() => {
+    if (!allMessages.length) return undefined;
+
+    if (isOfficer) {
+      /*const userMsg = allMessages.find(
+        (m) => m.sender === "USER" && m.username
+      );*/
+      return allMessages[0].username;
+    }
+
+    return undefined;
+  }, [allMessages, isOfficer]);
+
+  // Scroll automatico in fondo
   useEffect(() => {
     if (endRef.current) {
       endRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [sortedMessages]);
+  }, [allMessages]);
+
+  // Socket.IO
+  useEffect(() => {
+    if (!senderType) return;
+
+    initSocketClient({ baseUrl: socketBaseUrl });
+
+    const handleNewMessage = (m: MessageResponseDTO) => {
+      // Se non hai ancora reportId nel DTO lato backend, togli pure questo if
+      if ((m as any).reportId !== undefined && (m as any).reportId !== reportId) {
+        return;
+      }
+      setSocketReceivedMessages((prev) => [...prev, m]);
+    };
+
+    subscribeToNewMessages(handleNewMessage);
+    return () => {
+      unsubscribeFromNewMessages(handleNewMessage);
+    };
+  }, [senderType, socketBaseUrl, reportId]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -59,30 +125,92 @@ const Chat: React.FC<ChatProps> = ({ reportId }) => {
       setInput("");
     } catch (err: any) {
       console.error(err);
-      setError(err.response?.data?.error || err.message || "Errore invio messaggio");
+      setError(
+        err.response?.data?.error ||
+          err.message ||
+          "Errore invio messaggio"
+      );
     }
   };
 
   const formatTime = (value: Date | string) => {
     const d = new Date(value);
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   const isOwnMessage = (m: MessageResponseDTO) => {
-    if (!senderType || !displayName) return false;
-    return m.sender === senderType && m.username === displayName;
+    return m.sender === senderType;
   };
 
-  if (!senderType) {
+  // Stato auth
+  if (authLoading) {
     return (
-      <Paper elevation={3} sx={{ p: 2 }}>
-        <Typography variant="body2">Caricamento identità utente...</Typography>
+      <Paper
+        elevation={3}
+        sx={{
+          p: 2,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "85vh",
+        }}
+      >
+        <CircularProgress />
+        <Typography variant="body2" sx={{ ml: 2 }}>
+          Caricamento autenticazione...
+        </Typography>
       </Paper>
     );
   }
 
+  if (!senderType) {
+    return (
+      <Paper
+        elevation={3}
+        sx={{
+          p: 2,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "85vh",
+        }}
+      >
+        <Typography variant="body2" color="error">
+          Errore: Identità utente non definita o non autenticato.
+        </Typography>
+        <Typography variant="caption" sx={{ mt: 1 }}>
+          Assicurati di aver effettuato il login con un ruolo USER o OFFICER
+          valido.
+        </Typography>
+      </Paper>
+    );
+  }
+
+  // Header: SOLO sottotitolo, niente "report #"
+  let headerSubtitle: string;
+
+  if (isOfficer) {
+    if (otherSideUsername) {
+      headerSubtitle = `Stai chattando con l'utente ${otherSideUsername}`;
+    } else {
+      headerSubtitle = "Stai chattando con l'utente del report";
+    }
+  } else if (isUser) {
+    headerSubtitle = "Chat con l’operatore assegnato al report";
+  } else {
+    headerSubtitle = "";
+  }
+
   return (
-    <Paper elevation={3} sx={{ display: "flex", flexDirection: "column", height: 400 }}>
+    <Paper
+      elevation={3}
+      sx={{ display: "flex", flexDirection: "column", height: "85vh" }}
+    >
+      {/* Header */}
       <Box
         sx={{
           px: 2,
@@ -91,14 +219,14 @@ const Chat: React.FC<ChatProps> = ({ reportId }) => {
           borderColor: "divider",
         }}
       >
-        <Typography variant="subtitle1" fontWeight={700}>
-          Chat report #{reportId}
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          Stai chattando come {isUser ? "utente" : isOfficer ? "operatore" : "sconosciuto"}
-        </Typography>
+        {headerSubtitle && (
+          <Typography variant="caption" color="text.secondary">
+            {headerSubtitle}
+          </Typography>
+        )}
       </Box>
 
+      {/* Area messaggi */}
       <Box
         sx={{
           flex: 1,
@@ -108,7 +236,7 @@ const Chat: React.FC<ChatProps> = ({ reportId }) => {
           bgcolor: "grey.50",
         }}
       >
-        {isLoading && (
+        {messagesLoading && (
           <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
             <CircularProgress size={24} />
           </Box>
@@ -120,13 +248,13 @@ const Chat: React.FC<ChatProps> = ({ reportId }) => {
           </Typography>
         )}
 
-        {!isLoading && !sortedMessages.length && !error && (
+        {!messagesLoading && !allMessages.length && !error && (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             Nessun messaggio ancora.
           </Typography>
         )}
 
-        {sortedMessages.map((m, idx) => {
+        {allMessages.map((m, idx) => {
           const own = isOwnMessage(m);
           return (
             <Box
@@ -156,10 +284,6 @@ const Chat: React.FC<ChatProps> = ({ reportId }) => {
                     opacity: 0.8,
                   }}
                 >
-                  <span>
-                    {m.username ||
-                      (m.sender === "USER" ? "Utente" : m.role_label ?? "Operatore")}
-                  </span>
                   <span>{formatTime(m.created_at)}</span>
                 </Box>
                 <Typography variant="body2">{m.content}</Typography>
@@ -171,6 +295,7 @@ const Chat: React.FC<ChatProps> = ({ reportId }) => {
         <div ref={endRef} />
       </Box>
 
+      {/* Input */}
       <Box
         component="form"
         onSubmit={handleSubmit}

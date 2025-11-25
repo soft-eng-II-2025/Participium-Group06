@@ -107,6 +107,7 @@ export function createUserDTO(
 }
 
 export function createMessageResponseDTO(
+    reportId: number,
     role_label?: string,
     username?: string,
     content?: string,
@@ -114,6 +115,7 @@ export function createMessageResponseDTO(
     sender?: 'USER' | 'OFFICER'
 ): MessageResponseDTO {
     return removeNullAttributes({
+        reportId,
         role_label,
         username,
         content,
@@ -201,6 +203,7 @@ export function mapMessageDAOToDTO(messageDAO: Message): MessageResponseDTO {
     let username = messageDAO.user ? messageDAO.user.username : messageDAO.municipality_officer ? messageDAO.municipality_officer.username : undefined;
     let role_label = messageDAO.municipality_officer ? messageDAO.municipality_officer.role?.label : undefined;
     return createMessageResponseDTO(
+        messageDAO.report_id,
         role_label,
         username,
         messageDAO.content,

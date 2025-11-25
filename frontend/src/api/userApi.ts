@@ -36,8 +36,8 @@ export class UserApi {
         return response.data;
     }
 
-    async updateUserProfile(userId: number, payload: UpdateUserRequestDTO): Promise<UserResponseDTO> {
-        const response = await api.put<UserResponseDTO>(`${BASE_URL}/${userId}`, payload);
+    async updateUserProfile(payload: UpdateUserRequestDTO): Promise<UserResponseDTO> {
+        const response = await api.put<UserResponseDTO>(`${BASE_URL}/me`, payload);
         return response.data;
     }
 }

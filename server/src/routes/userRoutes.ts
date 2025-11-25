@@ -119,26 +119,25 @@ router.get('/reports/categories', requireAuth, async (req, res: Response) => {
 
 
 
-// Update profilo utente
-router.put("/users/:id", requireUser, validateDto(UpdateUserRequestDTO), async (req: Request, res: Response) => {
+// Update profilo utente loggato
+router.put(
+    "/users/me",
+    requireUser,
+    validateDto(UpdateUserRequestDTO),
+    async (req: Request, res: Response) => {
         try {
-            const userId = Number(req.params.id);
-            if (Number.isNaN(userId)) {
-                return res.status(400).json({ message: "Invalid user id" });
-            }
-
             // Utente autenticato messo da requireUser (es. req.user = { id, username, ... })
             const authUser = (req as any).user;
 
-            // Impedisce di aggiornare profili altrui
-            if (!authUser || authUser.id !== userId) {
-                return res
-                    .status(403)
-                    .json({ message: "You are not allowed to update this user profile." });
+            // opzionale: loggare l'utente autenticato
+            console.log("Authenticated user in /users/me:", authUser);
+
+            if (!authUser || !authUser.id) {
+                return res.status(401).json({ message: "Unauthorized" });
             }
 
             const updatedUser = await userController.updateUserProfile(
-                userId,
+                authUser.id,
                 req.body as UpdateUserRequestDTO
             );
 

@@ -14,16 +14,22 @@ import { get } from "http";
 import { updateReportOfficer,getReportsByCategoryIdAndStatus } from "./reportController";
 import { ReportResponseDTO } from "../models/DTOs/ReportResponseDTO";
 import { StatusType } from "../models/StatusType";
+import { CategoryRepository } from "../repositories/CategoryRepository";
+import { ReportRepository } from "../repositories/ReportRepository";
 
 /*const municipalityOfficerRepository = new MunicipalityOfficerRepository(AppDataSource);
 const roleRepository = new RoleRepository(AppDataSource);*/
 
 let municipalityOfficerRepository: MunicipalityOfficerRepository;
 let roleRepository: RoleRepository;
+let categoryRepository: CategoryRepository;
+let reportRepository: ReportRepository;
 
 export function initializeAdminRepositories(dataSource: DataSource) {
     municipalityOfficerRepository = new MunicipalityOfficerRepository(dataSource);
     roleRepository = new RoleRepository(dataSource);
+    categoryRepository = new CategoryRepository(dataSource);
+    reportRepository = new ReportRepository(dataSource);
 }
 
 function appErr(code: string, status = 400) {
@@ -125,44 +131,45 @@ export async function getMunicipalityOfficerDAOByUsername(username: string): Pro
     return officer;
 }
 
-export async function assignTechAgent(reportId:number, MunicipalityOfficerId:number):Promise<ReportResponseDTO> {
-    const Officer = await municipalityOfficerRepository.findById(MunicipalityOfficerId);
-    if (!Officer) throw appErr("OFFICER_NOT_FOUND", 404);
-    return updateReportOfficer(reportId, Officer);
+export async function assignTechAgent(reportId:number, officerUsername:string):Promise<ReportResponseDTO> {
+    const officer = await municipalityOfficerRepository.findByUsername(officerUsername);
+    if (!officer) throw appErr("OFFICER_NOT_FOUND", 404);
+    return updateReportOfficer(reportId, officer);
 }
 
-export async function getAgentsByTechLeadId(OfficerId :number):Promise<MunicipalityOfficerResponseDTO[]> {
-    const OfficerTitle = (await municipalityOfficerRepository.findById(OfficerId))?.role?.title;
-    if (!OfficerTitle) {
+export async function getAgentsByTechLeadUsername(techLeadUsername :string):Promise<MunicipalityOfficerResponseDTO[]> {
+    const officerTitle = (await municipalityOfficerRepository.findByUsername(techLeadUsername))?.role?.title;
+    if (!officerTitle) {
         throw appErr("OFFICER_NOT_FOUND", 404);
     }
-    if (OfficerTitle.slice(0,9) != "TECH_LEAD") {
+    if (officerTitle.slice(0,9) != "TECH_LEAD") {
         throw appErr("INVALID_TECH_LEAD_LABEL", 400);
     }
-    const tech_agent_title= "TECH_AGENT"+OfficerTitle.slice(9,OfficerTitle.length);
+    const tech_agent_title= "TECH_AGENT"+officerTitle.slice(9,officerTitle.length);
     const tech_agents = await municipalityOfficerRepository.findByRoleTitle(tech_agent_title);
     return tech_agents.map(mapMunicipalityOfficerDAOToResponse);
 }
 
-export async function getTechReports(OfficerId :number):Promise<ReportResponseDTO[]> {
-    const officer = await municipalityOfficerRepository.findById(OfficerId);
+export async function getTechReports(officerUsername :string):Promise<ReportResponseDTO[]> {
+    const officer = await municipalityOfficerRepository.findByusername(officerUsername);
     if (!officer) {
         throw appErr("OFFICER_NOT_FOUND", 404);
     }
-    const reports = officer.reports || [];
+    const reports = await reportRepository.findByOfficer(officer);
+
     return reports.map(mapReportDAOToResponse);
 }
 
-export async function getTechLeadReports(OfficerId :number):Promise<ReportResponseDTO[]> {
-    const officer = await municipalityOfficerRepository.findById(OfficerId);
+export async function getTechLeadReports(username :string):Promise<ReportResponseDTO[]> {
+    const officer = await municipalityOfficerRepository.findByUsername(username);
     if (!officer) {
         throw appErr("OFFICER_NOT_FOUND", 404);
     }
-    const categories = officer?.role?.categories || [];
     let reports: ReportResponseDTO[] = [];
+    const categories = await categoryRepository.findByRoleId(officer.role!.id);
     for (const category of categories) {
-        const Statuss = [StatusType.Assigned,StatusType.InProgress,StatusType.Resolved,StatusType.Rejected,StatusType.Suspended];
-        const categoryReports = await getReportsByCategoryIdAndStatus(category.id, Statuss);
+        const status = [StatusType.Assigned,StatusType.InProgress,StatusType.Resolved,StatusType.Rejected,StatusType.Suspended];
+        const categoryReports = await getReportsByCategoryIdAndStatus(category.id, status);
         reports = reports.concat(categoryReports);
     }
     return reports;

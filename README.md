@@ -77,8 +77,6 @@ The frontend will run on http://localhost:8080
 
 
 
-
-
 ## Backend API
 
 ### **Auth Routes**
@@ -115,6 +113,11 @@ The frontend will run on http://localhost:8080
 - GET `/api/users/reports/categories`
     - Description: Returns the full list of available report categories.
     - Success: Returns the full list of available report categories.
+    - Error: Returns an error response.
+
+- PUT `/api/users/me`
+    - Description: Updates the profile of the currently authenticated user using the provided data (e.g. Telegram ID and other editable fields).
+    - Success: Returns the updated user object.
     - Error: Returns an error response.
 
 ### **User Routes - Admin**
@@ -188,7 +191,7 @@ function getSession();                              // GET /api/session
 function addReport(report: ReportResponseDTO);                   // POST /api/users/reports
 function uploadReportImages(images: File[]): Promise<string[]>  // POST /api/users/reports/images/upload
 function getAllCategories(): Promise<CategoryResponseDTO[]>    // GET /api/users/reports/categories
-function updateUserProfile(userId: number, payload: UpdateUserRequestDTO): Promise<UserResponseDTO>  // PUT /api/users/:id
+function updateUserProfile(payload: UpdateUserRequestDTO): Promise<UserResponseDTO> // PUT /api/users/:id
 ```
 
 **Admin API**

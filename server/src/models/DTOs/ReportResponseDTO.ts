@@ -2,8 +2,11 @@ import { MunicipalityOfficer } from "../MunicipalityOfficer";
 import { StatusType } from "../StatusType";
 import { MunicipalityOfficerResponseDTO } from "./MunicipalityOfficerResponseDTO";
 import { UserResponseDTO } from "./UserResponseDTO";
+import { CategoryResponseDTO } from "./CategoryResponseDTO";
 
 export class ReportResponseDTO {
+    id: number | undefined;
+    
     longitude!: number;
 
     latitude!: number;
@@ -14,7 +17,7 @@ export class ReportResponseDTO {
 
     user!: UserResponseDTO;
 
-    categoryId!: number;
+    category!: string;
 
     status!: string;
 

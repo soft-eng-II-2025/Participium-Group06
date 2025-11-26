@@ -13,7 +13,9 @@
     "test:e2e": "jest src/tests/e2e --runInBand",
     "test:int": "jest src/tests/integration src/tests/e2e --runInBand",
     "test_separati": "npm run test:unit && npm run test:int",
-    "test": "jest src/tests/unit src/tests/integration src/tests/e2e --runInBand"
+    "test": "jest src/tests/unit src/tests/integration src/tests/e2e --runInBand",
+    "test:coverage": "jest src/tests/unit src/tests/integration src/tests/e2e --runInBand --coverage",
+    "test:coverage:unit": "jest src/tests/unit --coverage"
   },
   "keywords": [],
   "author": "",

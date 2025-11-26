@@ -48,7 +48,7 @@ jobs:
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevance of analysis
 
-      # 2. Avvia l'analisi (Versione aggiornata alla v5.0.0 per risolvere l'errore Java)
+      # 2. Avvia l'analisi (Versione aggiornata alla v5.0.0)
       - name: Analyze with SonarQube
         uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
@@ -56,7 +56,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
-          args:
+          args: >
             # Unique key of your project.
             -Dsonar.projectKey=soft-eng-II-2025_Participium-Group06
             

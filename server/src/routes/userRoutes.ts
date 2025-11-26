@@ -9,34 +9,56 @@ import multer from 'multer';
 import path from 'path'; // Importa path
 import {Request} from 'express';
 import express from 'express';
-import {requireAuth, requireUser} from '../middlewares/authMiddleware';
-import {UpdateUserRequestDTO} from "../models/DTOs/UpdateUserRequestDTO";
+import { requireAuth, requireUser } from '../middlewares/authMiddleware';
+import { UpdateUserRequestDTO } from "../models/DTOs/UpdateUserRequestDTO";
+import fs from 'fs';
+import { StatusType } from '../models/StatusType';
+import { MunicipalityOfficerResponseDTO } from '../models/DTOs/MunicipalityOfficerResponseDTO';
 
 export const router = Router();
 
 
 // --- CONFIGURAZIONE MULTER PER UPLOAD IN LOCALE ---
 // Crea la cartella 'uploads' se non esiste
-import fs from 'fs';
-import { StatusType } from '../models/StatusType';
-import { MunicipalityOfficerResponseDTO } from '../models/DTOs/MunicipalityOfficerResponseDTO';
-const uploadDir = path.join(__dirname, '../uploads'); // Cartella dove salvare le immagini
+
+/*const uploadDir = path.join(process.cwd(), 'uploads'); // Cartella dove salvare le immagini
+console.log('Multer Destination Path (inside container):', uploadDir);
+
 if (!fs.existsSync(uploadDir)) {
+    console.log('Multer Destination Path does NOT exist, creating it:', uploadDir)
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 // Configurazione di Multer per salvare i file su disco
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
+        console.log('Multer Destination CB:', uploadDir);
         cb(null, uploadDir); // Specifica la directory di destinazione
     },
     filename: (req, file, cb) => {
+        const filename = Date.now() + '-' + file.originalname;
+        console.log('Multer Filename CB:', filename);
         // Genera un nome di file unico usando il timestamp e il nome originale
-        cb(null, Date.now() + '-' + file.originalname);
+        cb(null, filename);
     }
 });
 const upload = multer({ storage: storage });
-// --- FINE CONFIGURAZIONE MULTER ---
+// --- FINE CONFIGURAZIONE MULTER ---*/
+const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, UPLOAD_DIR);
+    },
+    filename: function (req, file, cb) {
+        const uniqueName = Date.now() + "-" + file.originalname.replace(/\s+/g, "_");
+        cb(null, uniqueName);
+    }
+});
+
+export const upload = multer({
+    storage,
+});
 
 // Adapter: accetta anche il vecchio formato { user: { userId }, category: { id } } (rimane invariato)
 async function adaptCreateReportBody(body: any): Promise<CreateReportRequestDTO> {
@@ -108,7 +130,7 @@ router.post('/reports/images/upload', requireUser, upload.array('images', 3), as
 
 // Rotta per servire i file statici (immagini caricate)
 // Questo è FONDAMENTALE per rendere le immagini accessibili via URL
-router.use('/uploads', express.static(uploadDir));
+router.use('/uploads', express.static(UPLOAD_DIR));
 
 
 // Rotta per le categorie (invariata)

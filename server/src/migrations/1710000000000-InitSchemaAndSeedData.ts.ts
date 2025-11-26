@@ -225,35 +225,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
 
     // 10. Report Torino (25) – status vari ma mai "Rejected", explanation = ''
     await queryRunner.query(`INSERT INTO "report"
-<<<<<<< HEAD
   ("id","longitude","latitude","title","description","status","explanation","officerId","userId","categoryId") VALUES
-  (1,7.6869,45.0703,'Blocked-sewer.jpg','Scolo fognario ostruito in zona Centro.','In Progress','',10,1,3),
-  (2,7.6780,45.0710,'Broken-bench.jpg','Panchina rotta in piazza Statuto.','Pending Approval','',8,2,8),
-  (3,7.6820,45.0740,'broken-streetlamp.jpg','Lampione stradale non funzionante in via Garibaldi.','Assigned','',12,3,4),
-  (4,7.6905,45.0665,'broken-street-light-1.jpg','Illuminazione pubblica difettosa in San Salvario.','In Progress','',14,4,4),
-  (5,7.7000,45.0675,'Broken-traffic-light.jpg','Semaforo guasto allo incrocio Corso Vittorio.','Pending Approval','',6,5,6),
-  (6,7.7020,45.0730,'Broken-water-hydrant.jpg','Idrante rotto in zona Vanchiglia.','Assigned','',4,6,1),
-  (7,7.6815,45.0650,'Cracked-pavement.jpg','Pavimentazione sconnessa sul marciapiede in Crocetta.','In Progress','',4,7,7),
-  (8,7.6880,45.0750,'Crosswalk-sign-damaged.jpg','Segnale strisce pedonali danneggiato.','Pending Approval','',6,8,6),
-  (9,7.6750,45.0680,'Damaged-playground-slide.jpg','Scivolo del parco giochi danneggiato in Mirafiori Nord.','Assigned','',8,9,8),
-  (10,7.6920,45.0690,'Damaged-road-barrier.jpg','Barriera stradale danneggiata in Borgo Po.','In Progress','',4,10,7),
-  (11,7.6840,45.0725,'Damaged-road-sign.jpg','Segnale stradale illeggibile in Dora Riparia.','Assigned','',6,1,6),
-  (12,7.6800,45.0770,'Debris-on-the-road.jpg','Detriti sulla carreggiata in Cit Turin.','Pending Approval','',4,2,7),
-  (13,7.6990,45.0720,'Fallen-road-sign.jpg','Segnale stradale caduto in Aurora.','In Progress','',6,3,6),
-  (14,7.6765,45.0735,'Fallen-tree-branch.jpg','Ramo di un albero caduto in Parco del Valentino.','Assigned','',8,4,8),
-  (15,7.6875,45.0670,'Flooded-sewer.jpg','Allagamento dovuto a fogna intasata in Porta Nuova.','In Progress','',10,5,3),
-  (16,7.6935,45.0745,'Graffiti-on-public-wall.jpg','Graffiti su muro pubblico in Vanchiglietta.','Pending Approval','',14,6,9),
-  (17,7.7040,45.0695,'Low-water-pressure.jpg','Bassa pressione della acqua in zona Madonna del Pilone.','Assigned','',4,7,1),
-  (18,7.6980,45.0660,'overflowing-trash-bin.jpg','Cestino stradale stracolmo in Santa Rita.','In Progress','',10,8,5),
-  (19,7.6830,45.0698,'Playground-swing-broken.jpg','Altalena rotta nel parco giochi in Pozzo Strada.','Assigned','',9,9,8),
-  (20,7.6890,45.0715,'Poor-road-surface.jpg','Condizioni stradali precarie in Barriera di Milano.','In Progress','',4,10,7),
-  (21,7.6910,45.0760,'pothole-on-the-road.jpg','Grossa buca sulla strada in Rebaudengo.','Pending Approval','',4,1,7),
-  (22,7.6775,45.0708,'Street-flooding.jpg','Strada allagata dopo forte pioggia in Parella.','In Progress','',10,2,3),
-  (23,7.6955,45.0685,'Streetlight-outage.jpg','Diversi lampioni spenti in Crocetta.','Assigned','',12,3,4),
-  (24,7.7060,45.0718,'Trash-scattered.jpg','Rifiuti sparsi in area pubblica in Cavoretto.','In Progress','',10,4,5),
-  (25,7.6855,45.0738,'Water-leakage.jpg','Perdita di acqua sulla sede stradale in Lingotto.','Resolved','',4,5,1)
-=======
-      ("id","longitude","latitude","title","description","status","explanation","officerId","userId","categoryId") VALUES
   (1,7.6869,45.0703,'Ostruzione Fognaria Centro','Scolo fognario ostruito in zona Centro.','In Progress','',9,1,3),
   (2,7.6780,45.0710,'Panchina Danneggiata Piazza Statuto','Panchina rotta in piazza Statuto.','Pending Approval','',7,2,8),
   (3,7.6820,45.0740,'Lampione Non Funzionante Via Garibaldi','Lampione stradale non funzionante in via Garibaldi.','Assigned','',null,3,4),
@@ -280,7 +252,6 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
   (24,7.7060,45.0718,'Rifiuti Spazi in Area Pubblica Cavoretto','Rifiuti sparsi in area pubblica in Cavoretto.','In Progress','',9,4,5),
   (25,7.6855,45.0738,'Perdita d''Acqua Sede Stradale Lingotto','Perdita di acqua sulla sede stradale in Lingotto.','Resolved','',3,5,1)
   
->>>>>>> dev
 `);
 
     // 11. report_photo (timestamp fisso 1762946249248)

@@ -13,6 +13,7 @@ import AssignmentIcon from "@mui/icons-material/Assignment"; // <-- NEW ICON
 import Avatar from "@mui/material/Avatar";
 import Stack from "@mui/material/Stack";
 import MenuIcon from "@mui/icons-material/Menu";
+import NotificationsMenu from "../components/NotificationsMenu";
 import { Drawer, useMediaQuery, useTheme } from "@mui/material";
 
 export default function Header() {
@@ -133,6 +134,7 @@ export default function Header() {
                     {/* DESKTOP – LOGGED IN */}
                     {!isMobile && isAuthenticated && (
                         <Stack direction="row" spacing={2} alignItems="center">
+                            {role=="USER" && <NotificationsMenu />}
                             <Avatar
                                 sx={{
                                     width: 36,

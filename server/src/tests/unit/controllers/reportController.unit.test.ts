@@ -40,7 +40,7 @@ describe("getAllAcceptedReports - unit test puro", () => {
                 flag_email: true,
                 reports: [],
             } as UserResponseDTO,
-            category: "Category 101",
+            category: "Road",
             status: "Approved",
             explanation: "",
             officer: {
@@ -70,7 +70,7 @@ describe("getAllAcceptedReports - unit test puro", () => {
                 flag_email: false,
                 reports: [],
             } as UserResponseDTO,
-            category: "Category 102",
+            category: "Pothole",
             status: "Approved",
             explanation: "",
             officer: {

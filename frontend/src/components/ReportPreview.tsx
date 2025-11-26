@@ -109,8 +109,8 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                         </Button>
                     )}
                 </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h5" gutterBottom fontWeight={400}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="h6" gutterBottom fontWeight={500}>
                         {report.title}
                     </Typography>
                     <Chip

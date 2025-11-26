@@ -1,20 +1,24 @@
-// src/pages/AdminRegisterPage.tsx
 import React, { useEffect, useState } from "react";
-import { Box, Grid } from "@mui/material";
+import { Box, Grid, Button, useTheme, useMediaQuery } from "@mui/material";
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ReportsList from "../components/ReportsList";
 import ReportPreview from "../components/ReportPreview";
 import { StatusType } from "../DTOs/StatusType";
 import { useGetTechReports } from "../hook/techApi.hook";
 import { useUpdateReportStatus } from "../hook/reportApi.hook";
 import ConfirmDialog from "../components/ConfirmDialog";
-import { ReportResponseDTO } from "../DTOs/ReportResponseDTO";
 
 const TechAgentHomePage: React.FC = () => {
     const { data: reports } = useGetTechReports();
 
-    const [selectedIndex, setSelectedIndex] = useState<number | null>(reports?.length ? 0 : null);
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+    const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const [selectedStatus, setSelectedStatus] = useState<StatusType | null>(null);
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const [showPreview, setShowPreview] = useState(false);
+    
 
     const selectedReport = selectedIndex !== null ? reports?.[selectedIndex] : null;
     const updateStatusMutation = useUpdateReportStatus();
@@ -37,9 +41,13 @@ const TechAgentHomePage: React.FC = () => {
     }
 
     function assignStatusToReport(action: 'approve' | 'reject', payload?: { newStatus?: string }) {
-
         setConfirmOpen(true);
         setSelectedStatus(payload?.newStatus as StatusType ?? "");
+    }
+
+    function handleSelect(index: number | null) {
+        setSelectedIndex(index);
+        if (isMobile) setShowPreview(true);
     }
     const statuses = [StatusType.Assigned, StatusType.InProgress, StatusType.Resolved, StatusType.Suspended, "All"];
     return (
@@ -52,15 +60,29 @@ const TechAgentHomePage: React.FC = () => {
                     height: "fullvh",
                 }}>
                 {!isChatOpen ? (
-                    <Grid container spacing={2}>
-
-                        <Grid item xs={12} md={4}>
-                            <ReportsList reports={reports ?? []} selectedIndex={selectedIndex} onSelect={setSelectedIndex} statuses={statuses} />
+                    isMobile ? (
+                        showPreview ? (
+                            <Grid item xs={12}>
+                                <Box sx={{ mb: 1 }}>
+                                    <Button variant="outlined" className="partecipation-button" startIcon={<ArrowBackIcon />} onClick={() => setShowPreview(false)}>Back to list</Button>
+                                </Box>
+                                <ReportPreview report={selectedReport} showUpdateStatus={true} onAction={assignStatusToReport} showChat={true} openChat={toggleChatOpen} />
+                            </Grid>
+                        ) : (
+                            <Grid item xs={12}>
+                                <ReportsList reports={reports ?? []} selectedIndex={selectedIndex} onSelect={handleSelect} statuses={statuses} />
+                            </Grid>
+                        )
+                    ) : (
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} md={4}>
+                                <ReportsList reports={reports ?? []} selectedIndex={selectedIndex} onSelect={handleSelect} statuses={statuses} />
+                            </Grid>
+                            <Grid item xs={12} md={8}>
+                                <ReportPreview report={selectedReport} showUpdateStatus={true} onAction={assignStatusToReport} showChat={true} openChat={toggleChatOpen} />
+                            </Grid>
                         </Grid>
-                        <Grid item xs={12} md={8}>
-                            <ReportPreview report={selectedReport} showUpdateStatus={true} onAction={assignStatusToReport} showChat={true} openChat={toggleChatOpen} />
-                        </Grid>
-                    </Grid>
+                    )
                 ) : (
                     <Grid container spacing={2}>
 

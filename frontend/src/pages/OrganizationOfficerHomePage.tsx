@@ -1,6 +1,7 @@
 // src/pages/AdminRegisterPage.tsx
 import React, { useEffect, useState } from "react";
-import { Container, Box, Grid, Button, Typography } from "@mui/material";
+import { Container, Box, Grid, Button, useMediaQuery, useTheme, Typography } from "@mui/material";
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ConfirmDialog from "../components/ConfirmDialog";
 import ReportsList from "../components/ReportsList";
 import ReportPreview from "../components/ReportPreview";
@@ -10,11 +11,20 @@ import { useUpdateReportStatus } from "../hook/reportApi.hook";
 import { ReportResponseDTO } from "../DTOs/ReportResponseDTO";
 
 const OrganizationOfficerHomePage: React.FC = () => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
     const { data: reports } = useGetAllReports();
 
-    const [selectedIndex, setSelectedIndex] = useState<number | null>(reports?.length ? 0 : null);
-    
+    const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+    const [showPreview, setShowPreview] = useState(false);
+
+    useEffect(() => {
+        if ((selectedIndex === null || selectedIndex === undefined) && reports && reports.length > 0) {
+            setSelectedIndex(null);
+        }
+    }, [reports, selectedIndex]);
+
     const selectedReport = selectedIndex !== null ? reports?.[selectedIndex] : null;
     const updateStatusMutation = useUpdateReportStatus();
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -42,10 +52,18 @@ const OrganizationOfficerHomePage: React.FC = () => {
     }
 
     function handleActionFromChild(action: 'approve' | 'reject', payload?: { reason?: string; newStatus?: string; }) {
-
         setPendingPayload(payload);
         setPendingAction(action);
         setConfirmOpen(true);
+    }
+
+    // when a report is selected from the list
+    function handleSelect(index: number | null) {
+        setSelectedIndex(index);
+        if (isMobile) {
+            // switch to preview view on small screens
+            setShowPreview(true);
+        }
     }
 
     const statuses = [StatusType.PendingApproval, StatusType.Assigned, StatusType.InProgress, StatusType.Resolved, StatusType.Rejected, StatusType.Suspended, "All"];
@@ -54,12 +72,29 @@ const OrganizationOfficerHomePage: React.FC = () => {
         <>
             <Box sx={{ pt: 4, pb: 4, px: 2, height: "100vh", }}>
                 <Grid container spacing={2}>
-                    <Grid item xs={12} md={4}>
-                        <ReportsList reports={reports ?? []} selectedIndex={selectedIndex} onSelect={setSelectedIndex} statuses={statuses} />
-                    </Grid>
-                    <Grid item xs={12} md={8}>
-                        <ReportPreview report={selectedReport} showApprovalActions={true} onAction={handleActionFromChild} />
-                    </Grid>
+                    {isMobile ? (
+                        showPreview ? (
+                            <Grid item xs={12}>
+                                <Box sx={{ mb: 1 }}>
+                                    <Button variant="outlined" className="partecipation-button" startIcon={<ArrowBackIcon />} onClick={() => setShowPreview(false)}>Back to list</Button>
+                                </Box>
+                                <ReportPreview report={selectedReport} showApprovalActions={true} onAction={handleActionFromChild} />
+                            </Grid>
+                        ) : (
+                            <Grid item xs={12}>
+                                <ReportsList reports={reports ?? []} selectedIndex={selectedIndex} onSelect={handleSelect} statuses={statuses} />
+                            </Grid>
+                        )
+                    ) : (
+                        <>
+                            <Grid item xs={12} md={4}>
+                                <ReportsList reports={reports ?? []} selectedIndex={selectedIndex} onSelect={handleSelect} statuses={statuses} />
+                            </Grid>
+                            <Grid item xs={12} md={8}>
+                                <ReportPreview report={selectedReport} showApprovalActions={true} onAction={handleActionFromChild} />
+                            </Grid>
+                        </>
+                    )}
                 </Grid>
             </Box>
 

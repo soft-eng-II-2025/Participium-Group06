@@ -24,14 +24,6 @@
 # Feel free to take a look at our documentation (https://docs.sonarqube.org/latest/analysis/github-integration/)
 # or reach out to our community forum if you need some help (https://community.sonarsource.com/c/sq/10)
 
-Certamente. Ecco il file completamente sistemato.
-
-Ho sostituito la vecchia versione che causava l'errore Java con la versione v5.0.0 (l'ultima stabile e compatibile).
-
-Copia questo codice e sovrascrivi interamente il contenuto del file sia su main che su dev:
-
-YAML
-
 name: SonarQube analysis
 
 on:

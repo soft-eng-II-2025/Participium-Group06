@@ -22,4 +22,13 @@ export class NotificationApi {
     async deleteNotification(notificationId: number): Promise<void> {
         await api.delete(`${BASE_URL}/${notificationId}`);
     }
+
+    /**
+     * PATCH /api/notifications/:id/read
+     * Segna la notifica come letta per l'utente autenticato e restituisce la notifica aggiornata.
+     */
+    async markAsRead(notificationId: number): Promise<NotificationDTO> {
+        const response = await api.patch<NotificationDTO>(`${BASE_URL}/${notificationId}/read`);
+        return response.data;
+    }
 }

@@ -8,14 +8,15 @@
     "emitDecoratorMetadata": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    
+    // 👇 AGGIUNGERE QUESTO
+    "types": ["node", "jest"]
   },
-  "include": ["src/**/*.ts"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "src/tests",            // <--- aggiungi questa riga
-    "**/*.test.ts",         // <--- e questa per sicurezza
-    "**/*.spec.ts"
-  ]
+
+  // 👇 INCLUDERE ANCHE I TEST
+  "include": ["src/**/*.ts", "src/tests/**/*.ts"],
+
+  // 👇 RIMUOVERE eslcusioni dei test
+  "exclude": ["node_modules", "dist"]
 }

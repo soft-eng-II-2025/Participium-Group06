@@ -21,9 +21,6 @@ import { SocketService } from "../../../services/socketService";
 import { ReportResponseDTO } from "../../../models/DTOs/ReportResponseDTO";
 import { MunicipalityOfficerResponseDTO } from "../../../models/DTOs/MunicipalityOfficerResponseDTO";
 import { UserResponseDTO } from "../../../models/DTOs/UserResponseDTO";
-<<<<<<< HEAD
-import { StatusType } from "../../../models/StatusType";
-=======
 import { ReportPhoto } from "../../../models/ReportPhoto";
 import { StatusType } from "../../../models/StatusType";
 import {
@@ -31,6 +28,7 @@ import {
     getMunicipalityOfficerDAOByUsername,
 } from "../../../controllers/adminController";
 import { CreateReportRequestDTO } from "../../../models/DTOs/CreateReportRequestDTO";
+import { Server as SocketIOServer } from "socket.io";
 
 // ------------------------------------------------------------------
 // 1. OGGETTI MOCK GLOBALI
@@ -49,7 +47,6 @@ jest.mock("../../../controllers/adminController", () => ({
     getMunicipalityOfficerDAOForNewRequest: jest.fn(),
     getMunicipalityOfficerDAOByUsername: jest.fn(),
 }));
->>>>>>> dev
 
 // Mock delle dipendenze
 jest.mock("../../../repositories/ReportRepository");
@@ -80,9 +77,9 @@ beforeEach(() => {
     (ReportRepository as unknown as jest.Mock).mockImplementation(
         () => reportRepositoryMock as any,
     );
-
+    const io = new SocketIOServer();
     // 4.2 Re-inizializza il controller per iniettare l'istanza mock
-    initializeReportRepositories({} as any);
+    initializeReportRepositories({} as any, io);
 
     // 4.3 Pulisci tutti i mock prima di ogni test
     jest.clearAllMocks();

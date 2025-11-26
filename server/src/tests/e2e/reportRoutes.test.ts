@@ -15,7 +15,7 @@ import { Category } from "../../models/Category";
 import { Role } from "../../models/Role";
 import { ReportPhoto } from "../../models/ReportPhoto";
 import { Report } from "../../models/Report";
-
+import { Server as SocketIOServer } from "socket.io";
 // Mock di requireAuth → bypassa l'autenticazione
 jest.mock("../../middlewares/authMiddleware", () => ({
     requireAuth: (_req: any, _res: any, next: any) => next()
@@ -33,7 +33,8 @@ beforeAll(async () => {
         await TestDataSource.destroy();
     }
     await TestDataSource.initialize();
-    initializeReportRepositories(TestDataSource);
+    const io = new SocketIOServer();
+    initializeReportRepositories(TestDataSource, io);
 
     app = express();
     app.use(express.json());

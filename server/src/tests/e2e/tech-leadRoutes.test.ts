@@ -15,7 +15,7 @@ import { User } from "../../models/User";
 import { Category } from "../../models/Category";
 import { StatusType } from "../../models/StatusType";
 import { Report } from "../../models/Report";
-
+import { Server as SocketIOServer } from "socket.io";
 // MOCK middleware per bypassare autenticazione
 jest.mock("../../middlewares/authMiddleware", () => ({
     requireTechLead: (req: any, _res: any, next: any) => {
@@ -36,7 +36,8 @@ beforeAll(async () => {
     await TestDataSource.initialize();
     initializeAdminRepositories(TestDataSource);
     initializeUserRepositories(TestDataSource);
-    initializeReportRepositories(TestDataSource);
+    const io = new SocketIOServer();
+    initializeReportRepositories(TestDataSource, io);
 
     app = express();
     app.use(express.json());

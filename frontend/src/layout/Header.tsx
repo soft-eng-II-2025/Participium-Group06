@@ -162,10 +162,14 @@ export default function Header() {
 
                     {/* MOBILE MENU BUTTON */}
                     {isMobile && (
-                        <IconButton color="inherit" onClick={() => setDrawerOpen(true)}>
-                            <MenuIcon />
-                        </IconButton>
+                        <>
+                            <NotificationsMenu />
+                            <IconButton color="inherit" onClick={() => setDrawerOpen(true)}>
+                                <MenuIcon />
+                            </IconButton>
+                        </>
                     )}
+
                 </Toolbar>
             </AppBar>
 

@@ -19,7 +19,6 @@
 }
 
 .partecipation-button:hover {
-    box-shadow: 0px 4px 15px rgba(124, 29, 35, 0.4) !important;
     transform: translateY(-2px);
 }
 

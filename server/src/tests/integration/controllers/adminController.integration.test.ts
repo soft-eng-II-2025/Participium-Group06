@@ -50,9 +50,11 @@ async function seedCategory(role: Role) {
     return TestDataSource.getRepository(Category).save({
         name: "Road",
         description: "Street issues",
-        role: role
+        roles: [role]
     });
-} 
+}
+
+
 
 async function seedUser(): Promise<User> {
     return TestDataSource.getRepository(User).save({

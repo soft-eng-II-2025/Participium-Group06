@@ -325,7 +325,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
   (5,7.7000,45.0675,'Semaforo Guasto Corso Vittorio','Semaforo guasto allo incrocio Corso Vittorio.','Pending Approval','',5,5,6),
   (6,7.7020,45.0730,'Idrante Rotto Zona Vanchiglia','Idrante rotto in zona Vanchiglia.','Assigned','',null,6,1),
   (7,7.6815,45.0650,'Pavimentazione Sconnessa Marciapiede Crocetta','Pavimentazione sconnessa sul marciapiede in Crocetta.','In Progress','',3,7,7),
-  (8,7.6880,45.0750,'Segnale Strisce Pedonali Danneggiato','Segnale strisce pedonali danneggiato.','Pending Approval','',5,null,6),
+  (8,7.6880,45.0750,'Segnale Strisce Pedonali Danneggiato','Segnale strisce pedonali danneggiato.','Pending Approval','',5,7,6),
   (9,7.6750,45.0680,'Scivolo Parco Giochi Danneggiato Mirafiori Nord','Scivolo del parco giochi danneggiato in Mirafiori Nord.','Assigned','',null,9,8),
   (10,7.6920,45.0690,'Barriera Stradale Danneggiata Borgo Po','Barriera stradale danneggiata in Borgo Po.','In Progress','',3,10,7),
   (11,7.6840,45.0725,'Segnale Stradale Illeggibile Dora Riparia','Segnale stradale illeggibile in Dora Riparia.','Assigned','',null,1,6),

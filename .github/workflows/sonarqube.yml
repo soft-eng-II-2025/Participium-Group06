@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
 
       - name: Analyze with SonarQube
-        uses: SonarSource/sonarqube-scan-action@v5.0.0
+        uses: SonarSource/sonarqube-scan-action@135d4ee59adc0c4d5c94d2946bb31b665db20e72 # v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

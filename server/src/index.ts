@@ -25,6 +25,9 @@ export const app = express(); // Esposta per i test
 app.use(cors({ origin: true, credentials: true }));
 app.use(morgan('dev'));
 app.use(express.json());
+
+app.use("api/users/uploads", express.static(path.join(__dirname, "../uploads")));
+
 app.use(session({
     secret: process.env.SESSION_SECRET ?? 'dev-secret',
     resave: false,

@@ -9,5 +9,13 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist"
-  }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/tests",            // <--- aggiungi questa riga
+    "**/*.test.ts",         // <--- e questa per sicurezza
+    "**/*.spec.ts"
+  ]
 }

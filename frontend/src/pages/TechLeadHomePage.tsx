@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { Box, Grid } from "@mui/material";
+import { Box, Grid, Button, useMediaQuery, useTheme } from "@mui/material";
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ReportsList from "../components/ReportsList";
 import ReportPreview from "../components/ReportPreview";
 import { StatusType } from "../DTOs/StatusType";
 import { useGetTechLeadReports, useAssignTechAgent } from "../hook/techleadApi.hook";
 import ConfirmDialog from "../components/ConfirmDialog";
-import { ReportResponseDTO } from "../DTOs/ReportResponseDTO";
 
 const TechLeadHomePage: React.FC = () => {
 
     const {data: reports} = useGetTechLeadReports();
 
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
     const [officerUsername, setOfficerUsername] = useState<string>("");
-    const [selectedIndex, setSelectedIndex] = useState<number | null>(reports?.length ? 0 : null);
+    const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const [showPreview, setShowPreview] = useState(false);
 
     const selectedReport = selectedIndex !== null ? reports?.[selectedIndex] : null;
 
@@ -22,6 +26,11 @@ const TechLeadHomePage: React.FC = () => {
     function assignReportToOfficer(action: 'approve'| 'reject', payload?: { assignee?: string }) {
         setConfirmOpen(true);
         setOfficerUsername(payload?.assignee ?? "");
+    }
+
+    function handleSelect(index: number | null) {
+        setSelectedIndex(index);
+        if (isMobile) setShowPreview(true);
     }
 
     async function performAssignment() {
@@ -41,12 +50,29 @@ const TechLeadHomePage: React.FC = () => {
         <>
                <Box sx={{ pt: 4, pb: 4, px: 2, height: "100vh", }}>
                 <Grid container spacing={2}>
-                    <Grid item xs={12} md={4}>
-                        <ReportsList reports={reports ?? []} selectedIndex={selectedIndex} onSelect={setSelectedIndex} statuses={statuses} />
-                    </Grid>
-                    <Grid item xs={12} md={8}>
-                        <ReportPreview report={selectedReport} showTeamCard={true} onAction={assignReportToOfficer} />
-                    </Grid>
+                    {isMobile ? (
+                        showPreview ? (
+                            <Grid item xs={12}>
+                                <Box sx={{ mb: 1 }}>
+                                    <Button variant="outlined" className="partecipation-button" startIcon={<ArrowBackIcon />} onClick={() => setShowPreview(false)}>Back to list</Button>
+                                </Box>
+                                <ReportPreview report={selectedReport} showTeamCard={true} onAction={assignReportToOfficer} />
+                            </Grid>
+                        ) : (
+                            <Grid item xs={12}>
+                                <ReportsList reports={reports ?? []} selectedIndex={selectedIndex} onSelect={handleSelect} statuses={statuses} />
+                            </Grid>
+                        )
+                    ) : (
+                        <>
+                            <Grid item xs={12} md={4}>
+                                <ReportsList reports={reports ?? []} selectedIndex={selectedIndex} onSelect={handleSelect} statuses={statuses} />
+                            </Grid>
+                            <Grid item xs={12} md={8}>
+                                <ReportPreview report={selectedReport} showTeamCard={true} onAction={assignReportToOfficer} />
+                            </Grid>
+                        </>
+                    )}
                 </Grid>
             </Box>
 

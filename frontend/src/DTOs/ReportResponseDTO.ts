@@ -9,7 +9,7 @@ export interface ReportResponseDTO {
     title: string;
     description: string;
     user: UserResponseDTO; 
-    categoryId: number;
+    category: number;
     status: StatusType;
     explanation?: string;
     officer?: MunicipalityOfficerResponseDTO;

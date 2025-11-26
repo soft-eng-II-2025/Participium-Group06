@@ -1,22 +1,22 @@
-🎯 Priorité principale
+🎯 Main Priority
 
-Scalabilité et modularité — ces objectifs étaient déjà présents dans les sprints 1 et 2, et restent prioritaires.
+Scalability and modularity — these objectives were already part of Sprints 1 and 2, and remain top priorities.
 
-📊 Critères SonarCloud visés
+📊 Targeted SonarCloud Criteria
 
-Sécurité : A (nous voulons un niveau de sécurité maximal)
+Security: A (we want the highest security level)
 
-Maintenabilité : A/B
+Maintainability: A/B
 
-Fiabilité : A/B
+Reliability: A/B
 
-Aucun issue de sévérité High ou Medium ne doit être présent.
+No High or Medium severity issues must be present.
 
-🛠️ Actions prévues pour respecter ces critères
+🛠️ Planned Actions to Meet These Criteria
 
-Code existant :
-De nouvelles tâches seront ajoutées au Sprint 3 afin de mettre à niveau l’ancien code pour satisfaire les exigences SonarCloud.
+Existing code:
+New tasks will be added in Sprint 3 to upgrade the legacy code to meet SonarCloud requirements.
 
-Nouveau code (Sprints 3 et 4) :
-Le reviewer devra vérifier que aucun nouvel issue SonarCloud n’est introduit par les PR.
-Cela implique notamment une attention particulière à la configuration du pipeline build.yaml.
+New code (Sprints 3 and 4):
+The reviewer must ensure that no new SonarCloud issues are introduced by the PRs.
+This specifically requires special attention to the build.yaml pipeline configuration.

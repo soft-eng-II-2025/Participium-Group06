@@ -37,8 +37,16 @@ export class UserApi {
         return response.data;
     }
 
-    async updateUserProfile(userId: number, payload: UpdateUserRequestDTO): Promise<UserResponseDTO> {
-        const response = await api.put<UserResponseDTO>(`${BASE_URL}/${userId}`, payload);
+    /**
+     *  il tipo FormData è necessario per mandare la foto lato backend
+     * @param formData
+     */
+    async updateUserProfile(formData: FormData): Promise<UserResponseDTO> {
+        const response = await api.put<UserResponseDTO>(`${BASE_URL}/me`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
         return response.data;
     }
 

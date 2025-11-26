@@ -39,7 +39,7 @@ export async function addReport(reportData: CreateReportRequestDTO): Promise<Rep
 
     // Here we need an additional step to decide the officer and set it
     // reportDAO.officer = await reportRepository.assignOfficerToReport(addedReport);
-    reportDAO.officer = await getMunicipalityOfficerDAOForNewRequest() // Temporary: assign first officer
+    reportDAO.officer = undefined;
     const addedReport = await reportRepository.add(reportDAO);
     // Ora, aggiungiamo le foto al report aggiunto
     if (reportData.photos && reportData.photos.length > 0) {
@@ -66,7 +66,10 @@ export async function updateReportStatus(
     const report = await reportRepository.findById(reportId);
     if (!report) throw appErr('REPORT_NOT_FOUND', 404);
 
-    // Update report
+    if (report.status === StatusType.PendingApproval) {
+        report.officer = undefined;
+    }
+
     report.status = newStatus;
     report.explanation = explanation;
     const updatedReport = await reportRepository.update(report);

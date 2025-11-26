@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { Box, Typography, Button, Card, CardContent, CardActions, Stack, TextField, Chip, Paper } from "@mui/material";
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
-import { CreateReportDTO } from "../DTOs/CreateReportDTO";
 import MapForReportPreview from "./MapForReportPreview";
 import { StatusType } from "../DTOs/StatusType";
 import { useGetAgentsByTechLead } from "../hook/techleadApi.hook";
+import { useReportCategories } from "../hook/userApi.hook";
 import { useAuth } from "../contexts/AuthContext";
 import { MunicipalityOfficerResponseDTO } from "../DTOs/MunicipalityOfficerResponseDTO";
 import TechOfficerCard from "./TechOfficerCard";
 import { setStatusChipColor } from "../utils/stringUtilis";
 import { useGetReportPhoto } from "../hook/userApi.hook";
+import { ReportResponseDTO } from "../DTOs/ReportResponseDTO";
 
 type Props = {
-    report?: CreateReportDTO | null;
+    report?: ReportResponseDTO | null;
     showApprovalActions?: boolean;
     showTeamCard?: boolean;
     showUpdateStatus?: boolean;
@@ -109,8 +110,8 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                         </Button>
                     )}
                 </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h5" gutterBottom fontWeight={400}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="h6" gutterBottom fontWeight={500}>
                         {report.title}
                     </Typography>
                     <Chip
@@ -123,9 +124,25 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
 
                 <MapForReportPreview latitude={report.latitude} longitude={report.longitude} interactive={false} zoom={14} />
 
-                <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-                    <Typography variant="caption">Coordinates:</Typography>
-                    <Typography variant="body2">{report.latitude}, {report.longitude}</Typography>
+                <Stack direction="row" spacing={2} sx={{ mb: 1, mt: 2 }}>
+                    <Typography variant="body2" color="text.secondary">Cordinates:</Typography>
+
+                    <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>{report.latitude}, {report.longitude}</Typography>
+                    
+                </Stack>
+                <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary">Reporter:</Typography>
+                    <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
+                        {report.user?.first_name || report.user?.username} {report.user?.last_name ?? ''}
+                    </Typography>
+                    
+                </Stack>
+                <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary">Category:</Typography>
+                    <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
+                        {report.category}
+                    </Typography>
+                    
                 </Stack>
 
                 <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
@@ -279,7 +296,9 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
 
             )}
 
-            {(showUpdateStatus) && report.status === StatusType.Assigned && (
+            {(showUpdateStatus) && (report.status === StatusType.Assigned
+                || report.status === StatusType.InProgress
+                || report.status === StatusType.Suspended) && (
                 <CardContent sx={{ bgcolor: 'inherit', borderTop: '1px solid', borderColor: 'grey.300', flexShrink: 0 }}>
                     <Typography variant="h6" color="secondary" sx={{ mb: 1, fontWeight: 'bold' }}>Update report status</Typography>
                     <Paper elevation={0} sx={{ p: 2, borderRadius: 2, mb: 1 }}>

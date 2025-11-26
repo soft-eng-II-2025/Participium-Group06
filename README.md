@@ -25,8 +25,11 @@ The project is composed of:
 # Stop all containers
 docker compose down
 
-# Start the environment (Postgres + Migration)
-docker compose up --build migrator
+# Stop and delete all containers
+docker compose down -v
+
+# Start the enviroment
+docker compose up --build
 
 This command both initializes the schema and seeds the database with roles, categories, and an admin user.
 Once completed, the migrator container will stop automatically.
@@ -67,6 +70,35 @@ The frontend will run on http://localhost:8080
 - Username: admin
 - Password: Admin#2025!
 
+### **Users credentials:**
+
+      -- mariorossi password: MarioRossi
+      -- luigibianchi password: LuigiBianchi
+      -- annaverdi password: AnnaVerdi
+      -- giulianeri password: GiuliaNeri
+      -- paolorussi password: PaoloRussi
+      -- saraferrari password: SaraFerrari
+      -- lucagalli password: LucaGalli
+      -- francescacosta password: FrancescaCosta
+      -- elenamarino password: ElenaMarino
+      -- giorgiotesta password: GiorgioTesta
+
+### **Municipality Officers credentials:**
+
+      -- org_officer password: OrgOfficer1!
+      -- lead_infra password: LeadInfra1!
+      -- agent_infra password: AgentInfra1!
+      -- lead_mobility password: LeadMobility1!
+      -- agent_mobility password: AgentMobility1!
+      -- lead_green password: LeadGreen1!
+      -- agent_green password: AgentGreen1!
+      -- lead_waste password: LeadWaste1!
+      -- agent_waste passwordo: AgentWaste1!
+      -- lead_energy password: LeadEnergy1!
+      -- agent_energy password: AgentEnergy1!
+      -- lead_buildings password: LeadBuildings1!
+      -- agent_buildings password: AgentBuildings1!
+
 
 ## Ports Configuration
 | Service     | Host Port | Container Port | Description    |
@@ -74,6 +106,7 @@ The frontend will run on http://localhost:8080
 | PostgreSQL  | 5434      | 5432           | Database       |
 | Backend API | 3000      | -              | Node.js server |
 | Frontend    | 8080      | -              | React app      |
+
 
 
 
@@ -115,6 +148,11 @@ The frontend will run on http://localhost:8080
 - GET `/api/users/reports/categories`
     - Description: Returns the full list of available report categories.
     - Success: Returns the full list of available report categories.
+    - Error: Returns an error response.
+
+- PUT `/api/users/me`
+    - Description: Updates the profile of the currently authenticated user using the provided data (e.g. Telegram ID and other editable fields).
+    - Success: Returns the updated user object.
     - Error: Returns an error response.
 
 ### **User Routes - Admin**
@@ -212,7 +250,7 @@ function getSession();                              // GET /api/session
 function addReport(report: ReportResponseDTO);                   // POST /api/users/reports
 function uploadReportImages(images: File[]): Promise<string[]>  // POST /api/users/reports/images/upload
 function getAllCategories(): Promise<CategoryResponseDTO[]>    // GET /api/users/reports/categories
-function updateUserProfile(userId: number, payload: UpdateUserRequestDTO): Promise<UserResponseDTO>  // PUT /api/users/:id
+function updateUserProfile(payload: UpdateUserRequestDTO): Promise<UserResponseDTO> // PUT /api/users/:id
 ```
 
 **Admin API**

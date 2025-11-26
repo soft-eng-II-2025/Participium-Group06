@@ -1,6 +1,7 @@
 // frontend/src/services/socketClient.ts
 import { io, Socket } from "socket.io-client";
 import { MessageResponseDTO } from "../DTOs/MessageResponseDTO";
+import { NotificationDTO } from "../DTOs/NotificationDTO";
 
 let socket: Socket | null = null;
 
@@ -42,4 +43,20 @@ export function subscribeToNewMessages(cb: (m: MessageResponseDTO) => void) {
 export function unsubscribeFromNewMessages(cb: (m: MessageResponseDTO) => void) {
   if (!socket) return;
   socket.off("newMessage", cb);
+}
+
+export function subscribeToNewNotifications(
+  cb: (n: NotificationDTO) => void
+) {
+  socket?.on("newNotification", cb);
+}
+
+export function unsubscribeFromNewNotifications(
+  cb: (n: NotificationDTO) => void
+) {
+  socket?.off("newNotification", cb);
+}
+
+export function getSocket() {
+  return socket;
 }

@@ -76,6 +76,7 @@ export class SocketService {
      * Emit a new notification to a user if online
      */
     sendNotificationToUser(userId: number, notification: Notification) {
+        console.log("Sending notification to user", userId);
         const socket = this.onlineUsers.get(userId);
         if (socket) {
             socket.emit("newNotification", mapNotificationDAOToDTO(notification));

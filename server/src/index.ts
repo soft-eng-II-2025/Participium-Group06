@@ -16,6 +16,7 @@ import { initializeNotificationController } from "./controllers/notificationCont
 import { Server as SocketIOServer } from "socket.io";
 import http from "http";
 import { DataSource } from "typeorm";
+import path from "path";
 
 const PORT = Number(process.env.PORT ?? 3000);
 

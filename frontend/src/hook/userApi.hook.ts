@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CategoryResponseDTO } from "../DTOs/CategoryResponseDTO";
 import {UserApi} from "../api/userApi";
 import {CreateReportRequestDTO} from "../DTOs/CreateReportRequestDTO";
+import {UpdateUserRequestDTO} from "../DTOs/UpdateUserRequestDTO";
 
 const userApi = new UserApi();
 
@@ -27,6 +28,14 @@ export function useReportCategories() {
         queryFn: userApi.getAllCategories, // Funzione che fa la chiamata API
     });
 }
+
+
+export function useUserProfileUpdate() {
+    return useMutation({
+        mutationFn: (updatedUser: FormData) =>
+            userApi.updateUserProfile(updatedUser),
+     });
+ }
 
 export function useGetReportPhoto(url?: string, enabled: boolean = !!url) {
     return useQuery<Blob>({

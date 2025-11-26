@@ -156,7 +156,7 @@ export async function getTechReports(officerUsername :string):Promise<ReportResp
         throw appErr("OFFICER_NOT_FOUND", 404);
     }
     const reports = await reportRepository.findByOfficer(officer);
-    
+
     return reports.map(mapReportDAOToResponse);
 }
 

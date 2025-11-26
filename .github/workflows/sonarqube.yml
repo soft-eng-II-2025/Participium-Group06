@@ -27,7 +27,6 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
-          # NOTA: Qui dentro NON mettere commenti col simbolo #
           args: >
             -Dsonar.organization=soft-eng-ii-2025
             -Dsonar.projectKey=soft-eng-II-2025_Participium-Group06

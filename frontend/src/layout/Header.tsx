@@ -129,9 +129,10 @@ export default function Header() {
                     {!isMobile && isAuthenticated && (
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Avatar
+                                src={`http://localhost:3000/api/users/uploads/${user?.photo}` || undefined}
                                 sx={{width: 36, height: 36, bgcolor: 'secondary.main', fontSize: 16, fontWeight: 600}}
                                 onClick={handleNavigate}>
-                                {initials}
+                                {!user?.photo && initials}
                             </Avatar>
                             <Stack direction="column" spacing={0} sx={{mr: 2, textAlign: 'left'}}
                                    onClick={handleNavigate}>

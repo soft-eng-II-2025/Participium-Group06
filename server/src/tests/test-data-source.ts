@@ -6,6 +6,7 @@ import { Category } from '../models/Category';
 import { Report } from '../models/Report';
 import { ReportPhoto } from '../models/ReportPhoto';
 import { MunicipalityOfficer } from '../models/MunicipalityOfficer';
+import { Notification } from '../models/Notification';
 
 
 
@@ -19,5 +20,5 @@ export const TestDataSource = new DataSource({
   synchronize: true,
   dropSchema: true,
   logging: false,
-  entities: [User, Role, Category, Report, ReportPhoto, MunicipalityOfficer],
+  entities: [User, Role, Category, Report, ReportPhoto, MunicipalityOfficer, Notification],
 });

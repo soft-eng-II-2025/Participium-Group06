@@ -26,7 +26,7 @@ The project is composed of:
 docker compose down
 
 # Start the environment (Postgres + Migration)
-docker compose up --build migrator
+docker compose up 
 
 This command both initializes the schema and seeds the database with roles, categories, and an admin user.
 Once completed, the migrator container will stop automatically.

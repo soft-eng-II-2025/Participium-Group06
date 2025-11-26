@@ -7,6 +7,7 @@ import { StatusType } from "../DTOs/StatusType";
 import { useGetTechReports } from "../hook/techApi.hook";
 import { useUpdateReportStatus } from "../hook/reportApi.hook";
 import ConfirmDialog from "../components/ConfirmDialog";
+import Chat from "../components/Chat";
 
 const TechAgentHomePage: React.FC = () => {
   const { data: reports } = useGetTechReports();
@@ -94,7 +95,9 @@ const TechAgentHomePage: React.FC = () => {
                             <ReportPreview report={selectedReport} showUpdateStatus={true} onAction={assignStatusToReport} showChat={true} openChat={toggleChatOpen} />
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            {/* TODO CHAT */}
+                            {selectedReport ? (
+                              <Chat reportId={selectedReport.id} />
+                            ) : null}
                         </Grid>
                     </Grid>
                 )}

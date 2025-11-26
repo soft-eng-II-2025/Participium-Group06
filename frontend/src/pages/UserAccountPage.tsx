@@ -18,7 +18,7 @@ import {EmailTelegramCard} from "../components/EmailTelegramCard";
 import {useUserProfileUpdate} from "../hook/userApi.hook";
 
 export const UserAccountPage: React.FC = () => {
-    const {user} = useAuth();
+    const {user, setUser} = useAuth();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -71,6 +71,9 @@ export const UserAccountPage: React.FC = () => {
                 setPhoto(`http://localhost:3000/api/users/uploads/${updatedUser.photo}`);
             }
             console.log("Profilo aggiornato con successo");
+
+            //aggiorno l'auth context
+            setUser(updatedUser);
 
             // Dopo il salvataggio, resetto il selectedFile
             setSelectedFile(null);

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { List, ListItemButton, ListItemText, Chip, CircularProgress, Box, Typography, ListItemAvatar, Avatar, Button, ButtonGroup, Stack } from "@mui/material";
+import { List, ListItemButton, ListItemText, Chip, CircularProgress, Box, Typography, ListItemAvatar, Avatar, Button, Stack } from "@mui/material";
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import { CreateReportDTO } from "../DTOs/CreateReportDTO";
 import { StatusType } from "../DTOs/StatusType";
@@ -25,11 +25,16 @@ export default function ReportsList({ reports, selectedIndex, onSelect, onLoadMo
 
     return (
         <>
-            <Box sx={{ mb: 1, display: 'flex', width: '100%' }}>
-                <ButtonGroup variant="outlined" size="small" aria-label="status filters" sx={{
-                    width: '100%',
-                    mb: 1,
-                }} fullWidth>
+            <Box sx={{ mb: 1, width: '100%' }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        gap: 1,
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        py: 0.5,
+                    }}
+                >
                     {statuses.map((s) => (
                         <Button
                             key={s}
@@ -37,12 +42,18 @@ export default function ReportsList({ reports, selectedIndex, onSelect, onLoadMo
                             className="participation-button"
                             variant={selectedStatus === s ? 'contained' : 'outlined'}
                             onClick={() => setSelectedStatus(s)}
-                            sx={{ borderRadius: 3, flex: 1 }}
+                            sx={{
+                                borderRadius: 3,
+                                flex: '1 1 120px', // allow wrapping; try to take available space but not shrink below 120px
+                                minWidth: 100,
+                                textTransform: 'none',
+                                whiteSpace: 'nowrap',
+                            }}
                         >
                             {s}
                         </Button>
                     ))}
-                </ButtonGroup>
+                </Box>
             </Box>
 
             <List
@@ -59,11 +70,10 @@ export default function ReportsList({ reports, selectedIndex, onSelect, onLoadMo
                         <CircularProgress />
                     </Box>
                 )}
-
                 {!isLoading && filtered.length === 0 && (
                     <Box sx={{ textAlign: 'center', py: 6 }}>
                         <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                            No reports found for "{selectedStatus}".
+                            {reports.length === 0 ? 'No reports available.' : `No reports found for "${selectedStatus}".`}
                         </Typography>
                         <Stack direction="row" spacing={1} justifyContent="center">
                             <Button size="small" onClick={() => setSelectedStatus('All')}>Show all</Button>
@@ -71,7 +81,6 @@ export default function ReportsList({ reports, selectedIndex, onSelect, onLoadMo
                         </Stack>
                     </Box>
                 )}
-
                 {filtered.map(({ r, idx }) => {
                     const created = (r as any).createdAt ?? (r as any).created_at ?? null;
                     const createdStr = created ? new Date(created).toLocaleDateString() : undefined;
@@ -108,9 +117,9 @@ export default function ReportsList({ reports, selectedIndex, onSelect, onLoadMo
                                     </Typography>
                                 }
                                 secondary={
-                                        <Typography variant="body2" color="text.secondary">
-                                            {createdStr ?? r.user?.username ?? "Reported by unknown"}
-                                        </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {createdStr ?? r.user?.username ?? "Reported by unknown"}
+                                    </Typography>
                                 }
                             />
 

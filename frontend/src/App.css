@@ -47,3 +47,14 @@ body,
   margin: 0;
   padding: 0;
 }
+
+.card-tech-officer {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  transition: box-shadow 0.3s ease;
+}
+.card-tech-officer:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}

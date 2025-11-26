@@ -36,7 +36,7 @@ const HomePage = () => {
               variant="contained"
               size="large"
               className="partecipation-button"
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/register')}
             >
               JOIN US NOW
             </Button>

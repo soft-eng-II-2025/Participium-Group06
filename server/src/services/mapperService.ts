@@ -3,6 +3,8 @@ import type { MunicipalityOfficerResponseDTO } from "../models/DTOs/Municipality
 import type { ReportResponseDTO } from "../models/DTOs/ReportResponseDTO";
 import type { RoleResponseDTO } from "../models/DTOs/RoleResponseDTO";
 import type { UserResponseDTO } from "../models/DTOs/UserResponseDTO";
+import type { MessageResponseDTO } from "../models/DTOs/MessageResponseDTO";
+import type { NotificationDTO } from "../models/DTOs/NotificationDTO";
 
 import { CreateReportRequestDTO } from "../models/DTOs/CreateReportRequestDTO";
 
@@ -12,6 +14,10 @@ import { Report } from "../models/Report";
 import { Role } from "../models/Role";
 import { User } from "../models/User";
 import { ReportPhoto } from "../models/ReportPhoto";
+import { StatusType } from "../models/StatusType";
+import { Message } from "../models/Message";
+import { Notification } from "../models/Notification";
+import { NotificationType } from "../models/NotificationType";
 
 /* Helper */
 function removeNullAttributes<T extends Record<string, any>>(dto: T): Partial<T> {
@@ -32,41 +38,44 @@ export function createCategoryDTO(name?: string, reports?: ReportResponseDTO[]):
 }
 
 export function createMunicipalityOfficerDTO(
+    id: number,
     username?: string,
     email?: string,
-    password?: string | null,
     first_name?: string,
     last_name?: string,
-    role?: RoleResponseDTO
+    role?: string | null
 ): MunicipalityOfficerResponseDTO {
-    return removeNullAttributes({
-        username,
-        email,
-        password,
-        first_name,
-        last_name,
-        role,
-    }) as MunicipalityOfficerResponseDTO;
+    return removeNullAttributes({ id, username, email, first_name, last_name, role }) as MunicipalityOfficerResponseDTO;
 }
 
 export function createReportDTO(
-    longitude?: number,
-    latitude?: number,
-    title?: string,
-    description?: string,
-    userId?: number,
-    categoryId?: number,
-    photos?: string[]
+    id: number | undefined,
+    longitude: number,
+    latitude: number,
+    title: string,
+    description: string,
+    user: User, 
+    category?: CategoryResponseDTO,
+    status?: string,
+    explanation?: string,
+    officer?: MunicipalityOfficerResponseDTO,
+    photos?: string[],
+    createdAt?: Date,
 ): ReportResponseDTO {
     return removeNullAttributes({
+        id,
         longitude,
         latitude,
         title,
         description,
-        userId,
-        categoryId,
+        user: mapUserDAOToDTO(user),
+        category: category?.name,
+        status,
+        explanation,
+        officer,
         photos,
-    }) as ReportResponseDTO;
+        createdAt,
+    }) as unknown as ReportResponseDTO;
 }
 
 export function createRoleDTO(title?: string, officers?: MunicipalityOfficerResponseDTO[]): RoleResponseDTO {
@@ -79,6 +88,9 @@ export function createUserDTO(
     password?: string | null,
     first_name?: string,
     last_name?: string,
+    photo?: string | null,
+    telegram_id?: string | null,
+    flag_email?: boolean,
     reports?: ReportResponseDTO[]
 ): UserResponseDTO {
     return removeNullAttributes({
@@ -87,8 +99,47 @@ export function createUserDTO(
         password,
         first_name,
         last_name,
+        photo,
+        telegram_id,
+        flag_email,
         reports,
     }) as UserResponseDTO;
+}
+
+export function createMessageResponseDTO(
+    reportId: number,
+    role_label?: string,
+    username?: string,
+    content?: string,
+    created_at?: Date,
+    sender?: 'USER' | 'OFFICER'
+): MessageResponseDTO {
+    return removeNullAttributes({
+        reportId,
+        role_label,
+        username,
+        content,
+        created_at,
+        sender
+    }) as MessageResponseDTO;
+}
+
+export function createNotificationDTO(
+    id: number | undefined,
+    user?: UserResponseDTO,
+    content?: string,
+    type?: NotificationType,
+    is_read?: boolean,
+    created_at?: Date
+): NotificationDTO {
+    return removeNullAttributes({
+        id,
+        user,
+        content,
+        type,
+        is_read,
+        created_at
+    }) as NotificationDTO;
 }
 
 /* ----------- DAO -> Response mappers ----------- */
@@ -98,36 +149,34 @@ export function mapCategoryDAOToDTO(categoryDAO: Category): CategoryResponseDTO 
         id: categoryDAO.id,
         name: categoryDAO.name,
     };
-
-    // Se la relazione 'reports' è caricata, popola anche l'array e il conteggio
-    /*if (Array.isArray(categoryDAO.reports)) {
-        dto.reports = categoryDAO.reports.map((r: Report) => mapReportDAOToDTO(r));
-        dto.reportsCount = categoryDAO.reports.length; // opzionale
-    }*/
-
     return dto;
 }
 
 export function mapMunicipalityOfficerDAOToDTO(officerDAO: MunicipalityOfficer): MunicipalityOfficerResponseDTO {
     return createMunicipalityOfficerDTO(
+        officerDAO.id,
         officerDAO.username,
         officerDAO.email,
-        null,
         officerDAO.first_name,
         officerDAO.last_name,
-        officerDAO.role ? mapRoleDAOToDTO(officerDAO.role) : undefined
+        officerDAO.role?.title || null
     );
 }
 
 export function mapReportDAOToDTO(reportDAO: Report): ReportResponseDTO {
     return createReportDTO(
+        reportDAO.id,
         reportDAO.longitude,
         reportDAO.latitude,
         reportDAO.title,
         reportDAO.description,
-        reportDAO.user?.id,
-        reportDAO.category?.id,
-        reportDAO.photos?.map((p: ReportPhoto) => p.photo)
+        reportDAO.user,
+        reportDAO.category ? mapCategoryDAOToDTO(reportDAO.category) : undefined,
+        reportDAO.status,
+        reportDAO.explanation,
+        reportDAO.officer ? mapMunicipalityOfficerDAOToDTO(reportDAO.officer) : undefined,
+        reportDAO.photos?.map((p: ReportPhoto) => p.photo),
+        reportDAO.createdAt
     );
 }
 
@@ -145,7 +194,34 @@ export function mapUserDAOToDTO(userDAO: User): UserResponseDTO {
         null,
         userDAO.first_name,
         userDAO.last_name,
+        userDAO.photo,
+        userDAO.telegram_id,
+        userDAO.flag_email,
         userDAO.reports?.map((r: Report) => mapReportDAOToDTO(r))
+    );
+}
+
+export function mapMessageDAOToDTO(messageDAO: Message): MessageResponseDTO {
+    let username = messageDAO.user ? messageDAO.user.username : messageDAO.municipality_officer ? messageDAO.municipality_officer.username : undefined;
+    let role_label = messageDAO.municipality_officer ? messageDAO.municipality_officer.role?.label : undefined;
+    return createMessageResponseDTO(
+        messageDAO.report_id,
+        role_label,
+        username,
+        messageDAO.content,
+        messageDAO.created_at,
+        messageDAO.sender
+    );
+}
+
+export function mapNotificationDAOToDTO(notificationDAO: Notification): NotificationDTO {
+    return createNotificationDTO(
+        notificationDAO.id,
+        mapUserDAOToDTO(notificationDAO.user),
+        notificationDAO.content,
+        notificationDAO.type,
+        notificationDAO.is_read,
+        notificationDAO.created_at
     );
 }
 
@@ -161,7 +237,9 @@ export function mapCreateReportRequestToDAO(dto: CreateReportRequestDTO): Report
 
     dao.user = new User();
     dao.user.id = dto.userId;
-
+    dao.status = StatusType.PendingApproval;
+    dao.officer = undefined;
+    dao.explanation = "";
     dao.category = new Category();
     dao.category.id = dto.categoryId;
 

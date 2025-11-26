@@ -4,9 +4,10 @@ import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAddReport, useUploadReportImages, useReportCategories } from "../hook/userApi.hook";
-import { ReportDTO } from "../DTOs/ReportDTO";
+import { CreateReportDTO } from "../DTOs/CreateReportDTO";
 import { CategoryResponseDTO } from "../DTOs/CategoryResponseDTO";
 import { useAuth } from '../contexts/AuthContext';
+import { StatusType } from "../DTOs/StatusType";
 
 type FormState = {
   longitude: number | null;
@@ -139,13 +140,16 @@ export default function NewReportPage() {
       }
 
 
-      const reportData: ReportDTO = {
+      const reportData: CreateReportDTO = {
         longitude: Number(form.longitude),
         latitude: Number(form.latitude),
         title: form.title,
         description: form.description,
         categoryId: Number(form.categoryId),
         user,
+        status: StatusType.PendingApproval,
+        explanation: "", 
+        officer: undefined, // Empty officer object to be filled by backend
         photos: uploadedPhotoUrls,
       };
 
@@ -360,20 +364,48 @@ export default function NewReportPage() {
       </Snackbar>
 
       <Dialog
-        open={successDialogOpen}
-        disableEscapeKeyDown
-        PaperProps={{ sx: { borderRadius: 3, p: 2, minWidth: 360, boxShadow: 6, padding: 4 } }}
+          open={successDialogOpen}
+          disableEscapeKeyDown
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              p: 2,
+              px: 3,
+              py: 2,
+              width: { xs: '90%', sm: 400, md: 480 }, // larghezza adattiva
+              maxWidth: '90vw',
+              boxShadow: 6,
+            },
+          }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 2, pt: 1 }}>
-          <Box sx={{ width: 56, height: 56, borderRadius: '50%', bgcolor: 'success.main', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: '50%',
+                bgcolor: 'success.main',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: 3,
+                flexShrink: 0,
+              }}
+          >
             <CheckCircleIcon sx={{ color: 'white', fontSize: 32 }} />
           </Box>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>Report created</Typography>
-            <Typography variant="body2" color="text.secondary">Your report was uploaded successfully. Redirecting to the map...</Typography>
+
+          <Box sx={{ minWidth: 0 }}> {/* essenziale per il wrapping */}
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              Report created
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Your report was uploaded successfully. Redirecting to the map...
+            </Typography>
           </Box>
         </Box>
       </Dialog>
+
     </Box>
   );
 }

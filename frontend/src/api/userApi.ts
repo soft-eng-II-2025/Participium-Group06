@@ -1,14 +1,18 @@
 // src/api/userApi.ts
 
 import api from "./api";
-import { ReportDTO, CreateReportRequestDTO } from "../DTOs/ReportDTO"; // Importa anche CreateReportRequestDTO
 import { CategoryResponseDTO } from "../DTOs/CategoryResponseDTO";
+import {CreateReportRequestDTO} from "../DTOs/CreateReportRequestDTO";
+import {CreateReportDTO} from "../DTOs/CreateReportDTO";
+import {UpdateUserRequestDTO} from "../DTOs/UpdateUserRequestDTO";
+import {UserResponseDTO} from "../DTOs/UserResponseDTO";
+import { ReportResponseDTO } from "../DTOs/ReportResponseDTO";
 
 const BASE_URL = "users"; // Base URL per le tue API
 
 export class UserApi {
     async addReport(params: CreateReportRequestDTO) {
-        return api.post<ReportDTO>(`${BASE_URL}/reports`, params);
+        return api.post<CreateReportDTO>(`${BASE_URL}/reports`, params);
     }
 
     // Funzione per l'upload delle immagini (ora per endpoint locale)
@@ -17,7 +21,7 @@ export class UserApi {
         images.forEach((file) => {
             formData.append("images", file); // 'images' deve corrispondere al campo in multer.array('images', ...)
         });
-        
+
         // L'URL punta all'endpoint locale che gestisce l'upload
         // Assumendo che la tua API sia montata su /api
         const response = await api.post<{ urls: string[] }>(`${BASE_URL}/reports/images/upload`, formData, {
@@ -30,6 +34,28 @@ export class UserApi {
 
     async getAllCategories(): Promise<CategoryResponseDTO[]> {
         const response = await api.get<CategoryResponseDTO[]>(`${BASE_URL}/reports/categories`);
+        return response.data;
+    }
+
+    /**
+     *  il tipo FormData è necessario per mandare la foto lato backend
+     * @param formData
+     */
+    async updateUserProfile(formData: FormData): Promise<UserResponseDTO> {
+        const response = await api.put<UserResponseDTO>(`${BASE_URL}/me`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+        return response.data;
+    }
+
+    async getReportPhoto(url : string): Promise<Blob> {
+        const response = await api.get<Blob>(`${BASE_URL}/${url}`, { responseType: 'blob' });
+        return response.data;
+    }
+    async getUserReports(username: string): Promise<ReportResponseDTO[]> {
+        const response = await api.get<ReportResponseDTO[]>(`${BASE_URL}/${username}/my-reports`);
         return response.data;
     }
 }

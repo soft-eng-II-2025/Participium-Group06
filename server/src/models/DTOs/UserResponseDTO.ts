@@ -1,18 +1,26 @@
-import { IsEmail, IsNotEmpty } from "class-validator";
+import { IsBoolean, IsEmail, IsNotEmpty } from "class-validator";
 import { ReportResponseDTO } from "./ReportResponseDTO";
 
 export class UserResponseDTO {
     userId!: number;
 
-    @IsNotEmpty() username!: string;
+    @IsNotEmpty()
+    username!: string;
 
-    @IsEmail() email!: string;
+    @IsEmail()
+    email!: string;
 
-    password?: string | null;// sempre nullo in output
+    @IsNotEmpty()
+    first_name!: string;
 
-    @IsNotEmpty() first_name!: string;
+    @IsNotEmpty()
+    last_name!: string;
 
-    @IsNotEmpty() last_name!: string;
+    photo!: string | null;
+
+    telegram_id!: string | null;
+
+    @IsBoolean() flag_email!: boolean;
 
     reports!: ReportResponseDTO[];
 }

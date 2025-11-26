@@ -14,8 +14,25 @@ export const router = Router();
 // POST /api/register
 router.post('/register', validateDto(CreateUserRequestDTO), async (req, res: Response, next) => {
 
-    const newUser = await userController.createUser(req.body);
+    /*const newUser = await userController.createUser(req.body);
+    req.logIn(newUser, (err) => {
+        if (err) return next(err);
+        return res.status(201).json(newUser);
+    });
     res.status(201).json(newUser);
+
+     */
+    try {
+        const newUser = await userController.createUser(req.body);
+
+        req.logIn(newUser, (err) => {
+            if (err) return next(err);
+            return res.status(201).json(newUser);
+        });
+
+    } catch (err) {
+        next(err);
+    }
 });
 
 router.post('/login', validateDto(LoginRequestDTO), (req: Request, res: Response, next: NextFunction) => {
@@ -31,7 +48,7 @@ router.post('/login', validateDto(LoginRequestDTO), (req: Request, res: Response
     })(req, res, next);
 });
 
-router.post('/logout', (req, res) => {
+router.post('/logout', requireAuth, (req, res) => {
     req.logout(() => {
         req.session?.destroy(() => {
             res.clearCookie('connect.sid');
@@ -40,7 +57,7 @@ router.post('/logout', (req, res) => {
     });
 });
 
-router.get('/session', (req, res) => {
+router.get('/session', requireAuth,(req, res) => {
     try {
         // req.user is populated by passport.deserializeUser when authenticated
         return res.status(200).json(req.user ?? null);

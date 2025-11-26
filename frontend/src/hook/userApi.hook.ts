@@ -1,10 +1,9 @@
-// src/hooks/useReport.ts
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ReportDTO, CreateReportRequestDTO } from "../DTOs/ReportDTO";
-import { UserApi } from "../api/userApi";
 import { CategoryResponseDTO } from "../DTOs/CategoryResponseDTO";
-import { useQuery } from "@tanstack/react-query";
+import {UserApi} from "../api/userApi";
+import {CreateReportRequestDTO} from "../DTOs/CreateReportRequestDTO";
+import {UpdateUserRequestDTO} from "../DTOs/UpdateUserRequestDTO";
 
 const userApi = new UserApi();
 
@@ -27,5 +26,21 @@ export function useReportCategories() {
     return useQuery<CategoryResponseDTO[]>({
         queryKey: ['reportCategories'], // Chiave univoca per la query
         queryFn: userApi.getAllCategories, // Funzione che fa la chiamata API
+    });
+}
+
+
+export function useUserProfileUpdate() {
+    return useMutation({
+        mutationFn: (updatedUser: FormData) =>
+            userApi.updateUserProfile(updatedUser),
+     });
+ }
+
+export function useGetReportPhoto(url?: string, enabled: boolean = !!url) {
+    return useQuery<Blob>({
+        queryKey: ['reportPhoto', url],
+        queryFn: () => userApi.getReportPhoto(url!),
+        enabled,
     });
 }

@@ -6,6 +6,8 @@ import { Repository, DataSource }  from "typeorm";
 import { ReportPhoto } from "../models/ReportPhoto";
 import { User } from "../models/User";
 import { Category } from "../models/Category";
+import { StatusType } from "../models/StatusType";
+import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
 
 export class ReportRepository {
     protected ormRepository: Repository<Report>;
@@ -31,26 +33,67 @@ export class ReportRepository {
         });
     }
 
-    async add(report: Report): Promise<Report> {
-        const newReport = new Report();
-        newReport.longitude = report.longitude;
-        newReport.latitude = report.latitude;
-        newReport.title = report.title;
-        newReport.description = report.description;
-
-        if (report.user && report.user.id) {
-            //newReport.user = await userRepository.findOneBy({ id: report.user.id }) as User;
-            newReport.user = await this.userRepository.findOneBy({ id: report.user.id }) as User;
-            if (!newReport.user) throw new Error("User not found for report creation.");
-        }
-        if (report.category && report.category.id) {
-            //newReport.category = await Repository(Category).findOneBy({ id: report.category.id }) as Category;
-            newReport.category = await this.categoryRepository.findOneBy({ id: report.category.id }) as Category;
-            if (!newReport.category) throw new Error("Category not found for report creation.");
-        }
-
-        return this.ormRepository.save(newReport);
+    async findById(reportId: number): Promise<Report | null> {
+        return this.ormRepository.findOne({
+            where: { id: reportId },
+            relations: ['category', 'photos', 'user', 'officer']
+        });
     }
+
+    async findByUserId(userId: number): Promise<Report[]> {
+        return this.ormRepository.find({
+            where: { user: { id: userId } },
+            relations: ['category', 'photos', 'user', 'officer']
+        });
+    }
+
+     /*
+     * Find ONLY approved reports
+     */
+    async findApproved(): Promise<Report[]> {
+        return this.ormRepository.find({
+            where: { status: StatusType.Assigned },
+            relations: ["user", "category", "photos", "officer"],
+            order: { createdAt: "DESC" }
+        });
+    }
+    async findByOfficer(officer: MunicipalityOfficer): Promise<Report[]> {
+        return this.ormRepository.find({
+            where: { officer: { id: officer.id } },
+            relations: ['category', 'photos', 'user', 'officer']
+        });
+    }
+
+    async add(report: Report): Promise<Report> {
+    const newReport = new Report();
+    newReport.longitude = report.longitude;
+    newReport.latitude = report.latitude;
+    newReport.title = report.title;
+    newReport.description = report.description;
+    newReport.status = report.status ?? StatusType.PendingApproval; // ensure non-null
+    newReport.explanation = report.explanation ?? "";
+
+    if (report.user && report.user.id) {
+        newReport.user = await this.userRepository.findOneBy({ id: report.user.id }) as User;
+        if (!newReport.user) throw new Error("User not found for report creation.");
+    }
+
+    if (report.category && report.category.id) {
+        newReport.category = await this.categoryRepository.findOneBy({ id: report.category.id }) as Category;
+        if (!newReport.category) throw new Error("Category not found for report creation.");
+    }
+
+    if (report.officer && report.officer.id) {
+    const officer = await this.ormRepository.manager.findOne(MunicipalityOfficer, {
+        where: { id: report.officer.id }
+    });
+    if (!officer) throw new Error("Officer not found for report creation.");
+    newReport.officer = officer; // TypeScript knows this is not null now
+    }
+
+    return this.ormRepository.save(newReport);
+}
+
 
     async addPhotosToReport(report: Report, photos: ReportPhoto[]): Promise<ReportPhoto[]> {
         const photosWithReport = photos.map(photo => {
@@ -86,5 +129,16 @@ export class ReportRepository {
     async changeTitle(report: Report, newTitle: string): Promise<Report> {
         report.title = newTitle;
         return this.ormRepository.save(report);
+    }
+
+    async update(report: Report): Promise<Report> {
+        return this.ormRepository.save(report);
+    }
+
+    async findByCategoryId(categoryId: number): Promise<Report[]> { 
+        return this.ormRepository.find({
+            where: { category: { id: categoryId } },
+            relations: ['category', 'photos', 'user', 'officer']
+        });
     }
 }

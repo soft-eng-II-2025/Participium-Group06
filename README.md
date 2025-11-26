@@ -25,8 +25,11 @@ The project is composed of:
 # Stop all containers
 docker compose down
 
-# Start the environment (Postgres + Migration)
-docker compose up --build migrator
+# Stop and delete all containers
+docker compose down -v
+
+# Start the enviroment
+docker compose up --build
 
 This command both initializes the schema and seeds the database with roles, categories, and an admin user.
 Once completed, the migrator container will stop automatically.
@@ -67,6 +70,35 @@ The frontend will run on http://localhost:8080
 - Username: admin
 - Password: Admin#2025!
 
+### **Users credentials:**
+
+      -- mariorossi password: MarioRossi
+      -- luigibianchi password: LuigiBianchi
+      -- annaverdi password: AnnaVerdi
+      -- giulianeri password: GiuliaNeri
+      -- paolorussi password: PaoloRussi
+      -- saraferrari password: SaraFerrari
+      -- lucagalli password: LucaGalli
+      -- francescacosta password: FrancescaCosta
+      -- elenamarino password: ElenaMarino
+      -- giorgiotesta password: GiorgioTesta
+
+### **Municipality Officers credentials:**
+
+      -- org_officer password: OrgOfficer1!
+      -- lead_infra password: LeadInfra1!
+      -- agent_infra password: AgentInfra1!
+      -- lead_mobility password: LeadMobility1!
+      -- agent_mobility password: AgentMobility1!
+      -- lead_green password: LeadGreen1!
+      -- agent_green password: AgentGreen1!
+      -- lead_waste password: LeadWaste1!
+      -- agent_waste passwordo: AgentWaste1!
+      -- lead_energy password: LeadEnergy1!
+      -- agent_energy password: AgentEnergy1!
+      -- lead_buildings password: LeadBuildings1!
+      -- agent_buildings password: AgentBuildings1!
+
 
 ## Ports Configuration
 | Service     | Host Port | Container Port | Description    |
@@ -79,9 +111,10 @@ The frontend will run on http://localhost:8080
 
 
 
-## Backend API
-### **User Routes - Citizen**
 
+## Backend API
+
+### **Auth Routes**
 - POST `/api/register`
   - Description: Creates a new user in the database.
   - Success: Returns the newly created user object.
@@ -92,10 +125,35 @@ The frontend will run on http://localhost:8080
   - Success: Returns the logged-in user object.
   - Error: Returns an error.
 
+- GET `/api/logout`
+  - Description: Logs out the currently logged-in user.
+  - Success: Returns a success message.
+
+- GET `/api/session`
+  - Description: Retrieves the currently logged-in user object.
+  - Success: Returns the logged-in user object.
+  - Error: Returns an error.
+
+### **User Routes - Citizen**
 - POST `/api/users/reports`
   - Description: Adds a new report to the database.
   - Success: Returns the newly created report object.
   - Error: Returns an error response.
+
+- POST `/api/users/reports/images/upload`
+    - Description: Uploads up to 3 images for a report and returns their URLs.
+    - Success: Returns an object containing the list of uploaded image URLs.
+    - Error: Returns an error response if upload fails or no files are provided.
+
+- GET `/api/users/reports/categories`
+    - Description: Returns the full list of available report categories.
+    - Success: Returns the full list of available report categories.
+    - Error: Returns an error response.
+
+- PUT `/api/users/me`
+    - Description: Updates the profile of the currently authenticated user using the provided data (e.g. Telegram ID and other editable fields).
+    - Success: Returns the updated user object.
+    - Error: Returns an error response.
 
 ### **User Routes - Admin**
 - POST `/api/admin/accounts/register`
@@ -117,72 +175,169 @@ The frontend will run on http://localhost:8080
   - Success: Returns an array of role objects.
   - Error: Returns an error response.
 
+### **User Routes - Tech-Lead**
+- PUT `/api/tech-lead/:officerId/report/:reportId`
+  - Description: Assigns a report to an Officer. 
+  - Success: Returns the updated report
+  - Error: Returns an error response
 
+- GET `/api/tech-lead/:id/agents`
+  - Desciption: Returns the list of all the tech agents of the tech lead.
+  - Success: Returns a list of municipality users.
+  - Error: Returns an error response
+
+- GET `/api/tech-lead/:id/reports/list`
+  - Description: Returns the list of all the reports of the category managed by a tech lead, except the one in pending approval
+  - Success: Returns a list of report
+  - Error: Returns an error response
+
+### **User Routes - Tech agents**
+- GET `/api/tech/:id/reports/list`
+  - Description: Returns the list of all the reports assign to a tech agent
+  - Sucess: Returns a list of report
+  - Error: Returns an error response
+
+### **Report Routes**
+- POST `/api/reports/:id/status`
+  - Description: Modify the status of a report given its id
+  - Success: Returns the updated report
+  - Error: Returns an error response
+
+- GET `/api/reports/list`
+  - Desciption: Retrieves all the reports 
+  - Sucess: Return a list of reports
+  - Error: Returns an error response
+
+### **Message Routes**
+- POST `/api/messages/:reportId`
+  - Description: Sends a new message linked to a specific report. The sender is inferred from the authenticated user (regular user or municipality officer), while recipientId identifies the other party.
+  - Success: Returns the created message object
+  - Error: Returns an error response
+
+- GET `/api/messages/:reportId`
+    - Description: Retrieves all the messages associated with a specific report.
+    - Success: Returns a list of message objects.
+    - Error: Returns an error response
+
+
+### **Notification Routes**
+
+- GET `/api/notifications`
+    - Description: Retrieves all notifications for the currently authenticated user, ordered by creation date.
+    - Success: Returns a list of notification objects.
+    - Error: Returns an error response
+
+- DELETE `/api/notifications/:id`
+    - Description: Deletes a specific notification belonging to the authenticated user (used to mark it as read/handled).
+    - Success: Returns a confirmation object.
+    - Error: Returns an error response
 
 ## Frontend API 
 
 
 ### **Overview**
 
+**Auth API**
+```ts
+function registerUser(params: CreateUserRequestDTO);   // POST /api/register  registers a new user account into the system
+function login(params: LoginRequestDTO);              // POST /api/login    
+function logout();                                   // GET /api/logout
+function getSession();                              // GET /api/session
+
+```
 **User API**
 ```ts
-import {UserDTO} from "./UserDTO";
-import {LoginDTO} from "./LoginDTO";
-
-function registerUser(user: UserDTO);    // POST /api/register  registers a new user account into the system
-function login(credentials: LoginDTO);   // POST /api/login                       
-function addReport(report: ReportDTO);   // POST /api/users/reports
+function addReport(report: ReportResponseDTO);                   // POST /api/users/reports
+function uploadReportImages(images: File[]): Promise<string[]>  // POST /api/users/reports/images/upload
+function getAllCategories(): Promise<CategoryResponseDTO[]>    // GET /api/users/reports/categories
+function updateUserProfile(payload: UpdateUserRequestDTO): Promise<UserResponseDTO> // PUT /api/users/:id
 ```
 
 **Admin API**
 
 ```ts
-import {MunicipalityOfficerDTO} from "./MunicipalityOfficerDTO";
+import {MunicipalityOfficerResponseDTO} from "./MunicipalityOfficerResponseDTO";
 
-function registerMunicipalityOfficer(body: MunicipalityOfficerDTO);  // POST /api/admin/accounts/register  registers a new municipality officer account into the system
-function getAllMunicipalityUsers(): Promise<MunicipalityOfficerDTO[]>;                       // GET /api/admin/accounts/list       retrieves all municipality users in the system
-function setRole(body: MunicipalityOfficerDTO);                      // PUT /api/admin/accounts/assign     assigns a role to a specific municipality user
-function getRoles(): Promise<RoleDTO[]>;                                              // GET /api/admin/roles/list   retrieves all available roles in the system
+function registerMunicipalityOfficer(body: MunicipalityOfficerResponseDTO);  // POST /api/admin/accounts/register  registers a new municipality officer account into the system
+function getAllMunicipalityUsers(): Promise<MunicipalityOfficerResponseDTO[]>;                       // GET /api/admin/accounts/list       retrieves all municipality users in the system
+function setRole(body: MunicipalityOfficerResponseDTO);                      // PUT /api/admin/accounts/assign     assigns a role to a specific municipality user
+function getRoles(): Promise<RoleResponseDTO[]>;                                              // GET /api/admin/roles/list   retrieves all available roles in the system
 ```
 
-### **Municipality Officers Roles:**
+**Report API**
+```ts
+function getAllReports(): Promise<ReportResponseDTO[]>;  // GET /api/reports/list
+function updateReportStatus(reportId: number, payload: UpdateStatusReportDTO): Promise<ReportResponseDTO>;  // PUT /api/reports/:id/status
+```
 
-- ADMIN (Manages the entire platform and assigns roles to other municipal officers)
+**Tech Lead API**
+```ts
+function assignTechAgent(officerId: number, reportId: number): Promise<ReportResponseDTO>;  // PUT /api/tech-lead/:officerId/report/:reportId
+function getAgentsByTechLeadId(techLeadId: number): Promise<MunicipalityOfficerResponseDTO[]>;  // GET /api/tech-lead/:id/agents
+function getTechLeadReports(techLeadId: number): Promise<ReportResponseDTO[]>;  // GET /api/tech-lead/:id/reports/list
+```
 
-- ORGANIZATION_OFFICER (Reviews citizen reports, approves or rejects them, and assigns them to the correct technical area.)
+**Tech API**
+```ts
+function getTechReports(techAgentId: number): Promise<ReportResponseDTO[]>;  // GET /api/tech/:id/reports/list
+```
 
-- TECH_LEAD_INFRASTRUCTURE (Supervises infrastructure and road maintenance.)
+**Message API**
+```ts
+function sendMessage(payload: SendMessageRequestDTO, reportId: number): Promise<MessageResponseDTO> // POST /api/messages
+function getMessagesByReport(reportId: number): Promise<MessageResponseDTO[]>;  // GET /api/messages/:reportId
+```
 
-- TECH_AGENT_INFRASTRUCTURE (Performs field work and updates report status on roads and infrastructure.)
+**Notification API**
+```ts
+function getMyNotifications(): Promise<NotificationDTO[]>;  // GET /api/notifications
+function deleteNotification(notificationId: number): Promise<void>;  // DELETE /api/notifications/:id
+```
 
-- TECH_LEAD_GREEN_AREAS (Manages public parks, green areas, and playgrounds.)
+### 👥 Municipality Officer Roles
 
-- TECH_AGENT_GREEN_AREAS (Carries out maintenance tasks in green and recreational areas.)
+| Role Name | Assigned Categories |
+| :--- | :--- |
+| `ADMIN` | ALL |
+| `ORGANIZATION_OFFICER` | ALL |
+| `TECH_LEAD_INFRASTRUCTURE` | Roads and Urban Furnishings \| Sewer System \| Water Supply – Drinking Water |
+| `TECH_AGENT_INFRASTRUCTURE` | Roads and Urban Furnishings \| Architectural Barriers \| Sewer System \| Water Supply – Drinking Water |
+| `TECH_LEAD_MOBILITY` | Road Signs and Traffic Lights |
+| `TECH_AGENT_MOBILITY` | Road Signs and Traffic Lights \| Roads and Urban Furnishings |
+| `TECH_LEAD_GREEN_AREAS` | Public Green Areas and Playgrounds |
+| `TECH_AGENT_GREEN_AREAS` | Public Green Areas and Playgrounds |
+| `TECH_LEAD_WASTE_MANAGEMENT` | Waste |
+| `TECH_AGENT_WASTE_MANAGEMENT` | Waste \| Sewer System |
+| `TECH_LEAD_ENERGY_LIGHTING` | Public Lighting |
+| `TECH_AGENT_ENERGY_LIGHTING` | Public Lighting |
+| `TECH_LEAD_PUBLIC_BUILDINGS` | Architectural Barriers \| Other |
+| `TECH_AGENT_PUBLIC_BUILDINGS` | Architectural Barriers \| Other |
 
-- TECH_LEAD_ENVIRONMENTAL_QUALITY (Oversees pollution control and environmental hygiene.)
 
-- TECH_AGENT_ENVIRONMENTAL_QUALITY (Performs environmental inspections and clean-up operations.)
+### Username e Password Users
 
-- TECH_LEAD_URBAN_PLANNING (Responsible for urban accessibility and architectural barriers.)
+    -- luigibianchi password in chiaro: LuigiBianchi
+    -- annaverdi password in chiaro: AnnaVerdi
+    -- giulianeri password in chiaro: GiuliaNeri
+    -- paolorussi password in chiaro: PaoloRussi
+    -- saraferrari password in chiaro: SaraFerrari
+    -- lucagalli password in chiaro: LucaGalli
+    -- francescacosta password in chiaro: FrancescaCosta
+    -- elenamarino password in chiaro: ElenaMarino
+    -- giorgiotesta password in chiaro: GiorgioTesta
 
-- TECH_AGENT_URBAN_PLANNING (Conducts on-site evaluations of accessibility and urban design issues.)
 
-- TECH_LEAD_PRIVATE_BUILDINGS (Supervises private building safety and code compliance.)
+### Username e Password Officers
 
-- TECH_AGENT_PRIVATE_BUILDINGS (Handles inspections of private properties and construction issues.)
-
-- TECH_LEAD_PUBLIC_BUILDINGS (Manages maintenance of schools and municipal buildings.)
-
-- TECH_AGENT_PUBLIC_BUILDINGS (Executes maintenance and repair work on public buildings.)
-
-- TECH_LEAD_ENERGY_LIGHTING (Supervises public lighting and energy systems.)
-
-- TECH_AGENT_ENERGY_LIGHTING (Repairs and maintains streetlights and energy installations.)
-
-- TECH_LEAD_MOBILITY_TRANSPORT (Oversees mobility, transport, and parking infrastructure.)
-
-- TECH_AGENT_MOBILITY_TRANSPORT (Handles traffic light, signage, and parking maintenance.)
-
-- TECH_LEAD_WASTE_MANAGEMENT (Manages waste collection, street cleaning, and hygiene services.)
-
-- TECH_AGENT_WASTE_MANAGEMENT (Performs waste removal and street cleaning tasks.)
+    -- lead_infra password in chiaro: LeadInfra1!
+    -- agent_infra password in chiaro: AgentInfra1!
+    -- lead_mobility password in chiaro: LeadMobility1!
+    -- agent_mobility password in chiaro: AgentMobility1!
+    -- lead_green password in chiaro: LeadGreen1!
+    -- agent_green password in chiaro: AgentGreen1!
+    -- lead_waste password in chiaro: LeadWaste1!
+    -- agent_waste password in chiaro: AgentWaste1!
+    -- lead_energy password in chiaro: LeadEnergy1!
+    -- agent_energy password in chiaro: AgentEnergy1!
+    -- lead_buildings password in chiaro: LeadBuildings1!
+    -- agent_buildings password in chiaro: AgentBuildings1!

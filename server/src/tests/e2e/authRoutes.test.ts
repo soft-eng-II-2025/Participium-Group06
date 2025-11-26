@@ -1,63 +1,133 @@
 import request from "supertest";
-import { app, initializeApp } from "../../index";
+import express from "express";
+import session from "express-session";
+import passport from "passport";
+import { router as userRouter } from "../../routes/userRoutes";
 import { TestDataSource } from "../test-data-source";
-import { User } from "../../models/User";
+import { initializeUserRepositories } from "../../controllers/userController";
 
-describe("E2E: authRoutes", () => {
+// --------------------------------------------------
+// MOCK class-transformer per evitare Reflect.getMetadata
+// --------------------------------------------------
+
+describe("User API E2E", () => {
+  let app: express.Express;
+
   beforeAll(async () => {
-    if (!TestDataSource.isInitialized) {
-        await TestDataSource.initialize();
-    }
-        await TestDataSource.synchronize(true);
-    });
+    // inizializza DB test
+    await TestDataSource.initialize();
+    await TestDataSource.synchronize(true);
 
+    initializeUserRepositories(TestDataSource);
 
-  it("POST /api/register -> registra nuovo utente", async () => {
-    const payload = {
-      username: "user1",
-      email: "user1@mail.com",
-      password: "password123",
-      first_name: "Luca",
-      last_name: "Bianchi",
-    };
+    // crea app Express
+    app = express();
+    app.use(express.json());
 
-    const res = await request(app)
-      .post("/api/register")
-      .send(payload);
+    app.use(
+      session({
+        secret: "testsecret",
+        resave: false,
+        saveUninitialized: false,
+      })
+    );
 
-    expect(res.status).toBe(201);
-    expect(res.body).toHaveProperty("username", "user1");
+    app.use(passport.initialize());
+    app.use(passport.session());
 
-    const repo = TestDataSource.getRepository(User);
-    const user = await repo.findOne({ where: { username: "user1" } });
-    expect(user).not.toBeNull();
+    // monta le rotte
+    app.use("/api", userRouter);
   });
 
-  it("POST /api/login -> effettua login con credenziali corrette", async () => {
-    const payload = { username: "user1", password: "password123" };
+  afterAll(async () => {
+    await TestDataSource.destroy();
+  });
 
+  // --------------------------------------------------
+  // TEST: REGISTER
+  // --------------------------------------------------
+  it("POST /api/register -> crea un utente e lo autentica subito", async () => {
+    const agent = request.agent(app);
+
+    const res = await agent
+      .post("/api/register")
+      .send({
+        username: "mario",
+        email: "mario@example.com",
+        password: "password123",
+        first_name: "Mario",
+        last_name: "Rossi",
+      })
+      .expect(201);
+
+    expect(res.body).toHaveProperty("username", "mario");
+    expect(res.body).toHaveProperty("email", "mario@example.com");
+  });
+
+  // --------------------------------------------------
+  // TEST: LOGIN
+  // --------------------------------------------------
+  it("POST /api/login -> login con credenziali corrette", async () => {
+    const agent = request.agent(app);
+
+    const res = await agent
+      .post("/api/login")
+      .send({
+        username: "mario",
+        password: "password123",
+      })
+      .expect(200);
+
+    expect(res.body).toHaveProperty("username", "mario");
+  });
+
+  it("POST /api/login -> fallisce con password errata", async () => {
     const res = await request(app)
       .post("/api/login")
-      .send(payload);
+      .send({
+        username: "mario",
+        password: "WRONGPASS",
+      })
+      .expect(401);
 
-    // Passport ritorna 401 se credenziali errate
-    expect([200, 401]).toContain(res.status);
-
-    if (res.status === 200) {
-      expect(res.body).toHaveProperty("username", "user1");
-    }
+    expect(res.body.message).toBeDefined();
   });
 
-  it("GET /api/session -> ritorna sessione utente (null se non loggato)", async () => {
-    const res = await request(app).get("/api/session");
-    expect(res.status).toBe(200);
-    // Se non loggato: null
-    expect(res.body === null || typeof res.body === "object").toBe(true);
+  // --------------------------------------------------
+  // TEST: GET SESSION
+  // --------------------------------------------------
+  it("GET /api/session -> ritorna utente autenticato", async () => {
+    const agent = request.agent(app);
+
+    await agent.post("/api/login").send({
+      username: "mario",
+      password: "password123",
+    }).expect(200);
+
+    const ses = await agent.get("/api/session").expect(200);
+    expect(ses.body).toHaveProperty("username", "mario");
   });
 
-  it("POST /api/logout -> logout utente", async () => {
-    const res = await request(app).post("/api/logout");
-    expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty("ok", true);
+  it("GET /api/session -> 401 se non autenticato", async () => {
+    const res = await request(app).get("/api/session").expect(401);
+    expect(res.body).toHaveProperty("error", "Authentication required");
+  });
+
+  // --------------------------------------------------
+  // TEST: LOGOUT
+  // --------------------------------------------------
+  it("POST /api/logout -> invalida la sessione", async () => {
+    const agent = request.agent(app);
+
+    await agent.post("/api/login").send({
+      username: "mario",
+      password: "password123",
+    }).expect(200);
+
+    const out = await agent.post("/api/logout").expect(200);
+    expect(out.body).toHaveProperty("ok", true);
+
+    const ses = await agent.get("/api/session").expect(401);
+    expect(ses.body.error).toBe("Authentication required");
   });
 });

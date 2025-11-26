@@ -1,18 +1,41 @@
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsNotEmpty, IsNumber, IsString, Max, Min } from "class-validator";
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from "class-validator";
+import { StatusType } from "../StatusType";
+import { MunicipalityOfficerResponseDTO } from "./MunicipalityOfficerResponseDTO";
+import { Type } from "class-transformer";
 
 export class CreateReportRequestDTO {
-    @IsNumber() @Min(-180) @Max(180) longitude!: number;
 
-    @IsNumber() @Min(-90)  @Max(90)  latitude!: number;
+    @IsNumber()
+    @Min(-180)
+    @Max(180)
+    longitude!: number;
 
-    @IsNotEmpty() title!: string;
+    @IsNumber()
+    @Min(-90)
+    @Max(90)
+    latitude!: number;
 
-    @IsNotEmpty() description!: string;
+    @IsNotEmpty()
+    title!: string;
 
-    @IsNumber() userId!: number;
+    @IsNotEmpty()
+    description!: string;
 
-    @IsNumber() categoryId!: number;
+    @IsNumber()
+    userId!: number;
 
-    @IsArray() @ArrayMinSize(1) @ArrayMaxSize(3) @IsString({ each: true }) photos!: string[];
+    @IsNumber() 
+    categoryId!: number;
+
+
+    @IsOptional()
+    @Type(() => MunicipalityOfficerResponseDTO)
+    officer?: MunicipalityOfficerResponseDTO;
+
+    @IsArray()
+    @ArrayMinSize(1)
+    @ArrayMaxSize(3)
+    @IsString({ each: true })
+    photos!: string[];
 
 }

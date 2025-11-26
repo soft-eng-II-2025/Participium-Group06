@@ -2,6 +2,8 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColum
 import { User } from './User';
 import { Category } from './Category';
 import { ReportPhoto } from './ReportPhoto';
+import { StatusType } from './StatusType';
+import { MunicipalityOfficer } from './MunicipalityOfficer';
 
 @Entity()
 export class Report {
@@ -20,6 +22,21 @@ export class Report {
   @Column()
   description!: string;
 
+  @Column({
+  type: "enum",
+  enum: StatusType,
+  default: StatusType.PendingApproval, // <- DB default
+  })
+  status!: StatusType;
+
+
+  @Column()
+  explanation!: string;
+
+  @ManyToOne(() => MunicipalityOfficer, (officer) => officer.reports)
+  @JoinColumn({ name: 'officerId' })
+  officer?: MunicipalityOfficer;
+
   @ManyToOne(() => User, (user) => user.reports)
   @JoinColumn({ name: 'userId' })
   user!: User;
@@ -30,4 +47,6 @@ export class Report {
 
   @OneToMany(() => ReportPhoto, (photo) => photo.report)
   photos!: ReportPhoto[];
+  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt!: Date;
 }

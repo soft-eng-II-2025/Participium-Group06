@@ -49,6 +49,20 @@ export class MunicipalityOfficerRepository {
         return this.ormRepository.findOneBy({ email });
     }
 
+    async findById(id: number): Promise<MunicipalityOfficer | null> {
+        return this.ormRepository.findOne({
+            where: { id },
+            relations: ["role"],
+        });
+    }
+
+    async findByRoleTitle(roleTitle: string): Promise<MunicipalityOfficer[]> {
+        return this.ormRepository.find({
+            where: { role: { title: roleTitle } },
+            relations: ["role"],
+        });
+    }
+
     async add(municipalityOfficer: MunicipalityOfficer): Promise<MunicipalityOfficer> {
         return this.ormRepository.save(municipalityOfficer);
     }

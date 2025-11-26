@@ -1,399 +1,535 @@
-// src/tests/integration/adminController.test.ts
-import { TestDataSource } from '../../test-data-source';
-import { DataSource, Repository } from 'typeorm';
+// src/tests/unit/adminController.unit.test.ts
 
-// Importa adminController e la sua funzione di inizializzazione
-import * as adminController from '../../../controllers/adminController';
-// Per le istanze dei tuoi repository personalizzati, usiamo i loro tipi
-import { MunicipalityOfficerRepository } from '../../../repositories/MunicipalityOfficerRepository';
-import { RoleRepository } from '../../../repositories/RoleRepository';
-import { MunicipalityOfficer } from '../../../models/MunicipalityOfficer';
-import { Role } from '../../../models/Role';
-import { LoginRequestDTO } from '../../../models/DTOs/LoginRequestDTO'; // Per loginOfficer
-import { hashPassword } from '../../../services/passwordService';
+import {
+    initializeAdminRepositories,
+    addMunicipalityOfficer,
+    getAllMunicipalityOfficer,
+    updateMunicipalityOfficer,
+    loginOfficer,
+    getAllRoles,
+    getMunicipalityOfficerByUsername,
+    assignTechAgent,
+    getAgentsByTechLeadUsername,
+    getTechReports,
+    getTechLeadReports,
+} from "../../../controllers/adminController";
 
-// Importa tutte le entità per la pulizia del database
-import { User } from '../../../models/User';
-import { Report } from '../../../models/Report';
-import { ReportPhoto } from '../../../models/ReportPhoto';
-import { Category } from '../../../models/Category';
+import { MunicipalityOfficerRepository } from "../../../repositories/MunicipalityOfficerRepository";
+import { RoleRepository } from "../../../repositories/RoleRepository";
+import { CategoryRepository } from "../../../repositories/CategoryRepository";
+import { ReportRepository } from "../../../repositories/ReportRepository";
 
+import {
+    mapMunicipalityOfficerDAOToDTO as mapMunicipalityOfficerDAOToResponse,
+    mapReportDAOToDTO as mapReportDAOToResponse,
+} from "../../../services/mapperService";
+import { verifyPassword, hashPassword } from "../../../services/passwordService";
 
-describe('adminController (Integration Tests - DB in Memory)', () => {
-  // Variabili per le istanze dei tuoi repository personalizzati (chiamano i metodi del controller)
-  let adminMunicipalityOfficerRepository: MunicipalityOfficerRepository;
-  let adminRoleRepository: RoleRepository;
+// mock di reportController per le funzioni richiamate da adminController
+jest.mock("../../../controllers/reportController", () => ({
+    updateReportOfficer: jest.fn(),
+    getReportsByCategoryIdAndStatus: jest.fn(),
+}));
 
-  // Variabili per i repository TypeORM diretti (usati per pre-popolazione e pulizia nel test)
-  let typeOrmOfficerRepository: Repository<MunicipalityOfficer>;
-  let typeOrmRoleRepository: Repository<Role>;
-  let typeOrmUserRepository: Repository<User>;
-  let typeOrmReportRepository: Repository<Report>;
-  let typeOrmReportPhotoRepository: Repository<ReportPhoto>;
-  let typeOrmCategoryRepository: Repository<Category>;
+import {
+    updateReportOfficer,
+    getReportsByCategoryIdAndStatus,
+} from "../../../controllers/reportController";
 
+// mock repository e servizi
+jest.mock("../../../repositories/MunicipalityOfficerRepository");
+jest.mock("../../../repositories/RoleRepository");
+jest.mock("../../../repositories/CategoryRepository");
+jest.mock("../../../repositories/ReportRepository");
+jest.mock("../../../services/mapperService");
+jest.mock("../../../services/passwordService");
 
-  let adminRole: Role;
-  let officerRole: Role;
-  let regularOfficerWithRole: MunicipalityOfficer; // Ufficiale con ruolo
-  let regularOfficerWithoutRole: MunicipalityOfficer; // Ufficiale senza ruolo per i test di assegnazione
+describe("adminController - Unit Test (mock)", () => {
+    let officerRepoMock: any;
+    let roleRepoMock: any;
+    let categoryRepoMock: any;
+    let reportRepoMock: any;
 
-  // beforeEach viene eseguito prima di OGNI singolo test
-  beforeEach(async () => {
-    // Distrugge e reinizializza il DataSource per ogni test
-    if (TestDataSource.isInitialized) {
-      await TestDataSource.destroy();
-    }
-    await TestDataSource.initialize();
+    beforeEach(() => {
+        officerRepoMock = {
+            add: jest.fn(),
+            findAllVisible: jest.fn(),
+            findByUsername: jest.fn(),
+            findByusername: jest.fn(), // notare la 'u' minuscola, come nel controller
+            update: jest.fn(),
+            findById: jest.fn(),
+            findByRoleTitle: jest.fn(),
+        };
 
-    // *** Inizializza i repository del controller con il TestDataSource ***
-    adminController.initializeAdminRepositories(TestDataSource);
+        roleRepoMock = {
+            findByTitle: jest.fn(),
+            findAssignable: jest.fn(),
+        };
 
-    // Istanzia i repository personalizzati per chiamare i loro metodi (es. findByUsername)
-    adminMunicipalityOfficerRepository = new MunicipalityOfficerRepository(TestDataSource);
-    adminRoleRepository = new RoleRepository(TestDataSource);
+        categoryRepoMock = {
+            findByRoleId: jest.fn(),
+        };
 
-    // Ottieni le istanze dirette dei repository di TypeORM per pre-popolazione e pulizia
-    typeOrmOfficerRepository = TestDataSource.getRepository(MunicipalityOfficer);
-    typeOrmRoleRepository = TestDataSource.getRepository(Role);
-    typeOrmUserRepository = TestDataSource.getRepository(User);
-    typeOrmReportRepository = TestDataSource.getRepository(Report);
-    typeOrmReportPhotoRepository = TestDataSource.getRepository(ReportPhoto);
-    typeOrmCategoryRepository = TestDataSource.getRepository(Category);
+        reportRepoMock = {
+            findByOfficer: jest.fn(),
+        };
 
+        (MunicipalityOfficerRepository as unknown as jest.Mock).mockImplementation(
+            () => officerRepoMock,
+        );
+        (RoleRepository as unknown as jest.Mock).mockImplementation(
+            () => roleRepoMock,
+        );
+        (CategoryRepository as unknown as jest.Mock).mockImplementation(
+            () => categoryRepoMock,
+        );
+        (ReportRepository as unknown as jest.Mock).mockImplementation(
+            () => reportRepoMock,
+        );
 
-    // Prepara i ruoli
-    adminRole = new Role();
-    adminRole.title = 'Admin';
-    await typeOrmRoleRepository.save(adminRole);
+        // inizializza i repo interni del controller con un dataSource finto
+        initializeAdminRepositories({} as any);
 
-    officerRole = new Role();
-    officerRole.title = 'Officer';
-    await typeOrmRoleRepository.save(officerRole);
-
-    // Prepara un ufficiale REGOLARE CON RUOLO per i test di login, etc.
-    const officerWithRole = new MunicipalityOfficer();
-    officerWithRole.username = 'regular.officer';
-    officerWithRole.email = 'regular@example.com';
-    officerWithRole.password = await hashPassword('securepassword');
-    officerWithRole.first_name = 'Regular';
-    officerWithRole.last_name = 'Officer';
-    officerWithRole.role = officerRole;
-    regularOfficerWithRole = await typeOrmOfficerRepository.save(officerWithRole);
-
-    // Prepara un ufficiale SENZA RUOLO per i test di assegnazione ruolo
-    const officerWithoutRole = new MunicipalityOfficer();
-    officerWithoutRole.username = 'assignme.officer';
-    officerWithoutRole.email = 'assignme@example.com';
-    officerWithoutRole.password = await hashPassword('assignpass');
-    officerWithoutRole.first_name = 'Assign';
-    officerWithoutRole.last_name = 'Me';
-    // officerWithoutRole.role rimane undefined
-    regularOfficerWithoutRole = await typeOrmOfficerRepository.save(officerWithoutRole);
-
-  });
-
-
-  // --- Test per addMunicipalityOfficer ---
-  describe('addMunicipalityOfficer', () => {
-    it('dovrebbe aggiungere un nuovo ufficiale con un ruolo esistente', async () => {
-      const officerData = {
-        username: 'new.officer',
-        email: 'new@example.com',
-        password: 'securepass',
-        first_name: 'New',
-        last_name: 'Officer',
-        role: { title: officerRole.title },
-      };
-
-      const newOfficerDTO = await adminController.addMunicipalityOfficer(officerData);
-
-      expect(newOfficerDTO).toBeDefined();
-      expect(newOfficerDTO.username).toBe('new.officer');
-      expect(newOfficerDTO.email).toBe('new@example.com');
-      expect(newOfficerDTO.role?.title).toBe(officerRole.title);
-      expect(newOfficerDTO.password).toBeUndefined(); // password è undefined dopo removeNullAttributes
-
-      const savedOfficer = await typeOrmOfficerRepository.findOne({ where: { username: 'new.officer' }, relations: ['role'] });
-      expect(savedOfficer).toBeDefined();
-      expect(savedOfficer?.role?.id).toBe(officerRole.id);
+        jest.clearAllMocks();
     });
 
-    it('dovrebbe lanciare un errore se la password è vuota', async () => {
-      const officerData = {
-        username: 'failuser',
-        email: 'fail@example.com',
-        password: '', // Password vuota
-        first_name: 'Fail',
-        last_name: 'User',
-        role: { title: officerRole.title },
-      };
-      await expect(adminController.addMunicipalityOfficer(officerData)).rejects.toThrow('PASSWORD_REQUIRED');
+    // ------------------------------------------------------------------
+    // addMunicipalityOfficer
+    // ------------------------------------------------------------------
+    describe("addMunicipalityOfficer", () => {
+        it("dovrebbe aggiungere un nuovo ufficiale", async () => {
+            const dao = { id: 1, username: "new.officer", email: "new@example.com" };
+            (hashPassword as jest.Mock).mockResolvedValue("hashedpass");
+            officerRepoMock.add.mockResolvedValue(dao);
+            (mapMunicipalityOfficerDAOToResponse as jest.Mock).mockReturnValue({
+                username: "new.officer",
+                email: "new@example.com",
+                role: null,
+            });
+
+            const result = await addMunicipalityOfficer({
+                username: "new.officer",
+                email: "new@example.com",
+                password: "securepass",
+                first_name: "New",
+                last_name: "Officer",
+            });
+
+            expect(hashPassword).toHaveBeenCalledWith("securepass");
+            expect(officerRepoMock.add).toHaveBeenCalledTimes(1);
+            expect(result).toEqual({
+                username: "new.officer",
+                email: "new@example.com",
+                role: null,
+            });
+        });
+
+        it("dovrebbe lanciare PASSWORD_REQUIRED se la password è vuota", async () => {
+            await expect(
+                addMunicipalityOfficer({
+                    username: "failuser",
+                    email: "fail@example.com",
+                    password: "",
+                    first_name: "Fail",
+                    last_name: "User",
+                }),
+            ).rejects.toThrow("PASSWORD_REQUIRED");
+        });
+
+        it("può simulare violazione di vincolo (username duplicato)", async () => {
+            (hashPassword as jest.Mock).mockResolvedValue("hashedpass");
+            officerRepoMock.add.mockRejectedValue(new Error("duplicate key"));
+
+            await expect(
+                addMunicipalityOfficer({
+                    username: "regular.officer",
+                    email: "unique@example.com",
+                    password: "securepass",
+                    first_name: "Dup",
+                    last_name: "User",
+                }),
+            ).rejects.toThrow("duplicate key");
+        });
     });
 
-    it('dovrebbe lanciare un errore se il ruolo non esiste', async () => {
-      const officerData = {
-        username: 'norole.officer',
-        email: 'norole@example.com',
-        password: 'securepass',
-        first_name: 'No',
-        last_name: 'Role',
-        role: { title: 'NonExistentRole' },
-      };
-      await expect(adminController.addMunicipalityOfficer(officerData)).rejects.toThrow('ROLE_NOT_FOUND');
+    // ------------------------------------------------------------------
+    // getAllMunicipalityOfficer
+    // ------------------------------------------------------------------
+    describe("getAllMunicipalityOfficer", () => {
+        it("dovrebbe restituire gli ufficiali visibili (escluso admin)", async () => {
+            const daoList = [
+                { username: "regular.officer" },
+                { username: "assignme.officer" },
+            ];
+            officerRepoMock.findAllVisible.mockResolvedValue(daoList);
+            (mapMunicipalityOfficerDAOToResponse as jest.Mock)
+                .mockImplementation((dao: any) => ({ username: dao.username }));
+
+            const officers = await getAllMunicipalityOfficer();
+
+            expect(officerRepoMock.findAllVisible).toHaveBeenCalledTimes(1);
+            expect(officers).toEqual([
+                { username: "regular.officer" },
+                { username: "assignme.officer" },
+            ]);
+        });
+
+        it("dovrebbe restituire array vuoto se non ci sono ufficiali visibili", async () => {
+            officerRepoMock.findAllVisible.mockResolvedValue([]);
+
+            const officers = await getAllMunicipalityOfficer();
+
+            expect(officers).toEqual([]);
+        });
     });
 
-    it('dovrebbe lanciare un errore se si tenta di assegnare un ruolo Admin', async () => {
-      const officerData = {
-        username: 'bad.officer',
-        email: 'bad@example.com',
-        password: 'securepass',
-        first_name: 'Bad',
-        last_name: 'Officer',
-        role: { title: adminRole.title }, // Admin role
-      };
-      await expect(adminController.addMunicipalityOfficer(officerData)).rejects.toThrow('ROLE_NOT_ASSIGNABLE');
+    // ------------------------------------------------------------------
+    // updateMunicipalityOfficer
+    // ------------------------------------------------------------------
+    describe("updateMunicipalityOfficer", () => {
+        it("aggiorna il ruolo di un ufficiale con successo", async () => {
+            const existingOfficer = { username: "assignme.officer", role: null };
+            const role = { id: 10, title: "Supervisor" };
+
+            officerRepoMock.findByUsername.mockResolvedValue(existingOfficer);
+            roleRepoMock.findByTitle.mockResolvedValue(role);
+            officerRepoMock.update.mockResolvedValue({ ...existingOfficer, role });
+            (mapMunicipalityOfficerDAOToResponse as jest.Mock).mockReturnValue({
+                username: "assignme.officer",
+                role: "Supervisor",
+            });
+
+            const result = await updateMunicipalityOfficer({
+                username: "assignme.officer",
+                roleTitle: "Supervisor",
+            });
+
+            expect(officerRepoMock.findByUsername).toHaveBeenCalledWith("assignme.officer");
+            expect(roleRepoMock.findByTitle).toHaveBeenCalledWith("Supervisor");
+            expect(result).toEqual({
+                username: "assignme.officer",
+                role: "Supervisor",
+            });
+        });
+
+        it("lancia USERNAME_REQUIRED se username è vuoto", async () => {
+            await expect(
+                updateMunicipalityOfficer({ username: "", roleTitle: "Officer" }),
+            ).rejects.toThrow("USERNAME_REQUIRED");
+        });
+
+        it("lancia OFFICER_NOT_FOUND se l'ufficiale non esiste", async () => {
+            officerRepoMock.findByUsername.mockResolvedValue(null);
+
+            await expect(
+                updateMunicipalityOfficer({ username: "nonexistent", roleTitle: "Officer" }),
+            ).rejects.toThrow("OFFICER_NOT_FOUND");
+        });
+
+        it("lancia ROLE_ALREADY_ASSIGNED se l'ufficiale ha già un ruolo", async () => {
+            officerRepoMock.findByUsername.mockResolvedValue({
+                username: "regular.officer",
+                role: { title: "Officer" },
+            });
+
+            await expect(
+                updateMunicipalityOfficer({
+                    username: "regular.officer",
+                    roleTitle: "Officer",
+                }),
+            ).rejects.toThrow("ROLE_ALREADY_ASSIGNED");
+        });
+
+        it("lancia ROLE_TITLE_REQUIRED se roleTitle è mancante", async () => {
+            officerRepoMock.findByUsername.mockResolvedValue({
+                username: "assignme.officer",
+                role: null,
+            });
+
+            await expect(
+                updateMunicipalityOfficer({
+                    username: "assignme.officer",
+                    roleTitle: "",
+                }),
+            ).rejects.toThrow("ROLE_TITLE_REQUIRED");
+        });
+
+        it("lancia ROLE_NOT_FOUND se il ruolo non esiste", async () => {
+            officerRepoMock.findByUsername.mockResolvedValue({
+                username: "assignme.officer",
+                role: null,
+            });
+            roleRepoMock.findByTitle.mockResolvedValue(null);
+
+            await expect(
+                updateMunicipalityOfficer({
+                    username: "assignme.officer",
+                    roleTitle: "NonExistentRole",
+                }),
+            ).rejects.toThrow("ROLE_NOT_FOUND");
+        });
+
+        it("lancia ROLE_NOT_ASSIGNABLE se si prova ad assegnare Admin", async () => {
+            officerRepoMock.findByUsername.mockResolvedValue({
+                username: "assignme.officer",
+                role: null,
+            });
+
+            await expect(
+                updateMunicipalityOfficer({
+                    username: "assignme.officer",
+                    roleTitle: "Admin",
+                }),
+            ).rejects.toThrow("ROLE_NOT_ASSIGNABLE");
+        });
+
+        it('lancia FORBIDDEN_ADMIN_ACCOUNT se si tenta di modificare l\'utente "admin"', async () => {
+            await expect(
+                updateMunicipalityOfficer({
+                    username: "admin",
+                    roleTitle: "Officer",
+                }),
+            ).rejects.toThrow("FORBIDDEN_ADMIN_ACCOUNT");
+        });
     });
 
-    it('dovrebbe aggiungere un ufficiale senza ruolo', async () => {
-      const officerData = {
-        username: 'norole.officer',
-        email: 'norole@example.com',
-        password: 'securepass',
-        first_name: 'No',
-        last_name: 'Role',
-        // nessun ruolo specificato
-      };
+    // ------------------------------------------------------------------
+    // loginOfficer
+    // ------------------------------------------------------------------
+    describe("loginOfficer", () => {
+        it("login ok con credenziali valide", async () => {
+            const dao = { username: "regular.officer", password: "hashed" };
+            officerRepoMock.findByUsername.mockResolvedValue(dao);
+            (verifyPassword as jest.Mock).mockResolvedValue(true);
+            (mapMunicipalityOfficerDAOToResponse as jest.Mock).mockReturnValue({
+                username: "regular.officer",
+            });
 
-      const newOfficerDTO = await adminController.addMunicipalityOfficer(officerData);
-      expect(newOfficerDTO).toBeDefined();
-      expect(newOfficerDTO.username).toBe('norole.officer');
-      expect(newOfficerDTO.role).toBeUndefined(); // Verifica che non abbia un ruolo
-      expect(newOfficerDTO.password).toBeUndefined();
+            const res = await loginOfficer({
+                username: "regular.officer",
+                password: "securepassword",
+            });
+
+            expect(res).toEqual({ username: "regular.officer" });
+            expect(officerRepoMock.findByUsername).toHaveBeenCalledWith("regular.officer");
+            expect(verifyPassword).toHaveBeenCalled();
+        });
+
+        it("lancia INVALID_CREDENTIALS se la password è errata", async () => {
+            const dao = { username: "regular.officer", password: "hashed" };
+            officerRepoMock.findByUsername.mockResolvedValue(dao);
+            (verifyPassword as jest.Mock).mockResolvedValue(false);
+
+            await expect(
+                loginOfficer({
+                    username: "regular.officer",
+                    password: "wrongpassword",
+                }),
+            ).rejects.toThrow("INVALID_CREDENTIALS");
+        });
     });
 
-    it('dovrebbe lanciare un errore se username è duplicato', async () => {
-      const officerData = {
-        username: 'regular.officer', // Già esistente
-        email: 'unique@example.com',
-        password: 'securepass',
-        first_name: 'Dup',
-        last_name: 'User',
-        role: { title: officerRole.title },
-      };
-      await expect(adminController.addMunicipalityOfficer(officerData)).rejects.toThrow();
+    // ------------------------------------------------------------------
+    // getAllRoles
+    // ------------------------------------------------------------------
+    describe("getAllRoles", () => {
+        it("restituisce solo ruoli assegnabili (no Admin)", async () => {
+            roleRepoMock.findAssignable.mockResolvedValue([
+                { id: 1, title: "Officer", label: "Officer" },
+                { id: 2, title: "Viewer", label: "Viewer" },
+            ]);
+
+            const roles = await getAllRoles();
+
+            expect(roleRepoMock.findAssignable).toHaveBeenCalledTimes(1);
+            expect(roles).toEqual([
+                { id: 1, title: "Officer", label: "Officer" },
+                { id: 2, title: "Viewer", label: "Viewer" },
+            ]);
+        });
+
+        it("ritorna array vuoto se non ci sono ruoli", async () => {
+            roleRepoMock.findAssignable.mockResolvedValue([]);
+            const roles = await getAllRoles();
+            expect(roles).toEqual([]);
+        });
     });
 
-    it('dovrebbe lanciare un errore se email è duplicata', async () => {
-      const officerData = {
-        username: 'unique.user',
-        email: 'regular@example.com', // Già esistente
-        password: 'securepass',
-        first_name: 'Dup',
-        last_name: 'User',
-        role: { title: officerRole.title },
-      };
-      await expect(adminController.addMunicipalityOfficer(officerData)).rejects.toThrow();
-    });
-  });
+    // ------------------------------------------------------------------
+    // getMunicipalityOfficerByUsername
+    // ------------------------------------------------------------------
+    describe("getMunicipalityOfficerByUsername", () => {
+        it("restituisce l'ufficiale se esiste", async () => {
+            const dao = { username: "regular.officer", role: { title: "Officer" } };
+            officerRepoMock.findByUsername.mockResolvedValue(dao);
+            (mapMunicipalityOfficerDAOToResponse as jest.Mock).mockReturnValue({
+                username: "regular.officer",
+                role: "Officer",
+            });
 
-  // --- Test per getAllMunicipalityOfficer ---
-  describe('getAllMunicipalityOfficer', () => {
-    it('dovrebbe restituire tutti gli ufficiali visibili (escluso admin)', async () => {
-      // Aggiungiamo un ufficiale "admin" che dovrebbe essere escluso
-      const adminOfficer = new MunicipalityOfficer();
-      adminOfficer.username = 'admin';
-      adminOfficer.email = 'admin@example.com';
-      adminOfficer.password = await hashPassword('adminpass');
-      adminOfficer.first_name = 'Admin';
-      adminOfficer.last_name = 'User';
-      adminOfficer.role = adminRole;
-      await typeOrmOfficerRepository.save(adminOfficer);
+            const dto = await getMunicipalityOfficerByUsername("regular.officer");
+            expect(dto).toEqual({ username: "regular.officer", role: "Officer" });
+        });
 
-      const officers = await adminController.getAllMunicipalityOfficer();
+        it("lancia OFFICER_NOT_FOUND se non esiste", async () => {
+            officerRepoMock.findByUsername.mockResolvedValue(null);
 
-      expect(officers).toBeDefined();
-      expect(officers.length).toBe(2); // regularOfficerWithRole + regularOfficerWithoutRole
-      expect(officers.some(o => o.username === regularOfficerWithRole.username)).toBe(true);
-      expect(officers.some(o => o.username === regularOfficerWithoutRole.username)).toBe(true);
-      expect(officers.some(o => o.username === 'admin')).toBe(false); // L'admin è escluso
+            await expect(
+                getMunicipalityOfficerByUsername("nonexistent.officer"),
+            ).rejects.toThrow("OFFICER_NOT_FOUND");
+        });
     });
 
-    it('dovrebbe restituire un array vuoto se non ci sono ufficiali visibili', async () => {
-      // Pulisci tutti gli ufficiali
-      await typeOrmOfficerRepository.clear();
-      // Crea un solo ufficiale admin che verrà filtrato
-      const adminOfficer = new MunicipalityOfficer();
-      adminOfficer.username = 'admin';
-      adminOfficer.email = 'admin@example.com';
-      adminOfficer.password = await hashPassword('adminpass');
-      adminOfficer.first_name = 'Admin';
-      adminOfficer.last_name = 'User';
-      adminOfficer.role = adminRole;
-      await typeOrmOfficerRepository.save(adminOfficer);
+    // ------------------------------------------------------------------
+    // assignTechAgent
+    // ------------------------------------------------------------------
+    describe("assignTechAgent", () => {
+        it("assegna un tech agent a un report", async () => {
+            const officer = { id: 10, username: "tech.agent1" };
+            officerRepoMock.findByUsername.mockResolvedValue(officer);
 
-      const officers = await adminController.getAllMunicipalityOfficer();
-      expect(officers).toBeDefined();
-      expect(officers).toHaveLength(0);
-    });
-  });
+            (updateReportOfficer as jest.Mock).mockResolvedValue({
+                id: 123,
+                officer: { username: "tech.agent1" },
+            });
 
-  // --- Test per updateMunicipalityOfficer ---
-  describe('updateMunicipalityOfficer', () => {
-    it('dovrebbe aggiornare il ruolo di un ufficiale con successo', async () => {
-      const newRole = new Role();
-      newRole.title = 'Supervisor';
-      const supervisorRole = await typeOrmRoleRepository.save(newRole);
+            const result = await assignTechAgent(123, "tech.agent1");
 
-      const updateData = {
-        username: regularOfficerWithoutRole.username, // Usa l'ufficiale senza ruolo
-        role: { title: supervisorRole.title },
-      };
+            expect(officerRepoMock.findByUsername).toHaveBeenCalledWith("tech.agent1");
+            expect(updateReportOfficer).toHaveBeenCalledWith(123, officer);
+            expect(result.officer.username).toBe("tech.agent1");
+        });
 
-      const updatedOfficerDTO = await adminController.updateMunicipalityOfficer(updateData);
+        it("lancia OFFICER_NOT_FOUND se il tech agent non esiste", async () => {
+            officerRepoMock.findByUsername.mockResolvedValue(null);
 
-      expect(updatedOfficerDTO).toBeDefined();
-      expect(updatedOfficerDTO.username).toBe(regularOfficerWithoutRole.username);
-      expect(updatedOfficerDTO.role?.title).toBe('Supervisor');
-
-      const savedOfficer = await typeOrmOfficerRepository.findOne({ where: { username: regularOfficerWithoutRole.username }, relations: ['role'] });
-      expect(savedOfficer?.role?.id).toBe(supervisorRole.id);
+            await expect(
+                assignTechAgent(123, "missing.agent"),
+            ).rejects.toThrow("OFFICER_NOT_FOUND");
+        });
     });
 
-    it('dovrebbe lanciare un errore se username è mancante', async () => {
-      const updateData = {
-        username: '', // Mancante
-        role: { title: officerRole.title },
-      };
-      await expect(adminController.updateMunicipalityOfficer(updateData)).rejects.toThrow('USERNAME_REQUIRED');
+    // ------------------------------------------------------------------
+    // getAgentsByTechLeadUsername
+    // ------------------------------------------------------------------
+    describe("getAgentsByTechLeadUsername", () => {
+        it("restituisce tutti i tech agent per un tech lead valido", async () => {
+            const techLead = { id: 1, username: "tech.lead1", role: { title: "TECH_LEAD_AREA1" } };
+            officerRepoMock.findByUsername.mockResolvedValue(techLead);
+
+            const agents = [{ username: "tech.agent1" }, { username: "tech.agent2" }];
+            officerRepoMock.findByRoleTitle.mockResolvedValue(agents);
+
+            (mapMunicipalityOfficerDAOToResponse as jest.Mock)
+                .mockImplementation((o: any) => ({ username: o.username }));
+
+            const result = await getAgentsByTechLeadUsername("tech.lead1");
+
+            expect(officerRepoMock.findByUsername).toHaveBeenCalledWith("tech.lead1");
+            expect(officerRepoMock.findByRoleTitle).toHaveBeenCalledWith("TECH_AGENT_AREA1");
+            expect(result).toEqual([
+                { username: "tech.agent1" },
+                { username: "tech.agent2" },
+            ]);
+        });
+
+        it("lancia OFFICER_NOT_FOUND se il tech lead non esiste", async () => {
+            officerRepoMock.findByUsername.mockResolvedValue(null);
+
+            await expect(
+                getAgentsByTechLeadUsername("missing.lead"),
+            ).rejects.toThrow("OFFICER_NOT_FOUND");
+        });
+
+        it("lancia INVALID_TECH_LEAD_LABEL se il ruolo non è TECH_LEAD", async () => {
+            officerRepoMock.findByUsername.mockResolvedValue({
+                id: 2,
+                username: "not.lead",
+                role: { title: "Officer" },
+            });
+
+            await expect(
+                getAgentsByTechLeadUsername("not.lead"),
+            ).rejects.toThrow("INVALID_TECH_LEAD_LABEL");
+        });
     });
 
-    it('dovrebbe lanciare un errore se l\'ufficiale non esiste', async () => {
-      const updateData = {
-        username: 'nonexistent.officer',
-        role: { title: officerRole.title },
-      };
-      await expect(adminController.updateMunicipalityOfficer(updateData)).rejects.toThrow('OFFICER_NOT_FOUND');
+    // ------------------------------------------------------------------
+    // getTechReports
+    // ------------------------------------------------------------------
+    describe("getTechReports", () => {
+        it("restituisce i report assegnati al tech agent", async () => {
+            const officer = {
+                id: 1,
+                username: "tech.agent1",
+            };
+            officerRepoMock.findByusername.mockResolvedValue(officer);
+
+            const reportsDao = [
+                { id: 1, title: "R1" },
+                { id: 2, title: "R2" },
+            ];
+            reportRepoMock.findByOfficer.mockResolvedValue(reportsDao);
+
+            (mapReportDAOToResponse as jest.Mock).mockImplementation((r: any) => ({
+                id: r.id,
+                title: r.title,
+            }));
+
+            const res = await getTechReports("tech.agent1");
+
+            expect(officerRepoMock.findByusername).toHaveBeenCalledWith("tech.agent1");
+            expect(reportRepoMock.findByOfficer).toHaveBeenCalledWith(officer);
+            expect(res).toEqual([
+                { id: 1, title: "R1" },
+                { id: 2, title: "R2" },
+            ]);
+        });
+
+        it("lancia OFFICER_NOT_FOUND se il tech agent non esiste", async () => {
+            officerRepoMock.findByusername.mockResolvedValue(null);
+
+            await expect(
+                getTechReports("missing.agent"),
+            ).rejects.toThrow("OFFICER_NOT_FOUND");
+        });
     });
 
-    it('dovrebbe lanciare un errore se il ruolo è già assegnato', async () => {
-      // Per questo test, usiamo l'ufficiale che ha già un ruolo dal beforeEach
-      const updateData = {
-        username: regularOfficerWithRole.username, // Ha già un ruolo
-        role: { title: officerRole.title },
-      };
-      await expect(adminController.updateMunicipalityOfficer(updateData)).rejects.toThrow('ROLE_ALREADY_ASSIGNED');
+    // ------------------------------------------------------------------
+    // getTechLeadReports
+    // ------------------------------------------------------------------
+    describe("getTechLeadReports", () => {
+        it("restituisce tutti i report delle categorie del tech lead con status validi", async () => {
+            const officer = {
+                id: 1,
+                username: "tech.lead1",
+                role: {
+                    id: 99,
+                },
+            };
+            officerRepoMock.findByUsername.mockResolvedValue(officer);
+
+            // categorie collegate al ruolo del tech lead
+            categoryRepoMock.findByRoleId.mockResolvedValue([{ id: 10 }, { id: 20 }]);
+
+            (getReportsByCategoryIdAndStatus as jest.Mock)
+                .mockResolvedValueOnce([{ id: 100 }, { id: 101 }]) // cat 10
+                .mockResolvedValueOnce([{ id: 200 }]);             // cat 20
+
+            const res = await getTechLeadReports("tech.lead1");
+
+            expect(officerRepoMock.findByUsername).toHaveBeenCalledWith("tech.lead1");
+            expect(categoryRepoMock.findByRoleId).toHaveBeenCalledWith(99);
+            expect(getReportsByCategoryIdAndStatus).toHaveBeenCalledTimes(2);
+            expect(res).toEqual([{ id: 100 }, { id: 101 }, { id: 200 }]);
+        });
+
+        it("lancia OFFICER_NOT_FOUND se il tech lead non esiste", async () => {
+            officerRepoMock.findByUsername.mockResolvedValue(null);
+
+            await expect(
+                getTechLeadReports("missing.lead"),
+            ).rejects.toThrow("OFFICER_NOT_FOUND");
+        });
     });
-
-    it('dovrebbe lanciare un errore se il titolo del ruolo è mancante', async () => {
-      const updateData = {
-        username: regularOfficerWithoutRole.username, // Usa l'ufficiale senza ruolo
-        role: { title: '' }, // Titolo mancante
-      };
-      await expect(adminController.updateMunicipalityOfficer(updateData)).rejects.toThrow('ROLE_TITLE_REQUIRED');
-    });
-
-    it('dovrebbe lanciare un errore se il ruolo non esiste (per assegnazione)', async () => {
-      const updateData = {
-        username: regularOfficerWithoutRole.username, // Usa l'ufficiale senza ruolo
-        role: { title: 'NonExistentRole' },
-      };
-      await expect(adminController.updateMunicipalityOfficer(updateData)).rejects.toThrow('ROLE_NOT_FOUND');
-    });
-
-    it('dovrebbe lanciare un errore se si tenta di assegnare un ruolo Admin (in update)', async () => {
-      const updateData = {
-        username: regularOfficerWithoutRole.username, // Usa l'ufficiale senza ruolo
-        role: { title: adminRole.title }, // Admin role
-      };
-      await expect(adminController.updateMunicipalityOfficer(updateData)).rejects.toThrow('ROLE_NOT_ASSIGNABLE');
-    });
-
-    it('dovrebbe lanciare un errore se si tenta di modificare l\'utente "admin"', async () => {
-      // Creiamo un ufficiale con username 'admin' (non è l'admin officer vero e proprio)
-      const adminUsernameOfficer = new MunicipalityOfficer();
-      adminUsernameOfficer.username = 'admin';
-      adminUsernameOfficer.email = 'admin_user@example.com';
-      adminUsernameOfficer.password = await hashPassword('adminpass');
-      adminUsernameOfficer.first_name = 'Admin';
-      adminUsernameOfficer.last_name = 'User';
-      adminUsernameOfficer.role = officerRole;
-      await typeOrmOfficerRepository.save(adminUsernameOfficer);
-
-      const updateData = {
-        username: 'admin', // Username 'admin'
-        role: { title: officerRole.title },
-      };
-      await expect(adminController.updateMunicipalityOfficer(updateData)).rejects.toThrow('FORBIDDEN_ADMIN_ACCOUNT');
-    });
-  });
-
-  // --- Test per loginOfficer ---
-  describe('loginOfficer', () => {
-    it('dovrebbe effettuare il login con successo per un ufficiale', async () => {
-      const loginData: LoginRequestDTO = {
-        username: regularOfficerWithRole.username,
-        password: 'securepassword',
-      };
-      const loggedInOfficerDTO = await adminController.loginOfficer(loginData);
-      expect(loggedInOfficerDTO).toBeDefined();
-      expect(loggedInOfficerDTO.username).toBe(regularOfficerWithRole.username);
-      expect(loggedInOfficerDTO.password).toBeUndefined(); // password è undefined dopo removeNullAttributes
-    });
-
-    it('dovrebbe lanciare un errore con credenziali non valide per ufficiale', async () => {
-      const loginData: LoginRequestDTO = {
-        username: regularOfficerWithRole.username,
-        password: 'wrongpassword',
-      };
-      await expect(adminController.loginOfficer(loginData)).rejects.toThrow('INVALID_CREDENTIALS');
-    });
-  });
-
-  // --- Test per getAllRoles ---
-  describe('getAllRoles', () => {
-    it('dovrebbe restituire tutti i ruoli assegnabili (escluso Admin)', async () => {
-      // Aggiungiamo un ruolo non admin per verificare il filtraggio di findAssignable
-      const newRole = new Role();
-      newRole.title = 'Viewer';
-      await typeOrmRoleRepository.save(newRole);
-
-      const roles = await adminController.getAllRoles();
-      expect(roles).toBeDefined();
-      // Assumendo che findAssignable filtri "Admin" e che "Officer", "Viewer" siano assegnabili
-      expect(roles.length).toBe(2); // Officer, Viewer (adminRole è "Admin")
-      expect(roles.some(r => r.title === 'Officer')).toBe(true);
-      expect(roles.some(r => r.title === 'Viewer')).toBe(true);
-      expect(roles.some(r => r.title === 'Admin')).toBe(false); // Admin role dovrebbe essere escluso
-    });
-
-    it('dovrebbe restituire un array vuoto se non ci sono ruoli assegnabili', async () => {
-      // Pulisci tutti gli ufficiali (per evitare FK constraint failed su Role)
-      await typeOrmOfficerRepository.clear();
-      // Rimuovi tutti i ruoli
-      await typeOrmRoleRepository.clear();
-      // Aggiungi solo un ruolo "Admin"
-      const onlyAdminRole = new Role();
-      onlyAdminRole.title = 'Admin';
-      await typeOrmRoleRepository.save(onlyAdminRole);
-
-      const roles = await adminController.getAllRoles();
-      expect(roles).toBeDefined();
-      expect(roles).toHaveLength(0); // Nessun ruolo assegnabile
-    });
-  });
-
-  // --- Test per getMunicipalityOfficerByUsername ---
-  describe('getMunicipalityOfficerByUsername', () => {
-    it('dovrebbe restituire un ufficiale con successo', async () => {
-      const officerDTO = await adminController.getMunicipalityOfficerByUsername(regularOfficerWithRole.username);
-      expect(officerDTO).toBeDefined();
-      expect(officerDTO.username).toBe(regularOfficerWithRole.username);
-      expect(officerDTO.role?.title).toBe(officerRole.title);
-    });
-
-    it('dovrebbe lanciare un errore se l\'ufficiale non è stato trovato', async () => {
-      await expect(adminController.getMunicipalityOfficerByUsername('nonexistent.officer')).rejects.toThrow('OFFICER_NOT_FOUND');
-    });
-  });
 });

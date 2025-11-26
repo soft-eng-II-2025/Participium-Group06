@@ -18,7 +18,7 @@ import {
 import * as adminController from "../../../controllers/adminController";
 import { StatusType } from "../../../models/StatusType";
 import {initializeAdminRepositories} from "../../../controllers/adminController";
-
+import { Server as SocketIOServer } from "socket.io";
 // -------------------
 // Setup dei dati
 // -------------------
@@ -88,7 +88,8 @@ describe("ReportController Integration Tests", () => {
         await TestDataSource.initialize();
 
         // Inizializza repository reali
-        initializeReportRepositories(TestDataSource);
+        const io = new SocketIOServer();
+        initializeReportRepositories(TestDataSource, io);
         initializeAdminRepositories(TestDataSource);
 
         // Seed dati

@@ -6,6 +6,7 @@ import {CreateReportRequestDTO} from "../DTOs/CreateReportRequestDTO";
 import {CreateReportDTO} from "../DTOs/CreateReportDTO";
 import {UpdateUserRequestDTO} from "../DTOs/UpdateUserRequestDTO";
 import {UserResponseDTO} from "../DTOs/UserResponseDTO";
+import { ReportResponseDTO } from "../DTOs/ReportResponseDTO";
 
 const BASE_URL = "users"; // Base URL per le tue API
 
@@ -51,6 +52,10 @@ export class UserApi {
 
     async getReportPhoto(url : string): Promise<Blob> {
         const response = await api.get<Blob>(`${BASE_URL}/${url}`, { responseType: 'blob' });
+        return response.data;
+    }
+    async getUserReports(username: string): Promise<ReportResponseDTO[]> {
+        const response = await api.get<ReportResponseDTO[]>(`${BASE_URL}/${username}/my-reports`);
         return response.data;
     }
 }

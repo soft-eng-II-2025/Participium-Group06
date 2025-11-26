@@ -24,7 +24,7 @@ import { Report } from "../../../models/Report";
 import { StatusType } from "../../../models/StatusType";
 import { initializeUserRepositories } from "../../../controllers/userController";
 import { User } from "../../../models/User";
-
+import { Server as SocketIOServer } from "socket.io";
 // --------------------------------------
 // SEED UTILI
 // --------------------------------------
@@ -98,7 +98,8 @@ describe("AdminController Integration Tests", () => {
         await TestDataSource.initialize();
 
         initializeAdminRepositories(TestDataSource);
-        initializeReportRepositories(TestDataSource);
+        const io = new SocketIOServer();
+        initializeReportRepositories(TestDataSource, io);
         initializeUserRepositories(TestDataSource);
 
         role = await seedRole("ORGANIZATION_OFFICER");

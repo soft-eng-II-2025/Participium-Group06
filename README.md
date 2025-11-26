@@ -208,6 +208,30 @@ The frontend will run on http://localhost:8080
   - Sucess: Return a list of reports
   - Error: Returns an error response
 
+### **Message Routes**
+- POST `/api/messages/:reportId`
+  - Description: Sends a new message linked to a specific report. The sender is inferred from the authenticated user (regular user or municipality officer), while recipientId identifies the other party.
+  - Success: Returns the created message object
+  - Error: Returns an error response
+
+- GET `/api/messages/:reportId`
+    - Description: Retrieves all the messages associated with a specific report.
+    - Success: Returns a list of message objects.
+    - Error: Returns an error response
+
+
+### **Notification Routes**
+
+- GET `/api/notifications`
+    - Description: Retrieves all notifications for the currently authenticated user, ordered by creation date.
+    - Success: Returns a list of notification objects.
+    - Error: Returns an error response
+
+- DELETE `/api/notifications/:id`
+    - Description: Deletes a specific notification belonging to the authenticated user (used to mark it as read/handled).
+    - Success: Returns a confirmation object.
+    - Error: Returns an error response
+
 ## Frontend API 
 
 
@@ -258,6 +282,18 @@ function getTechLeadReports(techLeadId: number): Promise<ReportResponseDTO[]>;  
 function getTechReports(techAgentId: number): Promise<ReportResponseDTO[]>;  // GET /api/tech/:id/reports/list
 ```
 
+**Message API**
+```ts
+function sendMessage(payload: SendMessageRequestDTO, reportId: number): Promise<MessageResponseDTO> // POST /api/messages
+function getMessagesByReport(reportId: number): Promise<MessageResponseDTO[]>;  // GET /api/messages/:reportId
+```
+
+**Notification API**
+```ts
+function getMyNotifications(): Promise<NotificationDTO[]>;  // GET /api/notifications
+function deleteNotification(notificationId: number): Promise<void>;  // DELETE /api/notifications/:id
+```
+
 ### 👥 Municipality Officer Roles
 
 | Role Name | Assigned Categories |
@@ -276,3 +312,32 @@ function getTechReports(techAgentId: number): Promise<ReportResponseDTO[]>;  // 
 | `TECH_AGENT_ENERGY_LIGHTING` | Public Lighting |
 | `TECH_LEAD_PUBLIC_BUILDINGS` | Architectural Barriers \| Other |
 | `TECH_AGENT_PUBLIC_BUILDINGS` | Architectural Barriers \| Other |
+
+
+### Username e Password Users
+
+    -- luigibianchi password in chiaro: LuigiBianchi
+    -- annaverdi password in chiaro: AnnaVerdi
+    -- giulianeri password in chiaro: GiuliaNeri
+    -- paolorussi password in chiaro: PaoloRussi
+    -- saraferrari password in chiaro: SaraFerrari
+    -- lucagalli password in chiaro: LucaGalli
+    -- francescacosta password in chiaro: FrancescaCosta
+    -- elenamarino password in chiaro: ElenaMarino
+    -- giorgiotesta password in chiaro: GiorgioTesta
+
+
+### Username e Password Officers
+
+    -- lead_infra password in chiaro: LeadInfra1!
+    -- agent_infra password in chiaro: AgentInfra1!
+    -- lead_mobility password in chiaro: LeadMobility1!
+    -- agent_mobility password in chiaro: AgentMobility1!
+    -- lead_green password in chiaro: LeadGreen1!
+    -- agent_green password in chiaro: AgentGreen1!
+    -- lead_waste password in chiaro: LeadWaste1!
+    -- agent_waste password in chiaro: AgentWaste1!
+    -- lead_energy password in chiaro: LeadEnergy1!
+    -- agent_energy password in chiaro: AgentEnergy1!
+    -- lead_buildings password in chiaro: LeadBuildings1!
+    -- agent_buildings password in chiaro: AgentBuildings1!

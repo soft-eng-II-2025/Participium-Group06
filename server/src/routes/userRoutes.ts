@@ -180,11 +180,30 @@ router.put("/me", requireUser, async (req: Request, res: Response) => {
         });
 
 
-        res.status(200).json(updatedUser);
+            res.status(200).json(updatedUser);
+        } catch (error: any) {
+            console.error("Error updating user profile:", error);
+            res
+                .status(error.status || 500)
+                .json({ message: error.message || "Failed to update user profile." });
+        }
+    }
+);
+
+// Rotta per ottenere i report dell'utente autenticato (username preso dal body)
+router.get('/:username/my-reports', requireUser, async (req: Request, res: Response) => {
+    try {
+        const username = req.params.username;
+        if (!username) {
+            return res.status(400).json({ message: "Invalid username" });
+        }
+        const userId = await userController.getUserIdByUsername(username);
+        const reports = await reportController.getUserReports(userId);
+        res.status(200).json(reports);
     } catch (error: any) {
-        console.error("Errore interno PUT /me:", error);
-        res.status(error.status || 500).json({ message: error.message || "Failed to update user profile." });
+        console.error("Error fetching user reports:", error);
+        res
+            .status(error.status || 500)
+            .json({ message: error.message || "Failed to fetch user reports." });
     }
 });
-
-

@@ -21,14 +21,14 @@ export class User {
   @Column()
   last_name!: string;
 
-  @Column()
-  photo!: string;
+  @Column({ type: "text", nullable: true })
+  photo?: string | null;
 
-  @Column()
-  telegram_id!: string;
+  @Column({ type: "text", nullable: true })
+  telegram_id?: string | null;
 
-  @Column()
-  flag_email!: boolean;
+  @Column({ type: "boolean", default: false })
+  flag_email?: boolean;
 
   @OneToMany(() => Report, (report) => report.user)
   reports!: Report[];

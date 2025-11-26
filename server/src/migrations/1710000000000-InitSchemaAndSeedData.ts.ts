@@ -14,6 +14,16 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       'Resolved'
     )`);
 
+    await queryRunner.query(`CREATE TYPE "notification_type_enum" AS ENUM(
+      'report_changed',
+      'new_message'
+    )`);
+
+    await queryRunner.query(`CREATE TYPE "sender_enum" AS ENUM(
+      'USER',
+      'OFFICER'
+    )`);
+
     // 2. Base tables
     await queryRunner.query(`CREATE TABLE "role" (
       "id" SERIAL PRIMARY KEY,
@@ -89,8 +99,37 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
         FOREIGN KEY ("category_id") REFERENCES "category"("id") ON DELETE CASCADE
     )`);
 
-    // 4. Seed roles
-    await queryRunner.query(`INSERT INTO "role" ("id", "title", "label") VALUES
+    // 4. Message table
+    await queryRunner.query(`CREATE TABLE "message" (
+      "id" SERIAL PRIMARY KEY,
+      "municipality_officer_id" INT NOT NULL,
+      "user_id" INT NOT NULL,
+      "report_id" INT NOT NULL,
+      "content" TEXT NOT NULL,
+      "sender" "sender_enum" NOT NULL,
+      "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "FK_message_municipality_officer"
+        FOREIGN KEY ("municipality_officer_id") REFERENCES "municipality_officer"("id"),
+      CONSTRAINT "FK_message_user"
+        FOREIGN KEY ("user_id") REFERENCES "app_user"("id"),
+      CONSTRAINT "FK_message_report"
+        FOREIGN KEY ("report_id") REFERENCES "report"("id")
+    )`);
+
+    // 5. Notification table
+    await queryRunner.query(`CREATE TABLE "notification" (
+      "id" SERIAL PRIMARY KEY,
+      "type" "notification_type_enum" NOT NULL,
+      "content" TEXT NOT NULL,
+      "is_read" BOOLEAN DEFAULT FALSE,
+      "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      "user_id" INT NOT NULL,
+      CONSTRAINT "FK_notification_user"
+        FOREIGN KEY ("user_id") REFERENCES "app_user"("id")
+    )`);
+
+    // 6. Seed roles
+    await queryRunner.query(`INSERT INTO "role" ("id","title","label") VALUES
       (1,'ADMIN', 'Administrator'),
       (2,'ORGANIZATION_OFFICER', 'Organization Officer'),
       (3,'TECH_LEAD_INFRASTRUCTURE', 'Tech Lead, Infrastructure'),
@@ -108,8 +147,8 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       ON CONFLICT ("id") DO NOTHING
     `);
 
-    // 5. Seed categories
-    await queryRunner.query(`INSERT INTO "category" ("id", "name") VALUES
+    // 7. Seed categories
+    await queryRunner.query(`INSERT INTO "category" ("id","name") VALUES
       (1,'Water Supply – Drinking Water'),
       (2,'Architectural Barriers'),
       (3,'Sewer System'),
@@ -122,9 +161,8 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       ON CONFLICT ("id") DO NOTHING
     `);
 
-    // 6. Seed role-category assignments (nuove disposizioni)
-    // ADMIN → ALL
-    await queryRunner.query(`INSERT INTO role_categories SELECT 1, id FROM category`);
+    // 8. Seed role_categories
+     await queryRunner.query(`INSERT INTO role_categories SELECT 1, id FROM category`);
     // ORGANIZATION_OFFICER → ALL
     await queryRunner.query(`INSERT INTO role_categories SELECT 2, id FROM category`);
     // TECH_LEAD_INFRASTRUCTURE → Roads and Urban Furnishings | Sewer System | Water Supply – Drinking Water
@@ -152,7 +190,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
     // TECH_AGENT_PUBLIC_BUILDINGS → Architectural Barriers | Other
     await queryRunner.query(`INSERT INTO role_categories VALUES (14,2),(14,9)`);
 
-    // 7. Admin officer
+    // 9. Admin officer
     await queryRunner.query(`
       INSERT INTO "municipality_officer"
         ("id","username","email","password","first_name","last_name","role")
@@ -163,7 +201,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       ON CONFLICT ("id") DO NOTHING
     `);
 
-    // 8. Users (10) – password diverse ma stesso schema Argon2id
+    // 10 . Users (10) – password diverse ma stesso schema Argon2id
     await queryRunner.query(`
       -- mariorossi password in chiaro: MarioRossi
       -- luigibianchi password in chiaro: LuigiBianchi
@@ -287,7 +325,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
   (5,7.7000,45.0675,'Semaforo Guasto Corso Vittorio','Semaforo guasto allo incrocio Corso Vittorio.','Pending Approval','',5,5,6),
   (6,7.7020,45.0730,'Idrante Rotto Zona Vanchiglia','Idrante rotto in zona Vanchiglia.','Assigned','',null,6,1),
   (7,7.6815,45.0650,'Pavimentazione Sconnessa Marciapiede Crocetta','Pavimentazione sconnessa sul marciapiede in Crocetta.','In Progress','',3,7,7),
-  (8,7.6880,45.0750,'Segnale Strisce Pedonali Danneggiato','Segnale strisce pedonali danneggiato.','Pending Approval','',5,null,6),
+  (8,7.6880,45.0750,'Segnale Strisce Pedonali Danneggiato','Segnale strisce pedonali danneggiato.','Pending Approval','',5,7,6),
   (9,7.6750,45.0680,'Scivolo Parco Giochi Danneggiato Mirafiori Nord','Scivolo del parco giochi danneggiato in Mirafiori Nord.','Assigned','',null,9,8),
   (10,7.6920,45.0690,'Barriera Stradale Danneggiata Borgo Po','Barriera stradale danneggiata in Borgo Po.','In Progress','',3,10,7),
   (11,7.6840,45.0725,'Segnale Stradale Illeggibile Dora Riparia','Segnale stradale illeggibile in Dora Riparia.','Assigned','',null,1,6),
@@ -364,6 +402,8 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
 
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DROP TABLE "notification"`);
+    await queryRunner.query(`DROP TABLE "message"`);
     await queryRunner.query(`DROP TABLE "report_photo"`);
     await queryRunner.query(`DROP TABLE "report"`);
     await queryRunner.query(`DROP TABLE "role_categories"`);
@@ -372,5 +412,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "municipality_officer"`);
     await queryRunner.query(`DROP TABLE "role"`);
     await queryRunner.query(`DROP TYPE "status_type_enum"`);
+    await queryRunner.query(`DROP TYPE "sender_enum"`);
+    await queryRunner.query(`DROP TYPE "notification_type_enum"`);
   }
 }

@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AuthApi } from '../api/authApi';
 import type { LoginDTO } from '../DTOs/LoginDTO';
 import { MunicipalityOfficerResponseDTO } from '../DTOs/MunicipalityOfficerResponseDTO';
 import {UserResponseDTO} from "../DTOs/UserResponseDTO";
 import {CreateUserRequestDTO} from "../DTOs/CreateUserRequestDTO";
-
+import { initSocketClient, getSocket } from "../services/socketClient";
 type AuthContextType = {
   user: UserResponseDTO | null;
   loading: boolean;            // true while initial session fetch is pending
@@ -69,11 +69,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     await logoutMutation.mutateAsync();
     // session is already cleared in onSuccess; optionally also clear other caches
+    const socket = getSocket();
+    socket?.disconnect();
   };
 
   const setUser = (u: UserResponseDTO | MunicipalityOfficerResponseDTO | null) => {
     qc.setQueryData(['session'], u);
   };
+  useEffect(() => {
+    if (!user) return;
+
+    const role = resolveRole(user);
+
+    if (role === "USER") {
+      initSocketClient({ UserUsername: user.username });
+      return;
+    }
+
+    if (role?.startsWith("TECH") || role === "ORGANIZATION_OFFICER") {
+      initSocketClient({ OfficerUsername: user.username });
+      return;
+    }
+  }, [user]);
 
   const value = useMemo<AuthContextType>(() => ({
     user: user ?? null,

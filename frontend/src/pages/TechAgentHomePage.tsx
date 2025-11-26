@@ -7,9 +7,10 @@ import { StatusType } from "../DTOs/StatusType";
 import { useGetTechReports } from "../hook/techApi.hook";
 import { useUpdateReportStatus } from "../hook/reportApi.hook";
 import ConfirmDialog from "../components/ConfirmDialog";
+import Chat from "../components/Chat";
 
 const TechAgentHomePage: React.FC = () => {
-    const { data: reports } = useGetTechReports();
+  const { data: reports } = useGetTechReports();
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -20,25 +21,29 @@ const TechAgentHomePage: React.FC = () => {
     const [showPreview, setShowPreview] = useState(false);
     
 
-    const selectedReport = selectedIndex !== null ? reports?.[selectedIndex] : null;
-    const updateStatusMutation = useUpdateReportStatus();
+  const selectedReport = selectedIndex !== null ? reports?.[selectedIndex] : null;
 
-    async function performStatusUpdate() {
-        if (!selectedReport) return;
+  const updateStatusMutation = useUpdateReportStatus();
 
-        try {
-            await updateStatusMutation.mutateAsync({ reportId: selectedReport.id, payload: { newStatus: selectedStatus } as any });
-            setConfirmOpen(false);
-        } catch (err) {
-            console.error("Failed to update report status", err);
-        }
+  async function performStatusUpdate() {
+    if (!selectedReport) return;
+
+    try {
+      await updateStatusMutation.mutateAsync({
+        reportId: selectedReport.id,
+        payload: { newStatus: selectedStatus } as any,
+      });
+      setConfirmOpen(false);
+    } catch (err) {
+      console.error("Failed to update report status", err);
     }
+  }
 
-    const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
-    function toggleChatOpen() {
-        setIsChatOpen(!isChatOpen);
-    }
+  function toggleChatOpen() {
+    setIsChatOpen((prev) => !prev);
+  }
 
     function assignStatusToReport(action: 'approve' | 'reject', payload?: { newStatus?: string }) {
         setConfirmOpen(true);
@@ -90,7 +95,9 @@ const TechAgentHomePage: React.FC = () => {
                             <ReportPreview report={selectedReport} showUpdateStatus={true} onAction={assignStatusToReport} showChat={true} openChat={toggleChatOpen} />
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            {/* TODO CHAT */}
+                            {selectedReport ? (
+                              <Chat reportId={selectedReport.id} />
+                            ) : null}
                         </Grid>
                     </Grid>
                 )}
@@ -98,20 +105,20 @@ const TechAgentHomePage: React.FC = () => {
 
             </Box>
 
-            <ConfirmDialog
-                open={confirmOpen}
-                title="Confirm Status Update"
-                description="Are you sure you want to update the status of this report to:"
-                itemLabel={selectedStatus ?? ""}
-                onClose={() => { setConfirmOpen(false) }}
-                onConfirm={performStatusUpdate}
-                confirmText="Confirm"
-                cancelText="Cancel"
-            />
-
-
-        </>
-    );
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Confirm Status Update"
+        description="Are you sure you want to update the status of this report to:"
+        itemLabel={selectedStatus ?? ""}
+        onClose={() => {
+          setConfirmOpen(false);
+        }}
+        onConfirm={performStatusUpdate}
+        confirmText="Confirm"
+        cancelText="Cancel"
+      />
+    </>
+  );
 };
 
 export default TechAgentHomePage;

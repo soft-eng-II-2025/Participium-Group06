@@ -12,7 +12,7 @@ import { User } from "../../models/User";
 import { Category } from "../../models/Category";
 import { MunicipalityOfficer } from "../../models/MunicipalityOfficer";
 import { Role } from "../../models/Role";
-
+import { Server as SocketIOServer } from "socket.io";
 // 🔥 MOCK AUTH: req.user sempre presente
 jest.mock("../../middlewares/authMiddleware", () => ({
     requireUser: (req: any, _res: any, next: any) => {
@@ -30,7 +30,8 @@ describe("User Routes E2E (senza multer)", () => {
 
     beforeAll(async () => {
         await TestDataSource.initialize();
-        initializeReportRepositories(TestDataSource);
+        const io = new SocketIOServer();
+        initializeReportRepositories(TestDataSource, io);
         initializeAdminRepositories(TestDataSource);
         initializeUserRepositories(TestDataSource);
 

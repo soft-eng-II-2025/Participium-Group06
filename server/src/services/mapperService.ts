@@ -125,6 +125,7 @@ export function createMessageResponseDTO(
 }
 
 export function createNotificationDTO(
+    id: number | undefined,
     user?: UserResponseDTO,
     content?: string,
     type?: NotificationType,
@@ -132,6 +133,7 @@ export function createNotificationDTO(
     created_at?: Date
 ): NotificationDTO {
     return removeNullAttributes({
+        id,
         user,
         content,
         type,
@@ -214,6 +216,7 @@ export function mapMessageDAOToDTO(messageDAO: Message): MessageResponseDTO {
 
 export function mapNotificationDAOToDTO(notificationDAO: Notification): NotificationDTO {
     return createNotificationDTO(
+        notificationDAO.id,
         mapUserDAOToDTO(notificationDAO.user),
         notificationDAO.content,
         notificationDAO.type,

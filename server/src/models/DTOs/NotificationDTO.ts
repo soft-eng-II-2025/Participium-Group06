@@ -4,6 +4,7 @@ import { UserResponseDTO } from "./UserResponseDTO";
 import { NotificationType } from "../NotificationType";
 
 export class NotificationDTO {
+    id: number | undefined;
     user!: UserResponseDTO;
     @IsNotEmpty() 
     content!: string;

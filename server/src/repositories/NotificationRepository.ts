@@ -12,17 +12,19 @@ export class NotificationRepository {
 
   async findAll(): Promise<Notification[]> {
     return this.ormRepository.find({
+      relations: ['user'],
       order: { created_at: 'DESC' },
     });
   }
 
   async findById(id: number): Promise<Notification | null> {
-    return this.ormRepository.findOneBy({ id });
+    return this.ormRepository.findOne({ where: { id }, relations: ['user'] });
   }
 
   async findByUser(userId: number): Promise<Notification[]> {
     return this.ormRepository.find({
       where: { user: { id: userId } },
+      relations: ['user'],
       order: { created_at: 'DESC' },
     });
   }
@@ -30,6 +32,7 @@ export class NotificationRepository {
   async findUnreadByUser(userId: number): Promise<Notification[]> {
     return this.ormRepository.find({
       where: { user: { id: userId }, is_read: false },
+      relations: ['user'],
       order: { created_at: 'DESC' },
     });
   }

@@ -139,21 +139,21 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                     <Typography variant="body2" color="text.secondary">Cordinates:</Typography>
 
                     <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>{report.latitude}, {report.longitude}</Typography>
-                    
+
                 </Stack>
                 <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
                     <Typography variant="body2" color="text.secondary">Reporter:</Typography>
                     <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
                         {report.user?.first_name || report.user?.username} {report.user?.last_name ?? ''}
                     </Typography>
-                    
+
                 </Stack>
                 <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
                     <Typography variant="body2" color="text.secondary">Category:</Typography>
                     <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
                         {report.category}
                     </Typography>
-                    
+
                 </Stack>
 
                 <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
@@ -202,16 +202,16 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                 )}
             </CardContent>
 
-{report.status === StatusType.Rejected && report.explanation && (
-                    <Paper elevation={0} sx={{ p: 2, borderRadius: 1, mb: 2 }}>
-                        <Typography variant="subtitle1" color="secondary" sx={{ mb: 1, fontWeight: 'bold' }}>
-                            This report was rejected for the following reason:
-                        </Typography>
-                        <Typography variant="body2" color="text.primary">
-                            {report.explanation}
-                        </Typography>
-                    </Paper>
-                )}
+            {report.status === StatusType.Rejected && report.explanation && (
+                <Paper elevation={0} sx={{ p: 2, borderRadius: 1, mb: 2 }}>
+                    <Typography variant="subtitle1" color="secondary" sx={{ mb: 1, fontWeight: 'bold' }}>
+                        This report was rejected for the following reason:
+                    </Typography>
+                    <Typography variant="body2" color="text.primary">
+                        {report.explanation}
+                    </Typography>
+                </Paper>
+            )}
             {!isRejected && showApprovalActions && report.status === StatusType.PendingApproval && <CardActions sx={{ mb: 2, flexShrink: 0 }}>
                 <Button
                     color="success"
@@ -320,46 +320,46 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
             {(showUpdateStatus) && (report.status === StatusType.Assigned
                 || report.status === StatusType.InProgress
                 || report.status === StatusType.Suspended) && (
-                <CardContent sx={{ bgcolor: 'inherit', borderTop: '1px solid', borderColor: 'grey.300', flexShrink: 0 }}>
-                    <Typography variant="h6" color="secondary" sx={{ mb: 1, fontWeight: 'bold' }}>Update report status</Typography>
-                    <Paper elevation={0} sx={{ p: 2, borderRadius: 2, mb: 1 }}>
-                        <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
-                            {statusesForUpdate.filter((s) => s !== StatusType.Assigned).map((status) => (
+                    <CardContent sx={{ bgcolor: 'inherit', borderTop: '1px solid', borderColor: 'grey.300', flexShrink: 0 }}>
+                        <Typography variant="h6" color="secondary" sx={{ mb: 1, fontWeight: 'bold' }}>Update report status</Typography>
+                        <Paper elevation={0} sx={{ p: 2, borderRadius: 2, mb: 1 }}>
+                            <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
+                                {statusesForUpdate.filter((s) => s !== StatusType.Assigned).map((status) => (
+                                    <Button
+                                        key={status}
+                                        variant={statusButton === status ? 'contained' : 'outlined'}
+                                        color="secondary"
+                                        className="partecipation-button"
+                                        sx={{ mr: 1, mb: 1, minWidth: 140, textTransform: 'none' }}
+                                        onClick={() => setStatusButton(prev => prev === status ? null : status)}
+                                    >
+                                        {status}
+                                    </Button>
+                                ))}
+                            </Stack>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Choose a status and update the report
+                                </Typography>
                                 <Button
-                                    key={status}
-                                    variant={statusButton === status ? 'contained' : 'outlined'}
-                                    color="secondary"
+                                    variant="contained"
+                                    color="success"
                                     className="partecipation-button"
-                                    sx={{ mr: 1, mb: 1, minWidth: 140, textTransform: 'none' }}
-                                    onClick={() => setStatusButton(prev => prev === status ? null : status)}
+                                    sx={{ ml: 2 }}
+                                    disabled={!statusButton}
+                                    onClick={() => {
+                                        // send an explicit newStatus to parent so it can update without confirmation
+                                        if (onAction && statusButton) {
+                                            onAction('approve', { newStatus: statusButton as string });
+                                        }
+                                    }}
                                 >
-                                    {status}
+                                    Update
                                 </Button>
-                            ))}
-                        </Stack>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
-                            <Typography variant="body2" color="text.secondary">
-                                Choose a status and update the report
-                            </Typography>
-                            <Button
-                                variant="contained"
-                                color="success"
-                                className="partecipation-button"
-                                sx={{ ml: 2 }}
-                                disabled={!statusButton}
-                                onClick={() => {
-                                    // send an explicit newStatus to parent so it can update without confirmation
-                                    if (onAction && statusButton) {
-                                        onAction('approve', { newStatus: statusButton as string });
-                                    }
-                                }}
-                            >
-                                Update
-                            </Button>
-                        </Box>
-                    </Paper>
-                </CardContent>
-            )}
+                            </Box>
+                        </Paper>
+                    </CardContent>
+                )}
 
         </Card >
     );

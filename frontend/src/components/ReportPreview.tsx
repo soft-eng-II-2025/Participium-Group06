@@ -66,6 +66,17 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
         }
     }, [report, showTeamCard, techLeadAgents]);
 
+    // Reset transient UI state whenever a different report is selected
+    useEffect(() => {
+        // use report?.id so effect runs only when the selected report changes
+        setIsRejected(false);
+        setRejectComment('');
+        setSelectedIndex(0);
+        setStatusButton(null);
+        setSelectedOfficerUsername(null);
+        setChatOpen(false);
+    }, [report?.id]);
+
     function getPhotoUrl(p: string) {
         if (!p) return '';
 
@@ -191,6 +202,16 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                 )}
             </CardContent>
 
+{report.status === StatusType.Rejected && report.explanation && (
+                    <Paper elevation={0} sx={{ p: 2, borderRadius: 1, mb: 2 }}>
+                        <Typography variant="subtitle1" color="secondary" sx={{ mb: 1, fontWeight: 'bold' }}>
+                            This report was rejected for the following reason:
+                        </Typography>
+                        <Typography variant="body2" color="text.primary">
+                            {report.explanation}
+                        </Typography>
+                    </Paper>
+                )}
             {!isRejected && showApprovalActions && report.status === StatusType.PendingApproval && <CardActions sx={{ mb: 2, flexShrink: 0 }}>
                 <Button
                     color="success"

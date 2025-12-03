@@ -390,7 +390,24 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
 
     await queryRunner.query(`INSERT INTO "Chat" ("id","report_id","type") VALUES
       (1,1,'OFFICER_USER'),
-      (2,2,'OFFICER_USER'),
+      (2,3,'OFFICER_USER'),
+      (3,4,'OFFICER_USER'),
+      (4,6,'OFFICER_USER'),
+      (5,7,'OFFICER_USER'),
+      (6,9,'OFFICER_USER'),
+      (7,10,'OFFICER_USER'),
+      (8,11,'OFFICER_USER'),
+      (9,13,'OFFICER_USER'),
+      (10,18,'OFFICER_USER'),
+      (11,19,'OFFICER_USER'),
+      (12,20,'OFFICER_USER'),
+      (13,22,'OFFICER_USER'),
+      (14,23,'OFFICER_USER'),
+      (15,14,'OFFICER_USER'),
+      (16,15,'OFFICER_USER'),
+      (17,17,'OFFICER_USER'),
+      (18,24,'OFFICER_USER'),
+      (19,25,'OFFICER_USER')
     `);
 
     // Allineamento sequence app_user
@@ -416,6 +433,13 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
                     true
              );
     `);
+
+    // Allineamento sequence chat
+    await queryRunner.query(`SELECT setval(
+      pg_get_serial_sequence('"chat"','id'),
+      GREATEST((SELECT COALESCE(MAX(id),0) FROM "chat"), 1),
+      true
+    );`);
   }
 
 

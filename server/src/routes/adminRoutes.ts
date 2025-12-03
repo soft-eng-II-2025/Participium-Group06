@@ -5,12 +5,13 @@ import { MunicipalityOfficerResponseDTO } from "../models/DTOs/MunicipalityOffic
 import * as adminController from "../controllers/adminController";
 import {CreateUserRequestDTO} from "../models/DTOs/CreateUserRequestDTO";
 import { requireAdmin } from '../middlewares/authMiddleware';
+import { CreateOfficerRequestDTO } from '../models/DTOs/CreateOfficerRequestDTO';
 
 export const router = Router();
 
 
 
-router.post('/accounts/register', requireAdmin, validateDto(CreateUserRequestDTO), async (req, res: Response, next) => {
+router.post('/accounts/register', requireAdmin, validateDto(CreateOfficerRequestDTO), async (req, res: Response, next) => {
 
     const newMunicipalityOfficer = await adminController.addMunicipalityOfficer(req.body);
     res.status(201).json(newMunicipalityOfficer);

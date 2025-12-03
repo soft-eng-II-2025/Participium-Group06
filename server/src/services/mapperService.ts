@@ -7,6 +7,8 @@ import type { MessageResponseDTO } from "../models/DTOs/MessageResponseDTO";
 import type { NotificationDTO } from "../models/DTOs/NotificationDTO";
 
 import { CreateReportRequestDTO } from "../models/DTOs/CreateReportRequestDTO";
+import { CreateOfficerRequestDTO } from "../models/DTOs/CreateOfficerRequestDTO";
+import { hashPassword } from "./passwordService";
 
 import { Category } from "../models/Category";
 import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
@@ -43,9 +45,10 @@ export function createMunicipalityOfficerDTO(
     email?: string,
     first_name?: string,
     last_name?: string,
+    external?: boolean,
     role?: string | null
 ): MunicipalityOfficerResponseDTO {
-    return removeNullAttributes({ id, username, email, first_name, last_name, role }) as MunicipalityOfficerResponseDTO;
+    return removeNullAttributes({ id, username, email, first_name, last_name, external, role }) as MunicipalityOfficerResponseDTO;
 }
 
 export function createReportDTO(
@@ -159,6 +162,7 @@ export function mapMunicipalityOfficerDAOToDTO(officerDAO: MunicipalityOfficer):
         officerDAO.email,
         officerDAO.first_name,
         officerDAO.last_name,
+        officerDAO.external,
         officerDAO.role?.title || null
     );
 }
@@ -243,5 +247,17 @@ export function mapCreateReportRequestToDAO(dto: CreateReportRequestDTO): Report
     dao.category = new Category();
     dao.category.id = dto.categoryId;
 
+    return dao;
+}
+
+// map CreateOfficerRequestDTO to MunicipalityOfficer DAO
+export async function mapCreateOfficerRequestDTOToDAO(dto: CreateOfficerRequestDTO): Promise<MunicipalityOfficer> {
+    const dao = new MunicipalityOfficer();
+    dao.username = dto.username;
+    dao.password = await hashPassword(dto.password);
+    dao.email = dto.email.toLowerCase();
+    dao.first_name = dto.first_name;
+    dao.last_name = dto.last_name;
+    dao.external = dto.external;
     return dao;
 }

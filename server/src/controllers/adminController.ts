@@ -16,6 +16,8 @@ import { ReportResponseDTO } from "../models/DTOs/ReportResponseDTO";
 import { StatusType } from "../models/StatusType";
 import { CategoryRepository } from "../repositories/CategoryRepository";
 import { ReportRepository } from "../repositories/ReportRepository";
+import { CreateOfficerRequestDTO } from "../models/DTOs/CreateOfficerRequestDTO";
+import { mapCreateOfficerRequestDTOToDAO } from "../services/mapperService";
 
 /*const municipalityOfficerRepository = new MunicipalityOfficerRepository(AppDataSource);
 const roleRepository = new RoleRepository(AppDataSource);*/
@@ -42,17 +44,18 @@ function appErr(code: string, status = 400) {
 const isAdminRole = (t?: string) => !!t && /^(admin|super\s*admin)$/i.test(t.trim());
 const isAdminUser = (u?: string) => !!u && /^admin$/i.test(u.trim());
 
-export async function addMunicipalityOfficer(officerData: CreateUserRequestDTO, dataSource = AppDataSource): Promise<MunicipalityOfficerResponseDTO> {
+export async function addMunicipalityOfficer(officerData: CreateOfficerRequestDTO, dataSource = AppDataSource): Promise<MunicipalityOfficerResponseDTO> {
     if (!officerData.password?.trim()) throw appErr("PASSWORD_REQUIRED", 400);
 
     // costruzione DAO manuale
-    const dao = new MunicipalityOfficer();
+    /*const dao = new MunicipalityOfficer();
     dao.username = officerData.username;
     dao.email = officerData.email.toLowerCase();
     dao.password = await hashPassword(officerData.password);
     dao.first_name = officerData.first_name;
-    dao.last_name = officerData.last_name;
+    dao.last_name = officerData.last_name;*/
 
+    const dao = await mapCreateOfficerRequestDTOToDAO(officerData);
 
     const officerAdded = await municipalityOfficerRepository.add(dao);
     return mapMunicipalityOfficerDAOToResponse(officerAdded);

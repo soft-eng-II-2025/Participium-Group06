@@ -22,6 +22,9 @@ export class MunicipalityOfficer {
   @Column()
   last_name!: string;
 
+  @Column()
+  external!: boolean;
+
   @ManyToOne(() => Role, (role) => role.municipalityOfficer, { nullable: true })
   @JoinColumn({ name: 'role' })
   role?: Role;

@@ -21,7 +21,14 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
 
     await queryRunner.query(`CREATE TYPE "sender_enum" AS ENUM(
       'USER',
-      'OFFICER'
+      'OFFICER',
+      'LEAD',
+      'EXTERNAL'
+    )`);
+
+  await queryRunner.query(`CREATE TYPE "chat_type_enum" AS ENUM(
+      'OFFICER_USER',
+      'LEAD_EXTERNAL'
     )`);
 
     // 2. Base tables
@@ -38,6 +45,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       "password" VARCHAR NOT NULL,
       "first_name" VARCHAR NOT NULL,
       "last_name" VARCHAR NOT NULL,
+      "external" BOOLEAN NOT NULL,
       "role" INT,
       CONSTRAINT "FK_municipality_officer_role"
         FOREIGN KEY ("role") REFERENCES "role"("id")
@@ -99,21 +107,26 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
         FOREIGN KEY ("category_id") REFERENCES "category"("id") ON DELETE CASCADE
     )`);
 
+    await queryRunner.query(`CREATE TABLE "chat" (
+      "id" SERIAL PRIMARY KEY,
+      "report_id" INT NOT NULL,
+      "type" "chat_type_enum" NOT NULL,
+      CONSTRAINT "FK_chat_report"
+        FOREIGN KEY ("report_id") REFERENCES "report"("id") ON DELETE CASCADE
+    )`);
+
     // 4. Message table
     await queryRunner.query(`CREATE TABLE "message" (
       "id" SERIAL PRIMARY KEY,
-      "municipality_officer_id" INT NOT NULL,
-      "user_id" INT NOT NULL,
-      "report_id" INT NOT NULL,
+      "sender_id" INT NOT NULL,
+      "receiver_id" INT NOT NULL,
       "content" TEXT NOT NULL,
       "sender" "sender_enum" NOT NULL,
       "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT "FK_message_municipality_officer"
-        FOREIGN KEY ("municipality_officer_id") REFERENCES "municipality_officer"("id"),
-      CONSTRAINT "FK_message_user"
-        FOREIGN KEY ("user_id") REFERENCES "app_user"("id"),
-      CONSTRAINT "FK_message_report"
-        FOREIGN KEY ("report_id") REFERENCES "report"("id")
+      "sender_type" "sender_enum" NOT NULL,
+      "chat_id" INT NOT NULL,
+      CONSTRAINT "FK_chat_message"
+        FOREIGN KEY ("chat_id") REFERENCES "chat"("id") ON DELETE CASCADE
     )`);
 
     // 5. Notification table
@@ -193,11 +206,11 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
     // 9. Admin officer
     await queryRunner.query(`
       INSERT INTO "municipality_officer"
-        ("id","username","email","password","first_name","last_name","role")
+        ("id","username","email","password","first_name","last_name","external","role")
       VALUES
         (1,'admin','admin@participium.local',
         '$argon2id$v=19$m=65536,t=3,p=1$6FOS86yBc3WowYzkpdqonQ$fuBmKGHx8IRs15LrImF8/baI15mxyfvGnTkUNyVDd6g',
-        'System','Admin',1)
+        'System','Admin',false,1)
       ON CONFLICT ("id") DO NOTHING
     `);
 
@@ -264,47 +277,47 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       -- lead_buildings password in chiaro: LeadBuildings1!
       -- agent_buildings password in chiaro: AgentBuildings1!
       INSERT INTO "municipality_officer"
-        ("id","username","email","password","first_name","last_name","role")
+        ("id","username","email","password","first_name","last_name","external","role")
       VALUES
         (2,'org_officer','maria.rossi@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$MXQ5aHF2aG5vNmYwMDAwMA$xwEPRsmhAk4323jDh9Jf1laD9BxtD6wKee06uEAhPC8',
-         'Maria','Rossi',2),
+         'Maria','Rossi',false,2),
         (3,'lead_infra','giovanni.bianchi@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$d3l4eXJhczNjazAwMDAwMA$BoCWTDKLvtbZ+kzeyMeqyTyioSpGeZsSiaMnuwL9Chs',
-         'Giovanni','Bianchi',3),
+         'Giovanni','Bianchi',false,3),
         (4,'agent_infra','anna.verdi@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$cWF0b25kYjh2eDAwMDAwMA$apQMX9qx9rlc7O3aApOmkZHOG5iU0fTGDnn5K8A4f7k',
-         'Anna','Verdi',4),
+         'Anna','Verdi',false,4),
         (5,'lead_mobility','paolo.galli@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$NWx6N2U5MWwyMjcwMDAwMA$WKvR9cEs92cFuEAa4shZQVEWLIQWbAHGq9PFQaB3McY',
-         'Paolo','Galli',5),
+         'Paolo','Galli',false,5),
         (6,'agent_mobility','elena.ferrari@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$NjB3dTduY2IxdjIwMDAwMA$DKTu4q1d9uih9KSTYjwfOydPWdhi2/svvde0dZFgv6Q',
-         'Elena','Ferrari',6),
+         'Elena','Ferrari',false,6),
         (7,'lead_green','marco.russo@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$dmdxY2FzdXJhYTgwMDAwMA$STgY4pc4dSUaVeMpkhqizIMIY19+h1+L8Jy91sSMAiU',
-         'Marco','Russo',7),
+         'Marco','Russo',false,7),
         (8,'agent_green','sara.esposito@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$eml3cjV4cWwwemYwMDAwMA$zMrriiNvqXPn3c1OjuvDJqW40NKil2HO7HC28SZON30',
-         'Sara','Esposito',8),
+         'Sara','Esposito',false,8),
         (9,'lead_waste','luca.martini@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$dnJuajAybGVscWUwMDAwMA$bDRZDRurlvGmVoEHgmi1gnqHk3YazVMe0s75HWNfRrU',
-         'Luca','Martini',9),
+         'Luca','Martini',false,9),
         (10,'agent_waste','francesca.romano@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$NXljMmRpOG81bnQwMDAwMA$b2ARlYEp0fEqCaV075vNunWZjnpGYbnnsScHc+ydppk',
-         'Francesca','Romano',10),
+         'Francesca','Romano',false,10),
         (11,'lead_energy','davide.conti@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$aWl4NDJkM3pqZjkwMDAwMA$Ju94deagaCHPsEJmgRXmG9tAFYFx0mBbLWh/NV5myYs',
-         'Davide','Conti',11),
+         'Davide','Conti',false,11),
         (12,'agent_energy','chiara.ricci@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$emNzdnV3ZDR5Y2UwMDAwMA$gY6E0cr/UnIOEzGc9p7Shz75hO7lnketKTzc9LEEDTg',
-         'Chiara','Ricci',12),
+         'Chiara','Ricci',false,12),
         (13,'lead_buildings','alessandro.gallo@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$aWl3bTU4MHJxdGwwMDAwMA$/lpZZnQnbgU0UpPcGV8vg2bTsyZeIaqN+uEuB/nuDQg',
-         'Alessandro','Gallo',13),
+         'Alessandro','Gallo',false,13),
         (14,'agent_buildings','federica.moretti@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$cTNpaGhscjN4dnQwMDAwMA$EawaCPGuYrZKzo0ftbnaBMrq1D4ymmSp4TUsUK63Nec',
-         'Federica','Moretti',14)
+         'Federica','Moretti',false,14)
       ON CONFLICT ("id") DO NOTHING
     `);
 
@@ -375,6 +388,11 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       (25,'uploads/1762946249248-Water-leakage.jpg',25)
     `);
 
+    await queryRunner.query(`INSERT INTO "Chat" ("id","report_id","type") VALUES
+      (1,1,'OFFICER_USER'),
+      (2,2,'OFFICER_USER'),
+    `);
+
     // Allineamento sequence app_user
     await queryRunner.query(`
       SELECT setval(pg_get_serial_sequence('"app_user"', 'id'),
@@ -411,8 +429,10 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "app_user"`);
     await queryRunner.query(`DROP TABLE "municipality_officer"`);
     await queryRunner.query(`DROP TABLE "role"`);
+    await queryRunner.query(`DROP TABLE "chat"`);
     await queryRunner.query(`DROP TYPE "status_type_enum"`);
     await queryRunner.query(`DROP TYPE "sender_enum"`);
     await queryRunner.query(`DROP TYPE "notification_type_enum"`);
+    await queryRunner.query(`DROP TYPE "chat_type_enum"`);
   }
 }

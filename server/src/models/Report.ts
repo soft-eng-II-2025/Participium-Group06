@@ -4,6 +4,7 @@ import { Category } from './Category';
 import { ReportPhoto } from './ReportPhoto';
 import { StatusType } from './StatusType';
 import { MunicipalityOfficer } from './MunicipalityOfficer';
+import { Chat } from './Chat';
 
 @Entity()
 export class Report {
@@ -29,9 +30,11 @@ export class Report {
   })
   status!: StatusType;
 
-
   @Column()
   explanation!: string;
+
+  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt!: Date;
 
   @ManyToOne(() => MunicipalityOfficer, (officer) => officer.reports)
   @JoinColumn({ name: 'officerId' })
@@ -47,6 +50,8 @@ export class Report {
 
   @OneToMany(() => ReportPhoto, (photo) => photo.report)
   photos!: ReportPhoto[];
-  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt!: Date;
+
+  @OneToMany(() => Chat, chat => chat.report)
+  chats!: Chat[];
+
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Button, Card, CardContent, CardActions, Stack, TextField, Chip, Paper, Dialog, DialogContent, IconButton } from "@mui/material";
+import { useTheme, useMediaQuery, Box, Typography, Button, Card, CardContent, CardActions, Stack, TextField, Chip, Paper, Dialog, DialogContent, IconButton } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import MapForReportPreview from "./MapForReportPreview";
@@ -39,6 +39,8 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
     const [selectedOfficerUsername, setSelectedOfficerUsername] = useState<string | null>(null);
     const { user } = useAuth();
     const [chatOpen, setChatOpen] = useState(false);
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
     const photoPath = report?.photos?.[selectedIndex];
 
@@ -111,15 +113,13 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
     }
 
 
-
-
     return (
         <Card
             elevation={isFlat ? 0 : undefined}
             sx={{
                 height: isFlat ? '100%' : '85vh',
                 borderRadius: isFlat ? 0 : 5,
-                width: isFlat ? '33vw' : 'auto',
+                width : '100%',
                 display: 'flex',
                 flexDirection: 'column',
                 bgcolor: isFlat ? 'transparent' : undefined,
@@ -154,7 +154,7 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                     />
                 </Box>
 
-                <MapForReportPreview latitude={report.latitude} longitude={report.longitude} interactive={false} zoom={14} />
+                <MapForReportPreview latitude={report.latitude} longitude={report.longitude} interactive={false} zoom={14} isDrawer={isFlat} />
 
                 <Stack direction="row" spacing={2} sx={{ mb: 1, mt: 2 }}>
                     <Typography variant="body2" color="text.secondary">Cordinates:</Typography>

@@ -57,4 +57,8 @@ export class UserRepository {
         user.flag_email = newFlagEmail;
         return this.ormRepository.save(user);
     }
+    async changeVerified(user: User, newVerified: boolean): Promise<User> {
+        user.verified = newVerified;
+        return this.ormRepository.save(user);
+    }
 }

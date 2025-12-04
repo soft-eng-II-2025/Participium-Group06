@@ -7,31 +7,50 @@ import { MunicipalityOfficerResponseDTO } from "../models/DTOs/MunicipalityOffic
 import * as userController from "../controllers/userController";
 import passport from 'passport';
 import { requireAuth } from "../middlewares/authMiddleware";
+import { VerificationService } from '../services/verificationService';
+import { AppDataSource } from '../data-source';
 //import * as authController from "../controllers/authController";
 
 export const router = Router();
 
-// POST /api/register
-router.post('/register', validateDto(CreateUserRequestDTO), async (req, res: Response, next) => {
+const verificationService = new VerificationService(AppDataSource);
 
-    /*const newUser = await userController.createUser(req.body);
-    req.logIn(newUser, (err) => {
-        if (err) return next(err);
-        return res.status(201).json(newUser);
-    });
-    res.status(201).json(newUser);
-
-     */
+// POST /register
+router.post('/register', validateDto(CreateUserRequestDTO), async (req, res, next) => {
     try {
         const newUser = await userController.createUser(req.body);
+        console.log(newUser);
+        await verificationService.generateAndSend(newUser);
 
         req.logIn(newUser, (err) => {
             if (err) return next(err);
-            return res.status(201).json(newUser);
+            return res.status(201).json({
+                ...newUser,
+                verification_sent: true
+            });
         });
 
     } catch (err) {
         next(err);
+    }
+});
+
+// POST /verify
+router.post('/verify', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { username, code } = req.body;
+
+        if (!username || !code) {
+            return res.status(400).json({ error: "MISSING_FIELDS" });
+        }
+
+        await verificationService.verifyCode(username, code);
+
+        return res.status(200).json({ verified: true });
+
+    } catch (err: any) {
+        const status = err.status ?? 400;
+        return res.status(status).json({ error: err.message });
     }
 });
 

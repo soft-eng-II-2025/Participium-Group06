@@ -30,6 +30,9 @@ export class User {
   @Column({ type: "boolean", default: false })
   flag_email?: boolean;
 
+  @Column({ type: "boolean", default: false })
+  verified?: boolean;
+
   @OneToMany(() => Report, (report) => report.user)
   reports!: Report[];
 }

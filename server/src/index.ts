@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+dotenv.config();
 import 'reflect-metadata';
 import express from 'express';
 import cors from 'cors';
@@ -17,6 +19,8 @@ import { Server as SocketIOServer } from "socket.io";
 import http from "http";
 import { DataSource } from "typeorm";
 import path from "path";
+
+
 
 const PORT = Number(process.env.PORT ?? 3000);
 

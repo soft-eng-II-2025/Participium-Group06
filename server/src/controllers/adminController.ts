@@ -134,10 +134,12 @@ export async function getMunicipalityOfficerDAOByUsername(username: string): Pro
     return officer;
 }
 
-export async function assignTechAgent(reportId:number, officerUsername:string):Promise<ReportResponseDTO> {
+export async function assignTechAgent(reportId:number, officerUsername:string, techLeadUsername: string):Promise<ReportResponseDTO> {
     const officer = await municipalityOfficerRepository.findByUsername(officerUsername);
+    const techLead = await municipalityOfficerRepository.findByUsername(techLeadUsername);
+    if (!techLead) throw appErr("TECH_LEAD_NOT_FOUND", 404);
     if (!officer) throw appErr("OFFICER_NOT_FOUND", 404);
-    return updateReportOfficer(reportId, officer);
+    return updateReportOfficer(reportId, officer, techLead);
 }
 
 export async function getAgentsByTechLeadUsername(techLeadUsername :string):Promise<MunicipalityOfficerResponseDTO[]> {

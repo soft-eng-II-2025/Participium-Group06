@@ -9,11 +9,11 @@ export class Message {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column()
+  /*@Column()
   sender_id!: number;
 
   @Column()
-  receiver_id!: number;
+  receiver_id!: number;*/
 
   // contenu du message
   @Column({ type: 'text', name: 'content' })

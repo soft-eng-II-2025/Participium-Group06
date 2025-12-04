@@ -24,19 +24,18 @@ export class MessageRepository {
      */
     async findById(id: number): Promise<Message | null> {
         return this.ormRepository.findOne({
-            where: { id },
-            relations: ["user", "municipality_officer"],
+            where: { id }
         });
     }
 
     /**
      * Get all messages for a given report
      */
-    async findByReport(reportId: number): Promise<Message[]> {
+    async findByChatId(chatId: number): Promise<Message[]> {
         return this.ormRepository.find({
-            where: { report_id: reportId },
-            relations: ["user", "municipality_officer"],
+            where: { chat: { id: chatId } },
             order: { created_at: "ASC" },
+            relations: ["user", "municipality_officer"],
         });
     }
 

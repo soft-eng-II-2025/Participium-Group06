@@ -13,12 +13,16 @@ import { Server as SocketIoServer } from "socket.io";
 import { report } from "process";
 import { ReportRepository } from "../repositories/ReportRepository";
 import { CreateMessageDTO } from "../models/DTOs/CreateMessageDTO";
+import { ChatRepository } from "../repositories/ChatRepository";
+import { Chat } from "../models/Chat";
+import { ChatType } from "../models/ChatType";
 
 
 let messageRepository: MessageRepository;
 let notificationRepository: NotificationRepository;
 let socketService: SocketService;
 let reportRepository: ReportRepository;
+let chatRepository: ChatRepository;
 
 /**
  * Initialize repositories and socket service
@@ -41,6 +45,15 @@ export function initializeMessageRepositories(
     reportRepository = new ReportRepository(dataSource);
     notificationRepository = new NotificationRepository(dataSource);
     socketService = new SocketService(io); // Assumes SocketService can be instantiated without parameters
+    chatRepository = new ChatRepository(dataSource);
+}
+
+export async function createChatOfficerUser(reportId: number) {
+    return chatRepository.addReportToChatOfficerUser(reportId);
+}
+
+export async function createChatLeadExternal(reportId: number) {    
+    return chatRepository.addReportToLeadExternalUser(reportId);
 }
 
 /**
@@ -49,36 +62,26 @@ export function initializeMessageRepositories(
  * - recipientId: the other party’s ID (User.id or Officer.id)
  */
 export async function sendMessage(
-    reportId: number,         // comes from route params
+    chatId: number,         // comes from route params
     dto: CreateMessageDTO     // contains content + sender only
 ) {
     const { sender, content } = dto;
     // 1️⃣ Fetch report to get user + officer
-    const report = await reportRepository.findById(reportId);
-    if (!report) throw new Error("Report not found.");
-
-    const user = report.user;
-    const officer = report.officer;
-
-    if (!user) throw new Error("Report has no user assigned.");
-    if (!officer) throw new Error("Report has no officer assigned.");
+    const chat = await chatRepository.findById(chatId);
+    if (!chat) throw new Error("Chat not found.");
 
     // 2️⃣ Create message
     const message = new Message();
-    message.report_id = reportId;
+    message.chat = chat;
     message.content = content;
     message.sender = sender;
-    message.created_at = new Date(); // set here, not in DTO
-
- 
-    message.user = user;
-    message.municipality_officer = officer;
-    
+    message.created_at = new Date(); // set here, not in DTO    
 
     const savedMessage = await messageRepository.add(message);
     // 3️⃣ Notifications
     if (sender === "OFFICER") {
         const notif = new Notification();
+        const user = chat.report.user as User;
         notif.user = user;
         notif.content = "New message from officer";
         notif.type = NotificationType.NewMessage;
@@ -87,9 +90,15 @@ export async function sendMessage(
 
         socketService.sendMessageToUser(user.id, savedMessage);
         socketService.sendNotificationToUser(user.id, savedNotif);
-    }
-    if (sender === "USER") {
+    } else if (sender === "USER") {
+        const officer = chat.report.officer as MunicipalityOfficer;
         socketService.sendMessageToOfficer(officer.id, savedMessage);
+    } else if (sender === "LEAD") {
+        const externalOfficer = chat.report.officer as MunicipalityOfficer;
+        socketService.sendMessageToOfficer(externalOfficer.id, savedMessage);
+    } else {
+        const leadOfficer = chat.report.leadOfficer as MunicipalityOfficer;
+        socketService.sendMessageToOfficer(leadOfficer.id, savedMessage);
     }
 
     return mapMessageDAOToDTO(savedMessage);
@@ -99,9 +108,12 @@ export async function sendMessage(
 /**
  * Get all messages for a report
  */
-export async function getMessagesByReport(reportId: number) {
+export async function getMessagesByReport(reportId: number, chatType: ChatType) {
     if (!messageRepository) throw new Error("MessageRepository not initialized");
 
-    const messages = await messageRepository.findByReport(reportId);
+    const chat = await chatRepository.findByReportIdAndType(reportId, chatType);
+    if (!chat) throw new Error("Chat not found for the given report and type.");
+    const messages = await messageRepository.findByChatId(chat.id);
+    //const messages = await messageRepository.findByReport(reportId);
     return messages.map(mapMessageDAOToDTO);
 }

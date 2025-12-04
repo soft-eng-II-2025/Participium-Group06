@@ -24,9 +24,9 @@ export class Report {
   description!: string;
 
   @Column({
-  type: "enum",
-  enum: StatusType,
-  default: StatusType.PendingApproval, // <- DB default
+    type: "enum",
+    enum: StatusType,
+    default: StatusType.PendingApproval,
   })
   status!: StatusType;
 
@@ -54,4 +54,8 @@ export class Report {
   @OneToMany(() => Chat, chat => chat.report)
   chats!: Chat[];
 
+  // 👇 Lead officer for this report
+  @ManyToOne(() => MunicipalityOfficer, (officer) => officer.leadReports, { nullable: true })
+  @JoinColumn({ name: 'lead_officer_id' })
+  leadOfficer?: MunicipalityOfficer;
 }

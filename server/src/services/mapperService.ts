@@ -20,6 +20,7 @@ import { StatusType } from "../models/StatusType";
 import { Message } from "../models/Message";
 import { Notification } from "../models/Notification";
 import { NotificationType } from "../models/NotificationType";
+import { SenderType } from "../models/SenderType";
 
 /* Helper */
 function removeNullAttributes<T extends Record<string, any>>(dto: T): Partial<T> {
@@ -111,14 +112,16 @@ export function createUserDTO(
 
 export function createMessageResponseDTO(
     reportId: number,
+    chatId: number,
     role_label?: string,
     username?: string,
     content?: string,
     created_at?: Date,
-    sender?: 'USER' | 'OFFICER'
+    sender?: SenderType
 ): MessageResponseDTO {
     return removeNullAttributes({
         reportId,
+        chatId,
         role_label,
         username,
         content,
@@ -206,10 +209,11 @@ export function mapUserDAOToDTO(userDAO: User): UserResponseDTO {
 }
 
 export function mapMessageDAOToDTO(messageDAO: Message): MessageResponseDTO {
-    let username = messageDAO.user ? messageDAO.user.username : messageDAO.municipality_officer ? messageDAO.municipality_officer.username : undefined;
-    let role_label = messageDAO.municipality_officer ? messageDAO.municipality_officer.role?.label : undefined;
+    let username = messageDAO.chat.report.user.username;
+    let role_label = messageDAO.chat.report.officer ? messageDAO.chat.report.officer.role?.label : undefined;
     return createMessageResponseDTO(
-        messageDAO.report_id,
+        messageDAO.chat.report.id,
+        messageDAO.chat.id,
         role_label,
         username,
         messageDAO.content,

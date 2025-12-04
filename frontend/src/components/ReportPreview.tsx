@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useTheme, useMediaQuery, Box, Typography, Button, Card, CardContent, CardActions, Stack, TextField, Chip, Paper, Dialog, DialogContent, IconButton } from "@mui/material";
-import CloseIcon from '@mui/icons-material/Close';
+import { Box, Typography, Button, Card, CardContent, CardActions, Stack, TextField, Chip, Paper, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import MapForReportPreview from "./MapForReportPreview";
 import { StatusType } from "../DTOs/StatusType";
@@ -37,6 +37,13 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
     const [rejectComment, setRejectComment] = useState('');
     const [officeMembers, setOfficeMembers] = useState(null as MunicipalityOfficerResponseDTO[] | null);
     const [selectedOfficerUsername, setSelectedOfficerUsername] = useState<string | null>(null);
+    // external maintainers are mocked for now
+    const mockExternalMaintainers = [
+        { username: 'ext_mant_1', first_name: 'Marco', last_name: 'Rossi' },
+        { username: 'ext_mant_2', first_name: 'Luca', last_name: 'Bianchi' },
+        { username: 'ext_mant_3', first_name: 'Sara', last_name: 'Neri' },
+    ];
+    const [selectedExternalUsername, setSelectedExternalUsername] = useState<string | null>(null);
     const { user } = useAuth();
     const [chatOpen, setChatOpen] = useState(false);
     const theme = useTheme();
@@ -310,51 +317,102 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                 </Box>
             }
             {(showTeamCard) && (
-
-                (!report.officer) ? (<CardContent sx={{ bgcolor: 'inherit', borderTop: '1px solid', borderColor: 'grey.300', flexShrink: 0 }}>
-                    <Typography variant="h6" color="secondary" sx={{ mb: 1 }}>Assign this report to:</Typography>
-
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(4, 1fr)' }, gap: 1, }}>
-                        {officeMembers?.map((user) => {
-                            return (
-                                <TechOfficerCard
-                                    user={user}
-                                    selected={selectedOfficerUsername === user.username}
-                                    onClick={() => setSelectedOfficerUsername(prev => prev === user.username ? null : user.username)}
-                                />
-                            );
-                        })}
-
-
-                    </Box>
-                    <Box sx={{ mt: 2 }}>
-                        <Button
-                            variant="contained"
-                            className="partecipation-button"
-                            color="secondary"
-                            disabled={!selectedOfficerUsername}
-                            onClick={() => {
-                                if (onAction) {
-                                    onAction('approve', { assignee: selectedOfficerUsername ?? undefined });
-                                }
+                <Box sx={{ bgcolor: 'inherit', borderTop: '1px solid', borderColor: 'grey.300', flexShrink: 0 }}>
+                    {/* Internal team - opened by default */}
+                    <Accordion defaultExpanded disableGutters square sx={{ mb: 0, '&.Mui-expanded': { mb: 0 } }}>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                '& .MuiAccordionSummary-expandIconWrapper': { order: -1, mr: 1 },
+                                '& .MuiAccordionSummary-content': { marginLeft: 0 }
                             }}
                         >
-                            Assign to officer
-                        </Button>
-                    </Box>
-                </CardContent>
-                ) : (
-                    <CardContent sx={{ bgcolor: 'inherit', borderTop: '1px solid', borderColor: 'grey.300', flexShrink: 0 }}>
-                        <Typography variant="h6" color="secondary" sx={{ mb: 1, }}>Assigned to:</Typography>
-                        <Box sx={{ maxWidth: 300 }}>
-                            <TechOfficerCard
-                                user={report.officer}
-                                selected={false}
-                            />
-                        </Box>
-                    </CardContent>
-                )
+                            <Typography variant="h6" color="secondary">Assign to Office Member</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails sx={{ p: 2 }}>
+                            {!report.officer ? (
+                                <>
+                                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(4, 1fr)' }, gap: 1 }}>
+                                        {officeMembers?.map((user) => (
+                                            <TechOfficerCard
+                                                key={user.username}
+                                                user={user}
+                                                selected={selectedOfficerUsername === user.username}
+                                                onClick={() => { setSelectedOfficerUsername(prev => prev === user.username ? null : user.username); setSelectedExternalUsername(null); }}
+                                            />
+                                        ))}
+                                    </Box>
+                                    <Box sx={{ mt: 2 }}>
+                                        <Button
+                                            variant="contained"
+                                            className="partecipation-button"
+                                            color="secondary"
+                                            disabled={!selectedOfficerUsername}
+                                            onClick={() => {
+                                                if (onAction) {
+                                                    onAction('approve', { assignee: selectedOfficerUsername ?? undefined });
+                                                }
+                                            }}
+                                        >
+                                            Assign to officer
+                                        </Button>
+                                    </Box>
+                                </>
+                            ) : (
+                                <Box>
+                                    <Typography variant="h6" color="secondary" sx={{ mb: 1, }}>Assigned to:</Typography>
+                                    <Box sx={{ maxWidth: 300 }}>
+                                        <TechOfficerCard user={report.officer} selected={false} />
+                                    </Box>
+                                </Box>
+                            )}
+                        </AccordionDetails>
+                    </Accordion>
 
+                    {/* External maintainers - mocked data for now */}
+                    <Accordion disableGutters square sx={{ mb: 0, '&.Mui-expanded': { mb: 0 } }}>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                '& .MuiAccordionSummary-expandIconWrapper': { order: -1, mr: 1 },
+                                '& .MuiAccordionSummary-content': { marginLeft: 0 }
+                            }}
+                        >
+                            <Typography variant="h6" color="secondary">Assign to External Maintainer</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails sx={{ p: 2 }}>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(3, 1fr)' }, gap: 1 }}>
+                                {mockExternalMaintainers.map((user) => (
+                                    <TechOfficerCard
+                                        key={user.username}
+                                        user={user as any}
+                                        selected={selectedExternalUsername === user.username}
+                                        onClick={() => { setSelectedExternalUsername(prev => prev === user.username ? null : user.username); setSelectedOfficerUsername(null); }}
+                                    />
+                                ))}
+                            </Box>
+                            <Box sx={{ mt: 2 }}>
+                                <Button
+                                    variant="contained"
+                                    className="partecipation-button"
+                                    color="secondary"
+                                    disabled={!selectedExternalUsername}
+                                    onClick={() => {
+                                        if (onAction) {
+                                            onAction('approve', { assignee: selectedExternalUsername ?? undefined });
+                                        }
+                                    }}
+                                >
+                                    Assign external maintainer
+                                </Button>
+                            </Box>
+                        </AccordionDetails>
+                    </Accordion>
+                </Box>
             )}
 
             {(showUpdateStatus) && (report.status === StatusType.Assigned

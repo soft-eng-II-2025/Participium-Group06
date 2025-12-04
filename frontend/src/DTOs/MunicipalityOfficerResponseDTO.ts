@@ -6,8 +6,6 @@ export interface MunicipalityOfficerResponseDTO {
     email: string;
     first_name: string;
     last_name: string;
+    external: boolean;
     role: string | null;
 }
-
-
-

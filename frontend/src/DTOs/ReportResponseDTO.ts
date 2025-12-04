@@ -1,6 +1,7 @@
 import {UserResponseDTO} from "./UserResponseDTO";
 import { MunicipalityOfficerResponseDTO } from "./MunicipalityOfficerResponseDTO";
 import { StatusType } from "./StatusType";
+import { ChatResponseDTO } from "./ChatRespondeDTO";
 
 export interface ReportResponseDTO { 
     id: number;
@@ -15,4 +16,5 @@ export interface ReportResponseDTO {
     officer?: MunicipalityOfficerResponseDTO;
     photos: string[]; 
     createdAt: Date;
+    chats: ChatResponseDTO[];
 }   

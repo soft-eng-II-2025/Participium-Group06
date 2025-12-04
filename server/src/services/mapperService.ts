@@ -21,6 +21,9 @@ import { Message } from "../models/Message";
 import { Notification } from "../models/Notification";
 import { NotificationType } from "../models/NotificationType";
 import { SenderType } from "../models/SenderType";
+import { report } from "process";
+import { Chat } from "../models/Chat";
+import { ChatResponseDTO } from "../models/DTOs/ChatRespondeDTO";
 
 /* Helper */
 function removeNullAttributes<T extends Record<string, any>>(dto: T): Partial<T> {
@@ -65,6 +68,7 @@ export function createReportDTO(
     officer?: MunicipalityOfficerResponseDTO,
     photos?: string[],
     createdAt?: Date,
+    chats?: Chat[]
 ): ReportResponseDTO {
     return removeNullAttributes({
         id,
@@ -79,6 +83,7 @@ export function createReportDTO(
         officer,
         photos,
         createdAt,
+        chats: chats?.map((c: Chat) => mapChatDAOToDTO(c))
     }) as unknown as ReportResponseDTO;
 }
 
@@ -183,7 +188,8 @@ export function mapReportDAOToDTO(reportDAO: Report): ReportResponseDTO {
         reportDAO.explanation,
         reportDAO.officer ? mapMunicipalityOfficerDAOToDTO(reportDAO.officer) : undefined,
         reportDAO.photos?.map((p: ReportPhoto) => p.photo),
-        reportDAO.createdAt
+        reportDAO.createdAt,
+        reportDAO.chats
     );
 }
 
@@ -231,6 +237,14 @@ export function mapNotificationDAOToDTO(notificationDAO: Notification): Notifica
         notificationDAO.is_read,
         notificationDAO.created_at
     );
+}
+
+export function mapChatDAOToDTO(chatDAO: Chat): Chat {
+    const dto = new Chat();
+    dto.id = chatDAO.id;
+    dto.report.id = chatDAO.report.id;
+    dto.type = chatDAO.type;
+    return dto;
 }
 
 /* ----------- Request -> DAO mappers ----------- */

@@ -390,7 +390,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       (25,'uploads/1762946249248-Water-leakage.jpg',25)
     `);
 
-    await queryRunner.query(`INSERT INTO "Chat" ("id","report_id","type") VALUES
+    await queryRunner.query(`INSERT INTO "chat" ("id","report_id","type") VALUES
       (1,1,'OFFICER_USER'),
       (2,3,'OFFICER_USER'),
       (3,4,'OFFICER_USER'),

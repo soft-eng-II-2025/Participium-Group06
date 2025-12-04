@@ -29,7 +29,7 @@ router.post("/:reportId", requireAuth, async (req: Request, res: Response, next:
 router.get("/:reportId", requireAuth, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const reportId = +req.params.reportId;
-        if (isNaN(reportId)) return res.status(400).json({ error: "Invalid report ID" });
+        if (Number.isNaN(reportId)) return res.status(400).json({ error: "Invalid report ID" });
 
         const messages = await messageController.getMessagesByReport(reportId);
         res.status(200).json(messages);

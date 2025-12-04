@@ -1,7 +1,7 @@
 import React, {useState} from "react";
 import MapSelector from "../components/MapSelector";
 
-const Map: React.FC = () => {
+const StreetMap: React.FC = () => {
     const [lat, setLat] = useState<number | null>(null);
     const [lng, setLng] = useState<number | null>(null);
 
@@ -28,4 +28,4 @@ const Map: React.FC = () => {
 };
 
 
-export default Map;
+export default StreetMap;

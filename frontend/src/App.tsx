@@ -23,6 +23,7 @@ import TechLeadHomePage from './pages/TechLeadHomePage';
 import {UserAccountPage} from "./pages/UserAccountPage";
 import ChatPlaygroundPage from './pages/ChatPlayGroundPage';
 import UserReportsPage from './pages/UserReportsPage';
+import ExternalOfficerHomePage from './pages/ExternalOfficerHomePage';
 
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ function App() {
         if (role === 'ORGANIZATION_OFFICER') return <OrganizationOfficerHomePage />;
         if (role?.startsWith('TECH_LEAD')) return <TechLeadHomePage />;
         if (role?.startsWith('TECH_AGENT')) return <TechAgentHomePage />;
+        if (role?.startsWith('EXT')) return <ExternalOfficerHomePage />;
         else return <HomePage />;
     };
     return (

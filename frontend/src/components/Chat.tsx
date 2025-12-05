@@ -38,10 +38,20 @@ const Chat: React.FC<ChatProps> = ({
   const { user, loading: authLoading } = useAuth();
 
   // Se lead/external → usiamo hook LeadExternal, altrimenti OfficerUser
-  const { data: rawMessages = [], isLoading: messagesLoading } = 
-    isLead || (isOfficer && senderType === "EXTERNAL")
-      ? useMessagesByReportLeadExternal(reportId, !!reportId)
-      : useMessagesByReportOfficerUser(reportId, !!reportId);
+  // Hooks sempre chiamati, ma con enabled che li rende "inerti"
+const officerUserQuery = useMessagesByReportOfficerUser(reportId, true);
+const leadExternalQuery = useMessagesByReportLeadExternal(reportId, true);
+
+// Determina quale usare
+const isLeadExternalChat = isLead || senderType === "EXTERNAL";
+
+const rawMessages = isLeadExternalChat
+  ? leadExternalQuery.data || []
+  : officerUserQuery.data || [];
+
+const messagesLoading = isLeadExternalChat
+  ? leadExternalQuery.isLoading
+  : officerUserQuery.isLoading;
 
   const { mutateAsync: sendMessage, isPending: sending } = useSendMessage();
 

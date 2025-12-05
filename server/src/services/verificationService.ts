@@ -15,7 +15,6 @@ export class VerificationService {
 
   async generateAndSend(userdto: UserResponseDTO) {
     const user = await this.userRepo.findByUsername(userdto.username);
-    console.log(user);
     if (!user) throw new Error("USER_NOT_FOUND");
 
     const raw = String(Math.floor(100000 + Math.random() * 900000));
@@ -41,6 +40,6 @@ export class VerificationService {
   }
 
   async cleanupExpired() {
-    await this.codeRepo.deleteExpired();
+    await this.codeRepo.deleteExpiredWithUsers();
   }
 }

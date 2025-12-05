@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import path from "path";
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -35,7 +36,7 @@ export async function sendVerificationEmail(to: string, code: string) {
     html,
     attachments: [{
       filename: 'logo.png',
-      path: 'D:/SWE2/server/assets/logo.png',
+      path: path.join(__dirname, "../assets/logo.png"),
       cid: 'logo' // same as used in img src
     }]
   });

@@ -5,6 +5,6 @@ export class VerificationCodeDTO {
     @IsString()
     username?: string;
 
-    @IsNumber()
-    code?: number;
+    @IsString()
+    code?: string;
 }

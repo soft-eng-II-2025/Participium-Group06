@@ -22,6 +22,9 @@ RUN mkdir -p /app/dist /app/uploads \
 # Compila TypeScript come root (perché node non ha ancora dist)
 RUN npm run build
 
+# Copy ASSETS from src/ into dist/
+RUN cp -r /app/src/assets /app/dist/assets
+
 # Cambia proprietario per runtime
 RUN chown -R node:node /app/dist /app/uploads
 

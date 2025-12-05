@@ -20,7 +20,6 @@ const verificationService = new VerificationService(AppDataSource);
 router.post('/register', validateDto(CreateUserRequestDTO), async (req, res, next) => {
     try {
         const newUser = await userController.createUser(req.body);
-        console.log(newUser);
         await verificationService.generateAndSend(newUser);
 
         req.logIn(newUser, (err) => {

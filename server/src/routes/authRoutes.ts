@@ -9,6 +9,7 @@ import passport from 'passport';
 import { requireAuth } from "../middlewares/authMiddleware";
 import { VerificationService } from '../services/verificationService';
 import { AppDataSource } from '../data-source';
+import { VerificationCodeDTO } from '../models/DTOs/VerificationCodeDTO';
 //import * as authController from "../controllers/authController";
 
 export const router = Router();
@@ -36,16 +37,15 @@ router.post('/register', validateDto(CreateUserRequestDTO), async (req, res, nex
 });
 
 // POST /verify
-router.post('/verify', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/verify', validateDto(VerificationCodeDTO), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { username, code } = req.body;
+        const dto = req.body;
 
-        if (!username || !code) {
+        if (!dto.username || !dto.code) {
             return res.status(400).json({ error: "MISSING_FIELDS" });
         }
 
-        await verificationService.verifyCode(username, code);
-
+        await verificationService.verifyCode(dto.username, dto.code);
         return res.status(200).json({ verified: true });
 
     } catch (err: any) {

@@ -5,9 +5,11 @@ import * as argon2 from "argon2";
 
 export class VerificationCodeRepository {
   private ormRepository: Repository<VerificationCode>;
+  private userRepository: Repository<User>;
 
   constructor(dataSource: DataSource) {
     this.ormRepository = dataSource.getRepository(VerificationCode);
+    this.userRepository = dataSource.getRepository(User);
   }
 
   async createForUser(user: User, rawCode: string): Promise<VerificationCode> {
@@ -62,4 +64,33 @@ export class VerificationCodeRepository {
     await this.delete(entry);
     return true;
   }
+  async deleteExpiredWithUsers(): Promise<void> {
+    const expiredCodes = await this.ormRepository
+      .createQueryBuilder("code")
+      .leftJoinAndSelect("code.user", "user")
+      .where("code.expires_at < NOW()")
+      .getMany();
+
+    if (expiredCodes.length === 0) return;
+
+    const userIds = expiredCodes.map(c => c.user.id);
+
+    // Delete codes first
+    await this.ormRepository
+      .createQueryBuilder()
+      .delete()
+      .from(VerificationCode)
+      .where("expires_at < NOW()")
+      .execute();
+
+    // Delete users who never verified
+    await this.userRepository
+      .createQueryBuilder()
+      .delete()
+      .from(User)
+      .where("id IN (:...ids)", { ids: userIds })
+      .andWhere("verified = false")
+      .execute();
+  }
+
 }

@@ -10,8 +10,10 @@ export function useChatIdentity() {
   const isOfficer = role === "TECH_AGENT_INFRASTRUCTURE" || role === "TECH_AGENT_MOBILITY" || role === "TECH_AGENT_GREEN_AREAS" || 
                     role === "TECH_AGENT_WASTE_MANAGEMENT" || role === "TECH_AGENT_ENERGY_LIGHTING" || role === "TECH_AGENT_PUBLIC_BUILDINGS";
   const isAdmin = role === "ADMIN";
+  const isLead = role === "TECH_LEAD_INFRASTRUCTURE" || role === "TECH_LEAD_MOBILITY" || role === "TECH_LEAD_GREEN_AREAS" || 
+                    role === "TECH_LEAD_WASTE_MANAGEMENT" || role === "TECH_LEAD_ENERGY_LIGHTING" || role === "TECH_LEAD_PUBLIC_BUILDINGS";
 
-  let senderType: "USER" | "OFFICER" | null = null;
+  let senderType: "USER" | "OFFICER" | "EXTERNAL" | "LEAD" | null = null;
   let displayName: string | undefined;
 
   if (isUser && user) {
@@ -20,8 +22,17 @@ export function useChatIdentity() {
     displayName = u.username;
   } else if (isOfficer && user) {
     const o = user as MunicipalityOfficerResponseDTO;
-    senderType = "OFFICER";
-    displayName = o.username;
+    if(o.external) {
+      senderType = "EXTERNAL";
+      displayName = o.username;
+    } else {
+      senderType = "OFFICER";
+      displayName = o.role? o.role : o.username;
+    }
+  } else if (isLead && user) {
+    senderType = "LEAD";
+    const o = user as MunicipalityOfficerResponseDTO;
+    displayName = o.role? o.role : o.username;
   }
 
   return {
@@ -30,5 +41,6 @@ export function useChatIdentity() {
     isUser,
     isOfficer,
     isAdmin,
+    isLead
   };
 }

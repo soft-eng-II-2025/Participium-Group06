@@ -3,13 +3,15 @@ import express from 'express';
 import { requireTechLead } from '../middlewares/authMiddleware';
 import * as adminController from "../controllers/adminController";
 import { User } from '../models/User';
+import { MunicipalityOfficer } from '../models/MunicipalityOfficer';
 
 export const router = Router();
 
 router.put('/report/:reportId', requireTechLead, async (req, res: Response) => {
     const reportId = Number(req.params.reportId);
     const username = req.body.officerUsername;
-    const updatedReport = await adminController.assignTechAgent(reportId, username);
+    const techLeadUsername = (req.user as MunicipalityOfficer).username;
+    const updatedReport = await adminController.assignTechAgent(reportId, username, techLeadUsername);
     res.status(200).json(updatedReport);
 });
 

@@ -7,6 +7,8 @@ import type { MessageResponseDTO } from "../models/DTOs/MessageResponseDTO";
 import type { NotificationDTO } from "../models/DTOs/NotificationDTO";
 
 import { CreateReportRequestDTO } from "../models/DTOs/CreateReportRequestDTO";
+import { CreateOfficerRequestDTO } from "../models/DTOs/CreateOfficerRequestDTO";
+import { hashPassword } from "./passwordService";
 
 import { Category } from "../models/Category";
 import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
@@ -18,6 +20,10 @@ import { StatusType } from "../models/StatusType";
 import { Message } from "../models/Message";
 import { Notification } from "../models/Notification";
 import { NotificationType } from "../models/NotificationType";
+import { SenderType } from "../models/SenderType";
+import { report } from "process";
+import { Chat } from "../models/Chat";
+import { ChatResponseDTO } from "../models/DTOs/ChatRespondeDTO";
 
 /* Helper */
 function removeNullAttributes<T extends Record<string, any>>(dto: T): Partial<T> {
@@ -43,9 +49,10 @@ export function createMunicipalityOfficerDTO(
     email?: string,
     first_name?: string,
     last_name?: string,
+    external?: boolean,
     role?: string | null
 ): MunicipalityOfficerResponseDTO {
-    return removeNullAttributes({ id, username, email, first_name, last_name, role }) as MunicipalityOfficerResponseDTO;
+    return removeNullAttributes({ id, username, email, first_name, last_name, external, role }) as MunicipalityOfficerResponseDTO;
 }
 
 export function createReportDTO(
@@ -61,6 +68,7 @@ export function createReportDTO(
     officer?: MunicipalityOfficerResponseDTO,
     photos?: string[],
     createdAt?: Date,
+    chats?: Chat[]
 ): ReportResponseDTO {
     return removeNullAttributes({
         id,
@@ -75,6 +83,7 @@ export function createReportDTO(
         officer,
         photos,
         createdAt,
+        chats: chats?.map((c: Chat) => mapChatDAOToDTO(c))
     }) as unknown as ReportResponseDTO;
 }
 
@@ -110,14 +119,16 @@ export function createUserDTO(
 
 export function createMessageResponseDTO(
     reportId: number,
+    chatId: number,
     role_label?: string,
     username?: string,
     content?: string,
     created_at?: Date,
-    sender?: 'USER' | 'OFFICER'
+    sender?: SenderType
 ): MessageResponseDTO {
     return removeNullAttributes({
         reportId,
+        chatId,
         role_label,
         username,
         content,
@@ -161,6 +172,7 @@ export function mapMunicipalityOfficerDAOToDTO(officerDAO: MunicipalityOfficer):
         officerDAO.email,
         officerDAO.first_name,
         officerDAO.last_name,
+        officerDAO.external,
         officerDAO.role?.title || null
     );
 }
@@ -178,7 +190,8 @@ export function mapReportDAOToDTO(reportDAO: Report): ReportResponseDTO {
         reportDAO.explanation,
         reportDAO.officer ? mapMunicipalityOfficerDAOToDTO(reportDAO.officer) : undefined,
         reportDAO.photos?.map((p: ReportPhoto) => p.photo),
-        reportDAO.createdAt
+        reportDAO.createdAt,
+        reportDAO.chats
     );
 }
 
@@ -205,10 +218,11 @@ export function mapUserDAOToDTO(userDAO: User): UserResponseDTO {
 }
 
 export function mapMessageDAOToDTO(messageDAO: Message): MessageResponseDTO {
-    let username = messageDAO.user ? messageDAO.user.username : messageDAO.municipality_officer ? messageDAO.municipality_officer.username : undefined;
-    let role_label = messageDAO.municipality_officer ? messageDAO.municipality_officer.role?.label : undefined;
+    let username = messageDAO.chat.report.user.username;
+    let role_label = messageDAO.chat.report.officer ? messageDAO.chat.report.officer.role?.label : undefined;
     return createMessageResponseDTO(
-        messageDAO.report_id,
+        messageDAO.chat.report.id,
+        messageDAO.chat.id,
         role_label,
         username,
         messageDAO.content,
@@ -226,6 +240,14 @@ export function mapNotificationDAOToDTO(notificationDAO: Notification): Notifica
         notificationDAO.is_read,
         notificationDAO.created_at
     );
+}
+
+export function mapChatDAOToDTO(chatDAO: Chat): Chat {
+    const dto = new Chat();
+    dto.id = chatDAO.id;
+    dto.report.id = chatDAO.report.id;
+    dto.type = chatDAO.type;
+    return dto;
 }
 
 /* ----------- Request -> DAO mappers ----------- */
@@ -246,5 +268,17 @@ export function mapCreateReportRequestToDAO(dto: CreateReportRequestDTO): Report
     dao.category = new Category();
     dao.category.id = dto.categoryId;
 
+    return dao;
+}
+
+// map CreateOfficerRequestDTO to MunicipalityOfficer DAO
+export async function mapCreateOfficerRequestDTOToDAO(dto: CreateOfficerRequestDTO): Promise<MunicipalityOfficer> {
+    const dao = new MunicipalityOfficer();
+    dao.username = dto.username;
+    dao.password = await hashPassword(dto.password);
+    dao.email = dto.email.toLowerCase();
+    dao.first_name = dto.first_name;
+    dao.last_name = dto.last_name;
+    dao.external = dto.external;
     return dao;
 }

@@ -21,7 +21,14 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
 
     await queryRunner.query(`CREATE TYPE "sender_enum" AS ENUM(
       'USER',
-      'OFFICER'
+      'OFFICER',
+      'LEAD',
+      'EXTERNAL'
+    )`);
+
+  await queryRunner.query(`CREATE TYPE "chat_type_enum" AS ENUM(
+      'OFFICER_USER',
+      'LEAD_EXTERNAL'
     )`);
 
     // 2. Base tables
@@ -38,6 +45,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       "password" VARCHAR NOT NULL,
       "first_name" VARCHAR NOT NULL,
       "last_name" VARCHAR NOT NULL,
+      "external" BOOLEAN NOT NULL,
       "role" INT,
       CONSTRAINT "FK_municipality_officer_role"
         FOREIGN KEY ("role") REFERENCES "role"("id")
@@ -82,13 +90,16 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       "officerId" INT,
       "userId" INT,
       "categoryId" INT,
+      "lead_officer_id" INT,
       "createdAt" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT "FK_report_officer"
         FOREIGN KEY ("officerId") REFERENCES "municipality_officer"("id"),
       CONSTRAINT "FK_report_user"
         FOREIGN KEY ("userId") REFERENCES "app_user"("id"),
       CONSTRAINT "FK_report_category"
-        FOREIGN KEY ("categoryId") REFERENCES "category"("id")
+        FOREIGN KEY ("categoryId") REFERENCES "category"("id"),
+      CONSTRAINT "FK_report_lead_officer"
+        FOREIGN KEY ("lead_officer_id") REFERENCES "municipality_officer"("id")
     )`);
 
     await queryRunner.query(`CREATE TABLE "report_photo" (
@@ -110,21 +121,23 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
         FOREIGN KEY ("category_id") REFERENCES "category"("id") ON DELETE CASCADE
     )`);
 
+    await queryRunner.query(`CREATE TABLE "chat" (
+      "id" SERIAL PRIMARY KEY,
+      "report_id" INT NOT NULL,
+      "type" "chat_type_enum" NOT NULL,
+      CONSTRAINT "FK_chat_report"
+        FOREIGN KEY ("report_id") REFERENCES "report"("id") ON DELETE CASCADE
+    )`);
+
     // 4. Message table
     await queryRunner.query(`CREATE TABLE "message" (
       "id" SERIAL PRIMARY KEY,
-      "municipality_officer_id" INT NOT NULL,
-      "user_id" INT NOT NULL,
-      "report_id" INT NOT NULL,
       "content" TEXT NOT NULL,
       "sender" "sender_enum" NOT NULL,
       "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT "FK_message_municipality_officer"
-        FOREIGN KEY ("municipality_officer_id") REFERENCES "municipality_officer"("id"),
-      CONSTRAINT "FK_message_user"
-        FOREIGN KEY ("user_id") REFERENCES "app_user"("id"),
-      CONSTRAINT "FK_message_report"
-        FOREIGN KEY ("report_id") REFERENCES "report"("id")
+      "chat_id" INT NOT NULL,
+      CONSTRAINT "FK_chat_message"
+        FOREIGN KEY ("chat_id") REFERENCES "chat"("id") ON DELETE CASCADE
     )`);
 
     // 5. Notification table
@@ -204,11 +217,11 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
     // 9. Admin officer
     await queryRunner.query(`
       INSERT INTO "municipality_officer"
-        ("id","username","email","password","first_name","last_name","role")
+        ("id","username","email","password","first_name","last_name","external","role")
       VALUES
         (1,'admin','admin@participium.local',
         '$argon2id$v=19$m=65536,t=3,p=1$6FOS86yBc3WowYzkpdqonQ$fuBmKGHx8IRs15LrImF8/baI15mxyfvGnTkUNyVDd6g',
-        'System','Admin',1)
+        'System','Admin',false,1)
       ON CONFLICT ("id") DO NOTHING
     `);
 
@@ -275,47 +288,47 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       -- lead_buildings password in chiaro: LeadBuildings1!
       -- agent_buildings password in chiaro: AgentBuildings1!
       INSERT INTO "municipality_officer"
-        ("id","username","email","password","first_name","last_name","role")
+        ("id","username","email","password","first_name","last_name","external","role")
       VALUES
         (2,'org_officer','maria.rossi@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$MXQ5aHF2aG5vNmYwMDAwMA$xwEPRsmhAk4323jDh9Jf1laD9BxtD6wKee06uEAhPC8',
-         'Maria','Rossi',2),
+         'Maria','Rossi',false,2),
         (3,'lead_infra','giovanni.bianchi@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$d3l4eXJhczNjazAwMDAwMA$BoCWTDKLvtbZ+kzeyMeqyTyioSpGeZsSiaMnuwL9Chs',
-         'Giovanni','Bianchi',3),
+         'Giovanni','Bianchi',false,3),
         (4,'agent_infra','anna.verdi@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$cWF0b25kYjh2eDAwMDAwMA$apQMX9qx9rlc7O3aApOmkZHOG5iU0fTGDnn5K8A4f7k',
-         'Anna','Verdi',4),
+         'Anna','Verdi',false,4),
         (5,'lead_mobility','paolo.galli@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$NWx6N2U5MWwyMjcwMDAwMA$WKvR9cEs92cFuEAa4shZQVEWLIQWbAHGq9PFQaB3McY',
-         'Paolo','Galli',5),
+         'Paolo','Galli',false,5),
         (6,'agent_mobility','elena.ferrari@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$NjB3dTduY2IxdjIwMDAwMA$DKTu4q1d9uih9KSTYjwfOydPWdhi2/svvde0dZFgv6Q',
-         'Elena','Ferrari',6),
+         'Elena','Ferrari',false,6),
         (7,'lead_green','marco.russo@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$dmdxY2FzdXJhYTgwMDAwMA$STgY4pc4dSUaVeMpkhqizIMIY19+h1+L8Jy91sSMAiU',
-         'Marco','Russo',7),
+         'Marco','Russo',false,7),
         (8,'agent_green','sara.esposito@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$eml3cjV4cWwwemYwMDAwMA$zMrriiNvqXPn3c1OjuvDJqW40NKil2HO7HC28SZON30',
-         'Sara','Esposito',8),
+         'Sara','Esposito',false,8),
         (9,'lead_waste','luca.martini@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$dnJuajAybGVscWUwMDAwMA$bDRZDRurlvGmVoEHgmi1gnqHk3YazVMe0s75HWNfRrU',
-         'Luca','Martini',9),
+         'Luca','Martini',false,9),
         (10,'agent_waste','francesca.romano@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$NXljMmRpOG81bnQwMDAwMA$b2ARlYEp0fEqCaV075vNunWZjnpGYbnnsScHc+ydppk',
-         'Francesca','Romano',10),
+         'Francesca','Romano',false,10),
         (11,'lead_energy','davide.conti@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$aWl4NDJkM3pqZjkwMDAwMA$Ju94deagaCHPsEJmgRXmG9tAFYFx0mBbLWh/NV5myYs',
-         'Davide','Conti',11),
+         'Davide','Conti',false,11),
         (12,'agent_energy','chiara.ricci@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$emNzdnV3ZDR5Y2UwMDAwMA$gY6E0cr/UnIOEzGc9p7Shz75hO7lnketKTzc9LEEDTg',
-         'Chiara','Ricci',12),
+         'Chiara','Ricci',false,12),
         (13,'lead_buildings','alessandro.gallo@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$aWl3bTU4MHJxdGwwMDAwMA$/lpZZnQnbgU0UpPcGV8vg2bTsyZeIaqN+uEuB/nuDQg',
-         'Alessandro','Gallo',13),
+         'Alessandro','Gallo',false,13),
         (14,'agent_buildings','federica.moretti@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$cTNpaGhscjN4dnQwMDAwMA$EawaCPGuYrZKzo0ftbnaBMrq1D4ymmSp4TUsUK63Nec',
-         'Federica','Moretti',14)
+         'Federica','Moretti',false,14)
       ON CONFLICT ("id") DO NOTHING
     `);
 
@@ -328,32 +341,32 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
 
     // 10. Report Torino (25) – status vari ma mai "Rejected", explanation = ''
     await queryRunner.query(`INSERT INTO "report"
-      ("id","longitude","latitude","title","description","status","explanation","officerId","userId","categoryId") VALUES
-  (1,7.6869,45.0703,'Sewer Blockage in City Center','Sewer drain blocked in the city center.','In Progress','',9,1,3),
-  (2,7.6780,45.0710,'Damaged Bench in Piazza Statuto','Broken bench in Piazza Statuto.','Pending Approval','',7,2,8),
-  (3,7.6820,45.0740,'Non-Working Streetlight on Via Garibaldi','Streetlight not working on Via Garibaldi.','Assigned','',null,3,4),
-  (4,7.6905,45.0665,'Faulty Public Lighting in San Salvario','Faulty public lighting in the San Salvario area.','In Progress','',11,4,4),
-  (5,7.7000,45.0675,'Broken Traffic Light on Corso Vittorio','Broken traffic light at the Corso Vittorio intersection.','Pending Approval','',5,5,6),
-  (6,7.7020,45.0730,'Broken Fire Hydrant in Vanchiglia','Fire hydrant broken in the Vanchiglia area.','Assigned','',null,6,1),
-  (7,7.6815,45.0650,'Uneven Pavement on Crocetta Sidewalk','Uneven pavement on the sidewalk in Crocetta.','In Progress','',3,7,7),
-  (8,7.6880,45.0750,'Damaged Pedestrian Crossing Sign','Damaged pedestrian crossing sign.','Pending Approval','',5,7,6),
-  (9,7.6750,45.0680,'Broken Slide in Mirafiori Nord Playground','Slide in the playground damaged in Mirafiori Nord.','Assigned','',null,9,8),
-  (10,7.6920,45.0690,'Damaged Road Barrier in Borgo Po','Road barrier damaged in Borgo Po.','In Progress','',3,10,7),
-  (11,7.6840,45.0725,'Illegible Road Sign in Dora Riparia','Road sign unreadable in Dora Riparia.','Assigned','',null,1,6),
-  (12,7.6800,45.0770,'Debris on the Roadway in Cit Turin','Debris on the roadway in Cit Turin.','Pending Approval','',4,2,7),
-  (13,7.6990,45.0720,'Fallen Road Sign in Aurora','Road sign fallen in Aurora.','In Progress','',5,3,6),
-  (18,7.6980,45.0660,'Overflowing Street Bin in Santa Rita','Street bin overflowing in Santa Rita.','In Progress','',9,8,5),
-  (19,7.6830,45.0698,'Broken Swing in Pozzo Strada Playground','Swing broken in the playground in Pozzo Strada.','Assigned','',7,9,8),
-  (20,7.6890,45.0715,'Poor Road Conditions in Barriera di Milano','Poor road conditions in Barriera di Milano.','In Progress','',3,10,7),
-  (21,7.6910,45.0760,'Large Pothole on Road in Rebaudengo','Large pothole on the road in Rebaudengo.','Pending Approval','',3,1,7),
-  (22,7.6775,45.0708,'Flooded Street After Rain in Parella','Street flooded after heavy rain in Parella.','In Progress','',9,2,3),
-  (23,7.6955,45.0685,'Lighting Outage in Crocetta','Several streetlights out in Crocetta.','Assigned','',11,3,4),
-  (14,7.6765,45.0735,'Fallen Tree Branch in Valentino Park','A tree branch has fallen in Valentino Park.','Assigned','',7,4,8),
-  (15,7.6875,45.0670,'Flooding Due to Clogged Sewer in Porta Nuova','Flooding caused by a clogged sewer in Porta Nuova.','In Progress','',9,5,3),
-  (16,7.6935,45.0745,'Graffiti on Public Wall in Vanchiglietta','Graffiti on a public wall in Vanchiglietta.','Pending Approval','',13,6,9),
-  (17,7.7040,45.0695,'Low Water Pressure in Madonna del Pilone','Low water pressure in the Madonna del Pilone area.','Assigned','',null,7,1),
-  (24,7.7060,45.0718,'Trash Scattered in Public Area in Cavoretto','Trash scattered in a public area in Cavoretto.','In Progress','',9,4,5),
-  (25,7.6855,45.0738,'Water Leak on Roadway in Lingotto','Water leaking onto the roadway in Lingotto.','Resolved','',3,5,1)
+      ("id","longitude","latitude","title","description","status","explanation","officerId","userId","categoryId","lead_officer_id") VALUES
+  (1,7.6869,45.0703,'Sewer Blockage in City Center','Sewer drain blocked in the city center.','In Progress','',9,1,3,null),
+  (2,7.6780,45.0710,'Damaged Bench in Piazza Statuto','Broken bench in Piazza Statuto.','Pending Approval','',7,2,8,null),
+  (3,7.6820,45.0740,'Non-Working Streetlight on Via Garibaldi','Streetlight not working on Via Garibaldi.','Assigned','',null,3,4,null),
+  (4,7.6905,45.0665,'Faulty Public Lighting in San Salvario','Faulty public lighting in the San Salvario area.','In Progress','',11,4,4,null),
+  (5,7.7000,45.0675,'Broken Traffic Light on Corso Vittorio','Broken traffic light at the Corso Vittorio intersection.','Pending Approval','',5,5,6,null),
+  (6,7.7020,45.0730,'Broken Fire Hydrant in Vanchiglia','Fire hydrant broken in the Vanchiglia area.','Assigned','',null,6,1,null),
+  (7,7.6815,45.0650,'Uneven Pavement on Crocetta Sidewalk','Uneven pavement on the sidewalk in Crocetta.','In Progress','',3,7,7,null),
+  (8,7.6880,45.0750,'Damaged Pedestrian Crossing Sign','Damaged pedestrian crossing sign.','Pending Approval','',5,7,6,null),
+  (9,7.6750,45.0680,'Broken Slide in Mirafiori Nord Playground','Slide in the playground damaged in Mirafiori Nord.','Assigned','',null,9,8,null),
+  (10,7.6920,45.0690,'Damaged Road Barrier in Borgo Po','Road barrier damaged in Borgo Po.','In Progress','',3,10,7,null),
+  (11,7.6840,45.0725,'Illegible Road Sign in Dora Riparia','Road sign unreadable in Dora Riparia.','Assigned','',null,1,6,null),
+  (12,7.6800,45.0770,'Debris on the Roadway in Cit Turin','Debris on the roadway in Cit Turin.','Pending Approval','',4,2,7,null),
+  (13,7.6990,45.0720,'Fallen Road Sign in Aurora','Road sign fallen in Aurora.','In Progress','',5,3,6,null),
+  (18,7.6980,45.0660,'Overflowing Street Bin in Santa Rita','Street bin overflowing in Santa Rita.','In Progress','',9,8,5,null),
+  (19,7.6830,45.0698,'Broken Swing in Pozzo Strada Playground','Swing broken in the playground in Pozzo Strada.','Assigned','',7,9,8,null),
+  (20,7.6890,45.0715,'Poor Road Conditions in Barriera di Milano','Poor road conditions in Barriera di Milano.','In Progress','',3,10,7,null),
+  (21,7.6910,45.0760,'Large Pothole on Road in Rebaudengo','Large pothole on the road in Rebaudengo.','Pending Approval','',3,1,7,null),
+  (22,7.6775,45.0708,'Flooded Street After Rain in Parella','Street flooded after heavy rain in Parella.','In Progress','',9,2,3,null),
+  (23,7.6955,45.0685,'Lighting Outage in Crocetta','Several streetlights out in Crocetta.','Assigned','',11,3,4,null),
+  (14,7.6765,45.0735,'Fallen Tree Branch in Valentino Park','A tree branch has fallen in Valentino Park.','Assigned','',7,4,8,null),
+  (15,7.6875,45.0670,'Flooding Due to Clogged Sewer in Porta Nuova','Flooding caused by a clogged sewer in Porta Nuova.','In Progress','',9,5,3,null),
+  (16,7.6935,45.0745,'Graffiti on Public Wall in Vanchiglietta','Graffiti on a public wall in Vanchiglietta.','Pending Approval','',13,6,9,null),
+  (17,7.7040,45.0695,'Low Water Pressure in Madonna del Pilone','Low water pressure in the Madonna del Pilone area.','Assigned','',null,7,1,null),
+  (24,7.7060,45.0718,'Trash Scattered in Public Area in Cavoretto','Trash scattered in a public area in Cavoretto.','In Progress','',9,4,5,null),
+  (25,7.6855,45.0738,'Water Leak on Roadway in Lingotto','Water leaking onto the roadway in Lingotto.','Resolved','',3,5,1,null)
 `);
 
 
@@ -386,6 +399,28 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       (25,'uploads/1762946249248-Water-leakage.jpg',25)
     `);
 
+    await queryRunner.query(`INSERT INTO "chat" ("id","report_id","type") VALUES
+      (1,1,'OFFICER_USER'),
+      (2,3,'OFFICER_USER'),
+      (3,4,'OFFICER_USER'),
+      (4,6,'OFFICER_USER'),
+      (5,7,'OFFICER_USER'),
+      (6,9,'OFFICER_USER'),
+      (7,10,'OFFICER_USER'),
+      (8,11,'OFFICER_USER'),
+      (9,13,'OFFICER_USER'),
+      (10,18,'OFFICER_USER'),
+      (11,19,'OFFICER_USER'),
+      (12,20,'OFFICER_USER'),
+      (13,22,'OFFICER_USER'),
+      (14,23,'OFFICER_USER'),
+      (15,14,'OFFICER_USER'),
+      (16,15,'OFFICER_USER'),
+      (17,17,'OFFICER_USER'),
+      (18,24,'OFFICER_USER'),
+      (19,25,'OFFICER_USER')
+    `);
+
     // Allineamento sequence app_user
     await queryRunner.query(`
       SELECT setval(pg_get_serial_sequence('"app_user"', 'id'),
@@ -409,6 +444,15 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
                     true
              );
     `);
+
+    // Allineamento sequence chat
+    await queryRunner.query(`
+      SELECT setval(
+        pg_get_serial_sequence('"chat"','id'),
+        GREATEST((SELECT COALESCE(MAX(id),0) FROM "chat"), 1),
+        true
+      );
+    `);
   }
 
 
@@ -422,9 +466,11 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "app_user"`);
     await queryRunner.query(`DROP TABLE "municipality_officer"`);
     await queryRunner.query(`DROP TABLE "role"`);
+    await queryRunner.query(`DROP TABLE "chat"`);
     await queryRunner.query(`DROP TYPE "status_type_enum"`);
     await queryRunner.query(`DROP TYPE "sender_enum"`);
     await queryRunner.query(`DROP TYPE "notification_type_enum"`);
+    await queryRunner.query(`DROP TYPE "chat_type_enum"`);
     await queryRunner.query(`DROP TABLE "verification_code"`);
   }
 }

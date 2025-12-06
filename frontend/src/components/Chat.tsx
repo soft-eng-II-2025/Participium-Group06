@@ -11,7 +11,11 @@ import {
 import SendIcon from "@mui/icons-material/Send";
 
 import { MessageResponseDTO } from "../DTOs/MessageResponseDTO";
-import { useMessagesByReport, useSendMessage } from "../hook/messagesApi.hook";
+import {
+  useMessagesByReportLeadExternal,
+  useMessagesByReportOfficerUser,
+  useSendMessage,
+} from "../hook/messagesApi.hook";
 import { useChatIdentity } from "../hook/useChatIdentity";
 import { CreateMessageDTO } from "../api/messageApi";
 import { useAuth } from "../contexts/AuthContext";
@@ -30,17 +34,28 @@ const Chat: React.FC<ChatProps> = ({
   reportId,
   socketBaseUrl = "http://localhost:3000",
 }) => {
-  const { senderType, isUser, isOfficer } = useChatIdentity();
+  const { senderType, isUser, isOfficer, isLead } = useChatIdentity();
   const { user, loading: authLoading } = useAuth();
 
-  const { data: rawMessages = [], isLoading: messagesLoading } =
-    useMessagesByReport(reportId, !!reportId);
+  // Se lead/external → usiamo hook LeadExternal, altrimenti OfficerUser
+  // Hooks sempre chiamati, ma con enabled che li rende "inerti"
+const officerUserQuery = useMessagesByReportOfficerUser(reportId, true);
+const leadExternalQuery = useMessagesByReportLeadExternal(reportId, true);
+
+// Determina quale usare
+const isLeadExternalChat = isLead || senderType === "EXTERNAL";
+
+const rawMessages = isLeadExternalChat
+  ? leadExternalQuery.data || []
+  : officerUserQuery.data || [];
+
+const messagesLoading = isLeadExternalChat
+  ? leadExternalQuery.isLoading
+  : officerUserQuery.isLoading;
 
   const { mutateAsync: sendMessage, isPending: sending } = useSendMessage();
 
-  const [socketReceivedMessages, setSocketReceivedMessages] = useState<
-    MessageResponseDTO[]
-  >([]);
+  const [socketReceivedMessages, setSocketReceivedMessages] = useState<MessageResponseDTO[]>([]);
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
@@ -57,18 +72,26 @@ const Chat: React.FC<ChatProps> = ({
               new Date(sm.created_at).getTime()
         )
     );
-
     return [...rawMessages, ...uniqueSocketMessages].sort(
       (a, b) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
   }, [rawMessages, socketReceivedMessages]);
 
-  // Officer chat: get the other user's name
+  // Other side username (for header)
   const otherSideUsername = React.useMemo(() => {
-    if (!allMessages.length || !isOfficer) return undefined;
-    return allMessages[0].username;
-  }, [allMessages, isOfficer]);
+    if (!allMessages.length) return undefined;
+
+    if (isUser) {
+      return allMessages.find((m) => m.sender !== "USER")?.username;
+    } else if (isOfficer) {
+      return allMessages.find((m) => m.sender === "USER")?.username;
+    } else if (isLead) {
+      return allMessages.find((m) => m.sender === "EXTERNAL")?.username;
+    } else if (senderType === "EXTERNAL") {
+      return allMessages.find((m) => m.sender === "LEAD")?.username;
+    }
+  }, [allMessages, isUser, isOfficer, isLead, senderType]);
 
   // Auto-scroll
   useEffect(() => {
@@ -78,10 +101,12 @@ const Chat: React.FC<ChatProps> = ({
   // Socket setup
   useEffect(() => {
     if (!senderType || !user) return;
+
     initSocketClient({
       baseUrl: socketBaseUrl,
       UserUsername: isUser ? user.username : undefined,
       OfficerUsername: isOfficer ? user.username : undefined,
+      // aggiungiamo eventuale Lead / External se necessario
     });
 
     const handleNewMessage = (m: MessageResponseDTO) => {
@@ -100,7 +125,7 @@ const Chat: React.FC<ChatProps> = ({
     setError(null);
 
     const dto: CreateMessageDTO = {
-      report_id: reportId,
+      chat_id: reportId,
       content: input.trim(),
       sender: senderType,
     };
@@ -111,9 +136,7 @@ const Chat: React.FC<ChatProps> = ({
     } catch (err: any) {
       console.error(err);
       setError(
-        err.response?.data?.error ||
-          err.message ||
-          "Failed to send message"
+        err.response?.data?.error || err.message || "Failed to send message"
       );
     }
   }
@@ -170,12 +193,16 @@ const Chat: React.FC<ChatProps> = ({
 
   // Header subtitle
   let subtitle = "";
-  if (isOfficer) {
+  if (isOfficer || senderType === "EXTERNAL") {
     subtitle = otherSideUsername
       ? `Chat with user ${otherSideUsername}`
       : `Chat with report user`;
   } else if (isUser) {
     subtitle = `Chat with the assigned officer`;
+  } else if (isLead) {
+    subtitle = otherSideUsername
+      ? `Chat with external officer ${otherSideUsername}`
+      : `Chat with external officer`;
   }
 
   return (
@@ -273,7 +300,7 @@ const Chat: React.FC<ChatProps> = ({
         <div ref={endRef} />
       </Box>
 
-      {/* Input (officers only) */}
+      {/* Input (officers, lead, external only) */}
       {!isUser && (
         <Box
           component="form"

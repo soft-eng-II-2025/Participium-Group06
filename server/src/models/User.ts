@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Report } from './Report';
+import { Notification } from './Notification';
 
 @Entity('app_user')
 export class User {
@@ -35,4 +36,7 @@ export class User {
 
   @OneToMany(() => Report, (report) => report.user)
   reports!: Report[];
+
+  @OneToMany(() => Notification, notif => notif.user)
+  notifications!: Notification[];
 }

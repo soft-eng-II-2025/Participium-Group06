@@ -5,6 +5,8 @@ import { LatLngExpression } from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -19,11 +21,14 @@ type Props = {
   zoom?: number;
   height?: string | number;
   interactive?: boolean;
+  isDrawer? : boolean;
 };
 
-const MapForReportPreview: React.FC<Props> = ({ latitude, longitude, zoom = 13, height = 300, interactive = false }) => {
+const MapForReportPreview: React.FC<Props> = ({ latitude, longitude, zoom = 13, height = 300, interactive = false, isDrawer = false }) => {
   const markerRef = useRef<L.Marker | null>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
     if (latitude == null || longitude == null) return;
@@ -42,13 +47,13 @@ const MapForReportPreview: React.FC<Props> = ({ latitude, longitude, zoom = 13, 
 
   const center: LatLngExpression = [latitude, longitude];
 
+  const width = isDrawer ? (isMobile ? '100%' : '33vw') : '100%';
   return (
-    <div style={{ height, width: "100%" }}>
       <MapContainer
         center={center}
         zoom={zoom}
         ref={(m) => { (mapRef as any).current = m as any; }}
-        style={{ height: "100%", width: "100%" }}
+        style={{ width, height }}
         dragging={interactive}
         doubleClickZoom={interactive}
         scrollWheelZoom={interactive}
@@ -61,7 +66,6 @@ const MapForReportPreview: React.FC<Props> = ({ latitude, longitude, zoom = 13, 
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
         <Marker position={center} ref={markerRef} />
       </MapContainer>
-    </div>
   );
 };
 

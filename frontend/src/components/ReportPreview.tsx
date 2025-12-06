@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Button, Card, CardContent, CardActions, Stack, TextField, Chip, Paper } from "@mui/material";
+import { useTheme, useMediaQuery, Box, Typography, Button, Card, CardContent, CardActions, Stack, TextField, Chip, Paper, Dialog, DialogContent, IconButton } from "@mui/material";
+import CloseIcon from '@mui/icons-material/Close';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import MapForReportPreview from "./MapForReportPreview";
 import { StatusType } from "../DTOs/StatusType";
@@ -18,6 +19,7 @@ type Props = {
     showTeamCard?: boolean;
     showUpdateStatus?: boolean;
     showChat?: boolean;
+    isFlat?: boolean;
     // callback used to notify parent of actions. action is 'approve' or 'reject'.
     // payload can contain optional data like { reason } or { newStatus }
     onAction?: (action: 'approve' | 'reject', payload?: { reason?: string; newStatus?: string; assignee?: string }) => void;
@@ -28,7 +30,7 @@ type Props = {
 
 const statusesForUpdate = [StatusType.Assigned, StatusType.InProgress, StatusType.Resolved, StatusType.Suspended];
 
-export default function ReportPreview({ report, showApprovalActions = false, showTeamCard = false, showUpdateStatus = false, onAction, showChat = false, openChat, onChatToggle }: Props) {
+export default function ReportPreview({ report, showApprovalActions = false, showTeamCard = false, showUpdateStatus = false, isFlat = false, onAction, showChat = false, openChat, onChatToggle }: Props) {
     const [isRejected, setIsRejected] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [statusButton, setStatusButton] = useState<StatusType | null>(null);
@@ -37,12 +39,16 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
     const [selectedOfficerUsername, setSelectedOfficerUsername] = useState<string | null>(null);
     const { user } = useAuth();
     const [chatOpen, setChatOpen] = useState(false);
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
     const photoPath = report?.photos?.[selectedIndex];
 
     // only fetch blob for the currently selected photo
     const { data: photoBlob, isLoading: photoLoading } = useGetReportPhoto(photoPath, !!photoPath);
     const [photoSrc, setPhotoSrc] = useState<string | null>(null);
+    const [imageOpen, setImageOpen] = useState(false);
+    const [imageOpenSrc, setImageOpenSrc] = useState<string | null>(null);
 
     useEffect(() => {
         if (!photoBlob) {
@@ -53,6 +59,12 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
         setPhotoSrc(url);
         return () => { URL.revokeObjectURL(url); };
     }, [photoBlob]);
+
+    function openImage(src?: string | null) {
+        if (!src) return;
+        setImageOpenSrc(src);
+        setImageOpen(true);
+    }
 
     // only fetch agents when showTeamCard is true
     const { data: techLeadAgents, isLoading: agentsLoading, isError: agentsError } = useGetAgentsByTechLead(showTeamCard);
@@ -65,6 +77,17 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
             setOfficeMembers(null);
         }
     }, [report, showTeamCard, techLeadAgents]);
+
+    // Reset transient UI state whenever a different report is selected
+    useEffect(() => {
+        // use report?.id so effect runs only when the selected report changes
+        setIsRejected(false);
+        setRejectComment('');
+        setSelectedIndex(0);
+        setStatusButton(null);
+        setSelectedOfficerUsername(null);
+        setChatOpen(false);
+    }, [report?.id]);
 
     function getPhotoUrl(p: string) {
         if (!p) return '';
@@ -90,11 +113,20 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
     }
 
 
-
-
     return (
-        <Card sx={{ height: "85vh", borderRadius: 5, display: "flex", flexDirection: "column" }}>
-            <CardContent sx={{ flex: 1, overflow: 'auto' }}>
+        <Card
+            elevation={isFlat ? 0 : undefined}
+            sx={{
+                height: isFlat ? '100%' : '85vh',
+                borderRadius: isFlat ? 0 : 5,
+                width : '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                bgcolor: isFlat ? 'transparent' : undefined,
+                boxShadow: isFlat ? 'none' : undefined,
+            }}
+        >
+            <CardContent sx={{ flex: 1, overflow: 'auto', p: isFlat ? 0 : undefined }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h5" color="primary" gutterBottom fontWeight={600}>
                         Report Details
@@ -122,27 +154,33 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                     />
                 </Box>
 
-                <MapForReportPreview latitude={report.latitude} longitude={report.longitude} interactive={false} zoom={14} />
+                <MapForReportPreview latitude={report.latitude} longitude={report.longitude} interactive={false} zoom={14} isDrawer={isFlat} />
 
                 <Stack direction="row" spacing={2} sx={{ mb: 1, mt: 2 }}>
                     <Typography variant="body2" color="text.secondary">Cordinates:</Typography>
 
                     <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>{report.latitude}, {report.longitude}</Typography>
-                    
+
                 </Stack>
                 <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
                     <Typography variant="body2" color="text.secondary">Reporter:</Typography>
                     <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
                         {report.user?.first_name || report.user?.username} {report.user?.last_name ?? ''}
                     </Typography>
-                    
+
                 </Stack>
                 <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
                     <Typography variant="body2" color="text.secondary">Category:</Typography>
                     <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
                         {report.category}
                     </Typography>
-                    
+                </Stack>
+
+                <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary">Date:</Typography>
+                    <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
+                        {new Date(report.createdAt).toLocaleString()}
+                    </Typography>
                 </Stack>
 
                 <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
@@ -156,9 +194,11 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                     component="img"
                     src={photoSrc ?? undefined}
                     alt="Report photo"
+                    onClick={() => openImage(photoSrc ?? getPhotoUrl(report.photos?.[0] ?? ''))}
                     sx={{
                         maxWidth: { xs: '100%', md: 300 },
                         width: '100%',
+                        cursor: 'zoom-in',
                         // constrain tall (vertical) images so they don't dominate the layout
                         maxHeight: { xs: 160, md: 200 },
                         objectFit: 'contain',
@@ -169,7 +209,7 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                 />
                 {report.photos && report.photos.length > 1 && (
                     <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-                        {report.photos.map((p, i) => (
+                                {report.photos.map((p, i) => (
                             <Box
                                 key={i}
                                 component="img"
@@ -184,13 +224,34 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                                     border: selectedIndex === i ? '2px solid' : '2px solid transparent',
                                     borderColor: selectedIndex === i ? 'primary.main' : 'transparent'
                                 }}
-                                onClick={() => setSelectedIndex(i)}
+                                    onClick={() => { setSelectedIndex(i); openImage(getPhotoUrl(p)); }}
                             />
                         ))}
                     </Stack>
                 )}
+
+            <Dialog fullScreen open={imageOpen} onClose={() => setImageOpen(false)} PaperProps={{ sx: { backgroundColor: 'rgba(0,0,0,0.9)' } }}>
+                <Box sx={{ position: 'absolute', right: 8, top: 8, zIndex: 1400 }}>
+                    <IconButton onClick={() => setImageOpen(false)} size="large" sx={{ color: 'common.white' }}><CloseIcon /></IconButton>
+                </Box>
+                <DialogContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 0, height: '100vh' }}>
+                    {imageOpenSrc && (
+                        <Box component="img" src={imageOpenSrc} alt="full-photo" sx={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                    )}
+                </DialogContent>
+            </Dialog>
             </CardContent>
 
+            {report.status === StatusType.Rejected && report.explanation && (
+                <Paper elevation={0} sx={{ p: 2, borderRadius: 1, mb: 2 }}>
+                    <Typography variant="subtitle1" color="secondary" sx={{ mb: 1, fontWeight: 'bold' }}>
+                        This report was rejected for the following reason:
+                    </Typography>
+                    <Typography variant="body2" color="text.primary">
+                        {report.explanation}
+                    </Typography>
+                </Paper>
+            )}
             {!isRejected && showApprovalActions && report.status === StatusType.PendingApproval && <CardActions sx={{ mb: 2, flexShrink: 0 }}>
                 <Button
                     color="success"
@@ -299,46 +360,46 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
             {(showUpdateStatus) && (report.status === StatusType.Assigned
                 || report.status === StatusType.InProgress
                 || report.status === StatusType.Suspended) && (
-                <CardContent sx={{ bgcolor: 'inherit', borderTop: '1px solid', borderColor: 'grey.300', flexShrink: 0 }}>
-                    <Typography variant="h6" color="secondary" sx={{ mb: 1, fontWeight: 'bold' }}>Update report status</Typography>
-                    <Paper elevation={0} sx={{ p: 2, borderRadius: 2, mb: 1 }}>
-                        <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
-                            {statusesForUpdate.filter((s) => s !== StatusType.Assigned).map((status) => (
+                    <CardContent sx={{ bgcolor: 'inherit', borderTop: '1px solid', borderColor: 'grey.300', flexShrink: 0 }}>
+                        <Typography variant="h6" color="secondary" sx={{ mb: 1, fontWeight: 'bold' }}>Update report status</Typography>
+                        <Paper elevation={0} sx={{ p: 2, borderRadius: 2, mb: 1 }}>
+                            <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
+                                {statusesForUpdate.filter((s) => s !== StatusType.Assigned).map((status) => (
+                                    <Button
+                                        key={status}
+                                        variant={statusButton === status ? 'contained' : 'outlined'}
+                                        color="secondary"
+                                        className="partecipation-button"
+                                        sx={{ mr: 1, mb: 1, minWidth: 140, textTransform: 'none' }}
+                                        onClick={() => setStatusButton(prev => prev === status ? null : status)}
+                                    >
+                                        {status}
+                                    </Button>
+                                ))}
+                            </Stack>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Choose a status and update the report
+                                </Typography>
                                 <Button
-                                    key={status}
-                                    variant={statusButton === status ? 'contained' : 'outlined'}
-                                    color="secondary"
+                                    variant="contained"
+                                    color="success"
                                     className="partecipation-button"
-                                    sx={{ mr: 1, mb: 1, minWidth: 140, textTransform: 'none' }}
-                                    onClick={() => setStatusButton(prev => prev === status ? null : status)}
+                                    sx={{ ml: 2 }}
+                                    disabled={!statusButton}
+                                    onClick={() => {
+                                        // send an explicit newStatus to parent so it can update without confirmation
+                                        if (onAction && statusButton) {
+                                            onAction('approve', { newStatus: statusButton as string });
+                                        }
+                                    }}
                                 >
-                                    {status}
+                                    Update
                                 </Button>
-                            ))}
-                        </Stack>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
-                            <Typography variant="body2" color="text.secondary">
-                                Choose a status and update the report
-                            </Typography>
-                            <Button
-                                variant="contained"
-                                color="success"
-                                className="partecipation-button"
-                                sx={{ ml: 2 }}
-                                disabled={!statusButton}
-                                onClick={() => {
-                                    // send an explicit newStatus to parent so it can update without confirmation
-                                    if (onAction && statusButton) {
-                                        onAction('approve', { newStatus: statusButton as string });
-                                    }
-                                }}
-                            >
-                                Update
-                            </Button>
-                        </Box>
-                    </Paper>
-                </CardContent>
-            )}
+                            </Box>
+                        </Paper>
+                    </CardContent>
+                )}
 
         </Card >
     );

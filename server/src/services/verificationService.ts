@@ -3,6 +3,7 @@ import { VerificationCodeRepository } from "../repositories/VerificationCodeRepo
 import { UserRepository } from "../repositories/UserRepository";
 import { sendVerificationEmail } from "./emailService"; // Make sure this exists
 import { UserResponseDTO } from "../models/DTOs/UserResponseDTO";
+import crypto from "crypto";
 
 export class VerificationService {
   private codeRepo: VerificationCodeRepository;
@@ -17,7 +18,9 @@ export class VerificationService {
     const user = await this.userRepo.findByUsername(userdto.username);
     if (!user) throw new Error("USER_NOT_FOUND");
 
-    const raw = String(Math.floor(100000 + Math.random() * 900000));
+    //const raw = String(Math.floor(100000 + Math.random() * 900000));
+    // Codice OTP sicuro a 6 cifre
+    const raw = crypto.randomInt(100000, 1000000).toString();
 
     await this.codeRepo.createForUser(user, raw);
 

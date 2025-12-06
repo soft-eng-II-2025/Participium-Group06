@@ -121,10 +121,8 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
     // 4. Message table
     await queryRunner.query(`CREATE TABLE "message" (
       "id" SERIAL PRIMARY KEY,
-      "sender_id" INT NOT NULL,
-      "receiver_id" INT NOT NULL,
       "content" TEXT NOT NULL,
-      "sender_type" "sender_enum" NOT NULL,
+      "sender" "sender_enum" NOT NULL,
       "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
       "chat_id" INT NOT NULL,
       CONSTRAINT "FK_chat_message"

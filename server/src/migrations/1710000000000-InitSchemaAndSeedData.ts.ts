@@ -52,15 +52,26 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
     )`);
 
     await queryRunner.query(`CREATE TABLE "app_user" (
+    "id" SERIAL PRIMARY KEY,
+    "username" VARCHAR NOT NULL UNIQUE,
+    "email" VARCHAR NOT NULL UNIQUE,
+    "password" VARCHAR NOT NULL,
+    "first_name" VARCHAR NOT NULL,
+    "last_name" VARCHAR NOT NULL,
+    "photo" VARCHAR,
+    "telegram_id" VARCHAR,
+    "flag_email" BOOLEAN NOT NULL,
+    "verified" BOOLEAN NOT NULL DEFAULT FALSE
+  )`);
+
+    await queryRunner.query(`CREATE TABLE "verification_code" (
       "id" SERIAL PRIMARY KEY,
-      "username" VARCHAR NOT NULL UNIQUE,
-      "email" VARCHAR NOT NULL UNIQUE,
-      "password" VARCHAR NOT NULL,
-      "first_name" VARCHAR NOT NULL,
-      "last_name" VARCHAR NOT NULL,
-      "photo" VARCHAR,
-      "telegram_id" VARCHAR,
-      "flag_email" BOOLEAN NOT NULL
+      "user_id" INT NOT NULL,
+      "code_hash" VARCHAR NOT NULL,
+      "expires_at" TIMESTAMPTZ NOT NULL,
+      CONSTRAINT "FK_verification_code_user"
+        FOREIGN KEY ("user_id") REFERENCES "app_user"("id")
+        ON DELETE CASCADE
     )`);
 
     await queryRunner.query(`CREATE TABLE "category" (
@@ -227,38 +238,38 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       -- elenamarino password in chiaro: ElenaMarino
       -- giorgiotesta password in chiaro: GiorgioTesta
       INSERT INTO "app_user"
-        ("id","username","email","password","first_name","last_name","photo","telegram_id","flag_email")
+        ("id","username","email","password","first_name","last_name","photo","telegram_id","flag_email", "verified")
       VALUES
         (1,'mariorossi','mariorossi@gmail.com',
          '$argon2id$v=19$m=4096,t=3,p=1$ZDhqdjZ2ZGNrNncwMDAwMA$hryoiCqybaoJH7lBn8Me3NOYwCtbZNkvbFURyX4Upj8',
-         'Mario','Rossi',NULL,NULL,true),
+         'Mario','Rossi',NULL,NULL,true, true),
         (2,'luigibianchi','luigibianchi2@gmail.com',
          '$argon2id$v=19$m=4096,t=3,p=1$dHp0bno3dWZ5czkwMDAwMA$XuFcn2bP7v/PNr6Mg/23muTkC+lTpio39VjQCnVlWI0',
-         'Luigi','Bianchi',NULL,NULL,true),
+         'Luigi','Bianchi',NULL,NULL,true, true),
         (3,'annaverdi','annaverdi@gmail.com',
          '$argon2id$v=19$m=4096,t=3,p=1$ZzliNjB0eWF3MXMwMDAwMA$ckibuxO0qbyXtn3p7euk8viYtCKs4ickpYEawrAwKN0',
-         'Anna','Verdi',NULL,NULL,false),
+         'Anna','Verdi',NULL,NULL,false, true),
         (4,'giulianeri','giulianeri@gmail.com',
          '$argon2id$v=19$m=4096,t=3,p=1$cHE5ZW0xZXE2MTAwMDAwMA$+VdJJzTZKk0DiynxmEsy/N2nLnyBCHRk7i9Q2uJ/caM',
-         'Giulia','Neri',NULL,NULL,true),
+         'Giulia','Neri',NULL,NULL,true, true),
         (5,'paolorussi','paolorussi@gmail.com',
          '$argon2id$v=19$m=4096,t=3,p=1$Zjh5OWZpdWwwYXUwMDAwMA$rUBx/pvOHl64d1CaWPcHt4+sbVLGEnfc6t2RwIk4c20',
-         'Paolo','Russi',NULL,NULL,false),
+         'Paolo','Russi',NULL,NULL,false, true),
         (6,'saraferrari','saraferrari@gmail.com',
          '$argon2id$v=19$m=4096,t=3,p=1$YmpzemZ0cTE5ZWYwMDAwMA$SKIz5ScbpnSBjDzeSk5e17V5PhyjOabKkzHtWi60Hkw',
-         'Sara','Ferrari',NULL,NULL,true),
+         'Sara','Ferrari',NULL,NULL,true, true),
         (7,'lucagalli','lucagalli@gmail.com',
          '$argon2id$v=19$m=4096,t=3,p=1$eXhlaWRtejJhZjAwMDAwMA$5dlb94BGI0MNMVfl/FbmH1BIjmxGVvVR+we2O41r6s8',
-         'Luca','Galli',NULL,NULL,true),
+         'Luca','Galli',NULL,NULL,true, true),
         (8,'francescacosta','francescacosta@gmail.com',
          '$argon2id$v=19$m=4096,t=3,p=1$ZGMwMTJybmJyc28wMDAwMA$Bpdq9YibGVAxvZZ80uGZn5bb212uQgsosPqxC9zlWAA',
-         'Francesca','Costa',NULL,NULL,false),
+         'Francesca','Costa',NULL,NULL,false, true),
         (9,'elenamarino','elenamarino@gmail.com',
          '$argon2id$v=19$m=4096,t=3,p=1$ejlpdDd6NjA3cmQwMDAwMA$NvLaY9gWHsR5RGGt6DBnzNKJ6acWPVvBuCNZrcsP4PY',
-         'Elena','Marino',NULL,NULL,true),
+         'Elena','Marino',NULL,NULL,true, true),
         (10,'giorgiotesta','giorgiotesta@gmail.com',
          '$argon2id$v=19$m=4096,t=3,p=1$ZW1zZWRtdDV1OTgwMDAwMA$hpejmY8uq7zW1cuots4LJr6JxPBQCu/lDcDIvaD3K3k',
-         'Giorgio','Testa',NULL,NULL,true)
+         'Giorgio','Testa',NULL,NULL,true, true)
     `);
 
     // 9. Municipality officers per ogni ruolo (tranne admin già inserito)
@@ -460,5 +471,6 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
     await queryRunner.query(`DROP TYPE "sender_enum"`);
     await queryRunner.query(`DROP TYPE "notification_type_enum"`);
     await queryRunner.query(`DROP TYPE "chat_type_enum"`);
+    await queryRunner.query(`DROP TABLE "verification_code"`);
   }
 }

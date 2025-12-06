@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+dotenv.config();
 import 'reflect-metadata';
 import express from 'express';
 import cors from 'cors';
@@ -17,6 +19,9 @@ import { Server as SocketIOServer } from "socket.io";
 import http from "http";
 import { DataSource } from "typeorm";
 import path from "path";
+import { VerificationService } from "./services/verificationService";
+
+
 
 const PORT = Number(process.env.PORT ?? 3000);
 
@@ -59,6 +64,7 @@ io.on("connection", (socket) => {
 });
 
 // ------------------- App Initialization -------------------
+let verificationService: VerificationService;
 export async function initializeApp(dataSource: DataSource) {
     if (!dataSource.isInitialized) {
         await dataSource.initialize();
@@ -70,6 +76,19 @@ export async function initializeApp(dataSource: DataSource) {
     initializeReportRepositories(dataSource, io);
     initializeMessageRepositories(dataSource, io);
     initializeNotificationController(dataSource);
+
+        // -------------- INIT VERIFICATION SERVICE --------------
+    verificationService = new VerificationService(dataSource);
+
+    // Cleanup job every 10 minutes
+    setInterval(async () => {
+        try {
+            await verificationService.cleanupExpired();
+            console.log("[CLEANUP] Removed expired codes and unverified users.");
+        } catch (err) {
+            console.error("[CLEANUP ERROR]", err);
+        }
+    }, 10 * 60 * 1000);
 }
 
 // ------------------- Main -------------------

@@ -10,4 +10,5 @@ export interface UserResponseDTO {
     telegram_id?: string | null;
     flag_email?: boolean;
     reports?: CreateReportDTO[];
+    verified?: boolean;
 }

@@ -100,7 +100,8 @@ export function createUserDTO(
     photo?: string | null,
     telegram_id?: string | null,
     flag_email?: boolean,
-    reports?: ReportResponseDTO[]
+    reports?: ReportResponseDTO[],
+    verified?: boolean
 ): UserResponseDTO {
     return removeNullAttributes({
         username,
@@ -112,6 +113,7 @@ export function createUserDTO(
         telegram_id,
         flag_email,
         reports,
+        verified
     }) as UserResponseDTO;
 }
 
@@ -210,7 +212,8 @@ export function mapUserDAOToDTO(userDAO: User): UserResponseDTO {
         userDAO.photo,
         userDAO.telegram_id,
         userDAO.flag_email,
-        userDAO.reports?.map((r: Report) => mapReportDAOToDTO(r))
+        userDAO.reports?.map((r: Report) => mapReportDAOToDTO(r)),
+        userDAO.verified
     );
 }
 

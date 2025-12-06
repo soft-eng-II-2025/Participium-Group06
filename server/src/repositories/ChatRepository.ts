@@ -17,17 +17,26 @@ export class ChatRepository {
     }
 
     async findById(id: number): Promise<Chat | null> {
-        return this.chatRepository.findOne({
-            where: { id },
-            relations: ["messages", "report"]
-        });
+
+        return this.chatRepository
+            .createQueryBuilder("chat")
+            .leftJoinAndSelect("chat.report", "report")
+            .leftJoinAndSelect("report.user", "user")
+            .leftJoinAndSelect("report.officer", "officer")
+            .leftJoinAndSelect("officer.role", "officerRole")
+            .leftJoinAndSelect("chat.messages", "messages")
+            .where("chat.id = :id", { id })
+            .getOne();
     }
 
     async findByReportIdAndType(reportId: number, type: ChatType): Promise<Chat | null> {
-        return this.chatRepository.findOne({
-            where: { report: { id: reportId }, type },
-            relations: ["messages", "report"]
-        });
+        return this.chatRepository
+            .createQueryBuilder("chat")
+            .leftJoinAndSelect("chat.report", "report")
+            .leftJoinAndSelect("chat.messages", "messages")
+            .where("report.id = :reportId", { reportId })
+            .andWhere("chat.type = :type", { type })
+            .getOne();
     }
 
     async add(chat: Chat): Promise<Chat> {

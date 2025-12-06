@@ -32,11 +32,25 @@ export class MessageRepository {
      * Get all messages for a given report
      */
     async findByChatId(chatId: number): Promise<Message[]> {
+
         return this.ormRepository.find({
             where: { chat: { id: chatId } },
-            order: { created_at: "ASC" },
-            relations: ["user", "municipality_officer"],
+            order: { created_at: "ASC" }, // Assumendo che il campo sia questo nella tua entity
+            relations: {
+                chat: {
+                    report: {
+                        user: true,
+                        officer: {
+                            role: true
+                        },
+                        leadOfficer: {
+                            role: true
+                        }
+                    }
+                }
+            }
         });
+
     }
 
     /**

@@ -1,6 +1,5 @@
 import {TestDataSource} from "../../test-data-source";
 import {
-    createTestReport,
     createTestMunicipalityOfficer,
     createTestLeadOfficer,
     createBasicReport,
@@ -9,7 +8,6 @@ import {
 } from "../../utils";
 import {Report} from "../../../models/Report";
 import {MunicipalityOfficer} from "../../../models/MunicipalityOfficer";
-//import { appErr } from "../../../middlewares/errorsMiddleware";
 import * as adminController from '../../../controllers/adminController'
 import * as reportController from '../../../controllers/reportController'
 import * as messagingController from '../../../controllers/messagingController'
@@ -17,9 +15,7 @@ import {User} from "../../../models/User";
 import {StatusType} from "../../../models/StatusType";
 import {Category} from "../../../models/Category";
 import {Repository} from "typeorm";
-import {initializeReportRepositories} from "../../../controllers/reportController";
-import {initializeMessageRepositories} from "../../../controllers/messagingController";
-import {report} from "process";
+
 
 describe("assignTechAgent (Integration Tests)", () => {
     let ready: boolean

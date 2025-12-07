@@ -7,6 +7,9 @@ import { Report } from '../models/Report';
 import { ReportPhoto } from '../models/ReportPhoto';
 import { MunicipalityOfficer } from '../models/MunicipalityOfficer';
 import { Notification } from '../models/Notification';
+import { Message } from '../models/Message';
+import { Chat } from '../models/Chat';
+import { VerificationCode } from '../models/VerificationCode';
 
 
 
@@ -20,5 +23,5 @@ export const TestDataSource = new DataSource({
   synchronize: true,
   dropSchema: true,
   logging: false,
-  entities: [User, Role, Category, Report, ReportPhoto, MunicipalityOfficer, Notification],
+  entities: [User, Role, Category, Report, ReportPhoto, MunicipalityOfficer, Message, Notification, VerificationCode, Chat],
 });

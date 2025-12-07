@@ -1,12 +1,8 @@
-import {title} from "process";
 import {DataSource} from "typeorm";
-import {email} from "zod";
 import {MunicipalityOfficer} from "../models/MunicipalityOfficer";
 import {Role} from "../models/Role";
 import {Category} from "../models/Category";
 import {User} from "../models/User";
-import e from "express";
-import {create} from "domain";
 import {Chat} from "../models/Chat";
 import {StatusType} from "../models/StatusType";
 import {Report} from "../models/Report";
@@ -14,6 +10,11 @@ import {ChatType} from "../models/ChatType";
 import {Message} from "../models/Message";
 import {SenderType} from "../models/SenderType";
 
+
+/**
+ * Create roles and categories in the db
+ * @param ds
+ */
 export async function setupDb(ds: DataSource): Promise<boolean> {
     // Role
     let roles = await createAllBasicRole(ds);
@@ -183,7 +184,7 @@ export async function createTestCategory(ds: DataSource): Promise<Category> {
  */
 
 /**
- * Function to retrieve (by role title) the roles already added in the db
+ * Function to retrieve roles already added to the database by their title.
  * @param ds
  * @param stringRoleTitle
  */
@@ -197,7 +198,7 @@ export async function retrieveRole(ds: DataSource, stringRoleTitle: string): Pro
 }
 
 /**
- * Function to retrieve (by category name) the categories already added in the db
+ * Function to retrieve categories already added to the database by their title.
  * @param ds
  * @param categoryName
  */
@@ -251,7 +252,7 @@ export async function createTestOrganizationOfficer(ds: DataSource): Promise<Mun
 }
 
 /**
- * Crea un tech lead --> TECH_LEAD_INFRASTRUCTURE
+ * Create a tech lead --> TECH_LEAD_INFRASTRUCTURE
  * @param ds
  */
 export async function createTestLeadOfficer(ds: DataSource): Promise<MunicipalityOfficer> {
@@ -272,7 +273,10 @@ export async function createTestLeadOfficer(ds: DataSource): Promise<Municipalit
     return leadOfficer;
 }
 
-
+/**
+ * Create a tech agent --> TECH_AGENT_INFRASTRUCTURE
+ * @param ds
+ */
 export async function createTestMunicipalityOfficer(ds: DataSource): Promise<MunicipalityOfficer> {
     const officerRole = await retrieveRole(ds, 'TECH_AGENT_INFRASTRUCTURE')
     const officerRepo = ds.getRepository(MunicipalityOfficer);
@@ -291,6 +295,10 @@ export async function createTestMunicipalityOfficer(ds: DataSource): Promise<Mun
     return officer;
 }
 
+/**
+ * Create an external tech agent --> TECH_AGENT_INFRASTRUCTURE
+ * @param ds
+ */
 export async function createTestExternalMunicipalityOfficer(ds: DataSource): Promise<MunicipalityOfficer> {
     const officerRole = await retrieveRole(ds, 'TECH_AGENT_INFRASTRUCTURE')
     const officerRepo = ds.getRepository(MunicipalityOfficer);
@@ -309,6 +317,14 @@ export async function createTestExternalMunicipalityOfficer(ds: DataSource): Pro
     return officer;
 }
 
+/**
+ * Create a new role
+ * !! Attention: this function, create a new user internally, using the function createTestUser1
+ * so if you already use this function --> !! YOU'LL HAVE AN ERROR FOR DUPLICATE KEY IN THE DB !!
+ * !! The same happens for lead, external
+ * For a safe usage, yuo can use the function below --> createBasicReport
+ * @param ds
+ */
 export async function createTestReport(ds: DataSource): Promise<Report> {
     const user = await createTestUser1(ds);
     const category = await retrieveCategories(ds, "Water Supply – Drinking Water")
@@ -375,7 +391,14 @@ export async function createBasicReport(
     return report;
 }
 
+/* ###########################################################################
+    LE FUNZIONI SOPRA ERANO PIENE DI "INTRECCI" QUINDI SI OTTENEVANO
+    ERRORI DA PARTE DEL DB, adesso dovrebbero essere tutte sistemate
 
+    LE FUNZIONI CHE SEGUONO NON SO, MA POTREBBERO CAUSARE GLI STESSI ERRORI
+
+    ############### ############### ############### ############### ##########
+ */
 export async function createTestChat(ds: DataSource): Promise<Chat> {
     const report = await createTestReport(ds);
     const chatRepo = ds.getRepository(Chat);

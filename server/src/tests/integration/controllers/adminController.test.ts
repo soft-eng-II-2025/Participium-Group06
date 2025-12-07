@@ -5,7 +5,7 @@ import {
     createTestLeadOfficer,
     createBasicReport,
     createTestUser1,
-    setupDb, retrieveCategories
+    setupDb, retrieveCategories, createTestExternalMunicipalityOfficer
 } from "../../utils";
 import {Report} from "../../../models/Report";
 import {MunicipalityOfficer} from "../../../models/MunicipalityOfficer";
@@ -19,18 +19,21 @@ import {Category} from "../../../models/Category";
 import {Repository} from "typeorm";
 import {initializeReportRepositories} from "../../../controllers/reportController";
 import {initializeMessageRepositories} from "../../../controllers/messagingController";
+import {report} from "process";
 
 describe("assignTechAgent (Integration Tests)", () => {
     let ready: boolean
-    //let reportRepo: Repository<Report>;
-    //let officerRepo: Repository<MunicipalityOfficer>;
+    let reportRepo: Repository<Report>;
+    let officerRepo: Repository<MunicipalityOfficer>;
     let testReport: Report;
     let techLead: MunicipalityOfficer;
     let officer: MunicipalityOfficer;
     let reporter: User;
     let category: Category;
+    let externalOfficer: MunicipalityOfficer;
+    let testReportForExternalOfficer: Report;
 
-    // Definisci il mock all'esterno per poterne verificare le chiamate (se necessario)
+    // Definisce il mock all'esterno per poterne verificare le chiamate (se necessario)
     const mockSocketIOServer = {
         emit: jest.fn(),
         on: jest.fn(),
@@ -46,27 +49,31 @@ describe("assignTechAgent (Integration Tests)", () => {
         //await TestDataSource.synchronize(true);
 
         adminController.initializeAdminRepositories(TestDataSource);
-        reportController.initializeReportRepositories(TestDataSource,mockSocketIOServer as any);
-        messagingController.initializeMessageRepositories(TestDataSource,mockSocketIOServer as any);
-        //reportRepo = TestDataSource.getRepository(Report);
-        //officerRepo = TestDataSource.getRepository(MunicipalityOfficer);
+        reportController.initializeReportRepositories(TestDataSource, mockSocketIOServer as any);
+        messagingController.initializeMessageRepositories(TestDataSource, mockSocketIOServer as any);
+        reportRepo = TestDataSource.getRepository(Report);
+        officerRepo = TestDataSource.getRepository(MunicipalityOfficer);
 
         ready = await setupDb(TestDataSource)
 
-        if( !ready ){
+        if (!ready) {
             throw new Error("Errore nel setup del db");
         }
 
-        techLead = await createTestLeadOfficer(TestDataSource); // username: 'leadofficer',
-        officer = await createTestMunicipalityOfficer(TestDataSource); // username: 'techofficer',
+        techLead = await createTestLeadOfficer(TestDataSource);
+        officer = await createTestMunicipalityOfficer(TestDataSource);
+        externalOfficer = await createTestExternalMunicipalityOfficer(TestDataSource);
         reporter = await createTestUser1(TestDataSource)
         category = await retrieveCategories(TestDataSource, "Water Supply – Drinking Water")
         testReport = await createBasicReport(TestDataSource, reporter, category, techLead, officer, StatusType.Assigned)
+        testReportForExternalOfficer = await createBasicReport(TestDataSource, reporter, category, techLead, externalOfficer, StatusType.Assigned)
 
         // Rendo il report SENZA officer e lead prima dell'assegnazione
         testReport.officer = null as any;
         testReport.leadOfficer = null as any;
         await TestDataSource.getRepository(Report).save(testReport);
+        testReportForExternalOfficer.officer = null as any;
+        testReportForExternalOfficer.leadOfficer = null as any;
     });
 
     afterEach(async () => {
@@ -86,17 +93,38 @@ describe("assignTechAgent (Integration Tests)", () => {
         expect(response).toBeDefined();
         expect(response.id).toBe(testReport.id);
 
-        /*const updatedReport = await reportRepo.findOne({
+        const updatedReport = await reportRepo.findOne({
             where: {id: testReport.id},
             relations: ["officer", "leadOfficer"],
         });
 
         expect(updatedReport?.officer?.username).toBe(officer.username);
-        expect(updatedReport?.leadOfficer?.username).toBe(techLead.username);
+        expect(updatedReport?.leadOfficer).toBeNull()
 
-         */
     });
-/*
+
+    it("dovrebbe assegnare un external officer e il tech lead dovrebbe essere il tech lead di quella categoria", async () => {
+        const response = await adminController.assignTechAgent(
+            testReportForExternalOfficer.id,
+            externalOfficer.username,
+            techLead.username
+        );
+
+        expect(response).toBeDefined();
+        expect(response.id).toBe(testReportForExternalOfficer.id);
+
+        const updatedReport = await reportRepo.findOne({
+            where: {id: testReportForExternalOfficer.id},
+            relations: ["officer", "leadOfficer"],
+        });
+
+        expect(updatedReport?.officer?.username).toBe(externalOfficer.username);
+        expect(updatedReport?.leadOfficer?.username).toBe(techLead.username)
+
+
+    });
+
+
     it("dovrebbe lanciare errore se tech lead non trovato", async () => {
         await expect(
             adminController.assignTechAgent(
@@ -117,5 +145,5 @@ describe("assignTechAgent (Integration Tests)", () => {
         ).rejects.toThrow("OFFICER_NOT_FOUND");
     });
 
- */
+
 });

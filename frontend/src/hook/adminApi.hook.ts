@@ -4,13 +4,14 @@ import { MunicipalityOfficerResponseDTO } from "../DTOs/MunicipalityOfficerRespo
 import { RoleResponseDTO } from "../DTOs/RoleResponseDTO";
 import {CreateUserRequestDTO} from "../DTOs/CreateUserRequestDTO";
 import {AssignRoleRequestDTO} from "../DTOs/AssignRoleRequestDTO";
+import {CreateOfficerRequestDTO} from "../DTOs/CreateOfficerRequestDTO";
 
 const adminApi = new AdminApi();
 
 export function useRegisterMunicipalityOfficer() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (newOfficer: CreateUserRequestDTO) =>
+        mutationFn: (newOfficer: CreateOfficerRequestDTO) =>
             adminApi.registerMunicipalityOfficer(newOfficer),
         onSuccess: () => qc.invalidateQueries({ queryKey: ["officers"] }),
     });

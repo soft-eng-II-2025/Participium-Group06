@@ -3,12 +3,13 @@ import { MunicipalityOfficerResponseDTO } from "../DTOs/MunicipalityOfficerRespo
 import { RoleResponseDTO } from "../DTOs/RoleResponseDTO";
 import {CreateUserRequestDTO} from "../DTOs/CreateUserRequestDTO";
 import {AssignRoleRequestDTO} from "../DTOs/AssignRoleRequestDTO";
+import {CreateOfficerRequestDTO} from "../DTOs/CreateOfficerRequestDTO";
 
 const ADMIN_BASE = "/api/admin";
 const ACCOUNTS_BASE = `${ADMIN_BASE}/accounts`;
 
 export class AdminApi {
-    async registerMunicipalityOfficer(params: CreateUserRequestDTO) {
+    async registerMunicipalityOfficer(params: CreateOfficerRequestDTO) {
         return axios.post<MunicipalityOfficerResponseDTO>(`${ACCOUNTS_BASE}/register`, params);
     }
 

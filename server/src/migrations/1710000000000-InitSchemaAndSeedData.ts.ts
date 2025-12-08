@@ -46,6 +46,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       "first_name" VARCHAR NOT NULL,
       "last_name" VARCHAR NOT NULL,
       "external" BOOLEAN NOT NULL,
+      "companyName" VARCHAR,
       "role" INT,
       CONSTRAINT "FK_municipality_officer_role"
         FOREIGN KEY ("role") REFERENCES "role"("id")
@@ -217,11 +218,11 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
     // 9. Admin officer
     await queryRunner.query(`
       INSERT INTO "municipality_officer"
-        ("id","username","email","password","first_name","last_name","external","role")
+        ("id","username","email","password","first_name","last_name","external", "companyName", "role")
       VALUES
         (1,'admin','admin@participium.local',
         '$argon2id$v=19$m=65536,t=3,p=1$6FOS86yBc3WowYzkpdqonQ$fuBmKGHx8IRs15LrImF8/baI15mxyfvGnTkUNyVDd6g',
-        'System','Admin',false,1)
+        'System','Admin',false,NULL,1)
       ON CONFLICT ("id") DO NOTHING
     `);
 
@@ -288,47 +289,47 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       -- lead_buildings password in chiaro: LeadBuildings1!
       -- agent_buildings password in chiaro: AgentBuildings1!
       INSERT INTO "municipality_officer"
-        ("id","username","email","password","first_name","last_name","external","role")
+        ("id","username","email","password","first_name","last_name","external","companyName","role")
       VALUES
         (2,'org_officer','maria.rossi@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$MXQ5aHF2aG5vNmYwMDAwMA$xwEPRsmhAk4323jDh9Jf1laD9BxtD6wKee06uEAhPC8',
-         'Maria','Rossi',false,2),
+         'Maria','Rossi',false,NULL,2),
         (3,'lead_infra','giovanni.bianchi@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$d3l4eXJhczNjazAwMDAwMA$BoCWTDKLvtbZ+kzeyMeqyTyioSpGeZsSiaMnuwL9Chs',
-         'Giovanni','Bianchi',false,3),
+         'Giovanni','Bianchi',false,NULL,3),
         (4,'agent_infra','anna.verdi@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$cWF0b25kYjh2eDAwMDAwMA$apQMX9qx9rlc7O3aApOmkZHOG5iU0fTGDnn5K8A4f7k',
-         'Anna','Verdi',false,4),
+         'Anna','Verdi',false,NULL,4),
         (5,'lead_mobility','paolo.galli@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$NWx6N2U5MWwyMjcwMDAwMA$WKvR9cEs92cFuEAa4shZQVEWLIQWbAHGq9PFQaB3McY',
-         'Paolo','Galli',false,5),
+         'Paolo','Galli',false,NULL,5),
         (6,'agent_mobility','elena.ferrari@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$NjB3dTduY2IxdjIwMDAwMA$DKTu4q1d9uih9KSTYjwfOydPWdhi2/svvde0dZFgv6Q',
-         'Elena','Ferrari',false,6),
+         'Elena','Ferrari',false,NULL,6),
         (7,'lead_green','marco.russo@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$dmdxY2FzdXJhYTgwMDAwMA$STgY4pc4dSUaVeMpkhqizIMIY19+h1+L8Jy91sSMAiU',
-         'Marco','Russo',false,7),
+         'Marco','Russo',false,NULL,7),
         (8,'agent_green','sara.esposito@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$eml3cjV4cWwwemYwMDAwMA$zMrriiNvqXPn3c1OjuvDJqW40NKil2HO7HC28SZON30',
-         'Sara','Esposito',false,8),
+         'Sara','Esposito',false,NULL,8),
         (9,'lead_waste','luca.martini@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$dnJuajAybGVscWUwMDAwMA$bDRZDRurlvGmVoEHgmi1gnqHk3YazVMe0s75HWNfRrU',
-         'Luca','Martini',false,9),
+         'Luca','Martini',false,NULL,9),
         (10,'agent_waste','francesca.romano@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$NXljMmRpOG81bnQwMDAwMA$b2ARlYEp0fEqCaV075vNunWZjnpGYbnnsScHc+ydppk',
-         'Francesca','Romano',false,10),
+         'Francesca','Romano',false,NULL,10),
         (11,'lead_energy','davide.conti@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$aWl4NDJkM3pqZjkwMDAwMA$Ju94deagaCHPsEJmgRXmG9tAFYFx0mBbLWh/NV5myYs',
-         'Davide','Conti',false,11),
+         'Davide','Conti',false,NULL,11),
         (12,'agent_energy','chiara.ricci@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$emNzdnV3ZDR5Y2UwMDAwMA$gY6E0cr/UnIOEzGc9p7Shz75hO7lnketKTzc9LEEDTg',
-         'Chiara','Ricci',false,12),
+         'Chiara','Ricci',false,NULL,12),
         (13,'lead_buildings','alessandro.gallo@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$aWl3bTU4MHJxdGwwMDAwMA$/lpZZnQnbgU0UpPcGV8vg2bTsyZeIaqN+uEuB/nuDQg',
-         'Alessandro','Gallo',false,13),
+         'Alessandro','Gallo',false,NULL,13),
         (14,'agent_buildings','federica.moretti@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$cTNpaGhscjN4dnQwMDAwMA$EawaCPGuYrZKzo0ftbnaBMrq1D4ymmSp4TUsUK63Nec',
-         'Federica','Moretti',false,14)
+         'Federica','Moretti',false,NULL,14)
       ON CONFLICT ("id") DO NOTHING
     `);
 

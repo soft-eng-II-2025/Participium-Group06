@@ -50,9 +50,10 @@ export function createMunicipalityOfficerDTO(
     first_name?: string,
     last_name?: string,
     external?: boolean,
-    role?: string | null
+    role?: string | null,
+    companyName?: string | null
 ): MunicipalityOfficerResponseDTO {
-    return removeNullAttributes({ id, username, email, first_name, last_name, external, role }) as MunicipalityOfficerResponseDTO;
+    return removeNullAttributes({ id, username, email, first_name, last_name, external, role, companyName }) as MunicipalityOfficerResponseDTO;
 }
 
 export function createReportDTO(
@@ -173,7 +174,8 @@ export function mapMunicipalityOfficerDAOToDTO(officerDAO: MunicipalityOfficer):
         officerDAO.first_name,
         officerDAO.last_name,
         officerDAO.external,
-        officerDAO.role?.title || null
+        officerDAO.role?.title || null,
+        officerDAO.companyName
     );
 }
 

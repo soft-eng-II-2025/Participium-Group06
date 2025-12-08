@@ -26,7 +26,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 1) initial session load — AuthProvider owns the query
   const { data: user, isLoading } = useQuery<UserResponseDTO | null>({
     queryKey: ['session'],
-    queryFn: () => authApi.getSession(),
+    queryFn: async () => {
+      try {
+        const s = await authApi.getSession();
+        // normalize: only accept a proper user-shaped object, otherwise return null
+        if (!s || typeof s !== 'object') return null;
+        // check if user has username property
+        if (!('username' in (s as any))) return null;
+        return s as UserResponseDTO;
+      } catch (err) {
+        return null;
+      }
+    },
     retry: false,
     refetchOnWindowFocus: true,
   });

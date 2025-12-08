@@ -35,7 +35,7 @@ export default function AssignRoleDialog({open, user, onClose}: Props) {
     const [confirmStep, setConfirmStep] = useState(false);
     const [external, setExternal] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
-    const partnerCompanies = ["a", "b", "c"];
+    const partnerCompanies = ["GTT - Gruppo Trasporti Torinese", "Iren S.p.A.", "Amiat", "Italgas", "Enel X"];
     const filteredRoles = useMemo(() => {
         if (!external) return roles;
         return roles.filter(r =>

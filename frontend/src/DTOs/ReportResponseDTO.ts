@@ -10,11 +10,12 @@ export interface ReportResponseDTO {
     title: string;
     description: string;
     user: UserResponseDTO; 
-    category: number;
+    category: string;
     status: StatusType;
     explanation?: string;
     officer?: MunicipalityOfficerResponseDTO;
     photos: string[]; 
     createdAt: Date;
+    updatedAt: Date;
     chats: ChatResponseDTO[];
 }   

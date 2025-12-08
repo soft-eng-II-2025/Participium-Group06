@@ -115,6 +115,7 @@ export default function Header() {
                             <Button
                                 color="secondary"
                                 variant="contained"
+                                className="partecipation-button"
                                 size="medium"
                                 onClick={() => navigate("/login")}
                             >
@@ -123,6 +124,7 @@ export default function Header() {
                             <Button
                                 sx={{ color: "inherit", borderColor: "inherit", ml: 2 }}
                                 variant="outlined"
+                                className="partecipation-button"
                                 size="medium"
                                 onClick={() => navigate("/register")}
                             >

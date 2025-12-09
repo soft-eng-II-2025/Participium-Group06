@@ -15,17 +15,15 @@ import AdminRegisterPage from "./pages/AdminRegisterPage";
 import TechAgentHomePage from './pages/TechAgentHomePage';
 import OrganizationOfficerHomePage from './pages/OrganizationOfficerHomePage';
 import RequireRole from './routes/RequireRole';
-import ProtectedRoute from './routes/ProtectedRoute';
 import GuestRoute from './routes/GuestRoute';
 import NewReportPage from './pages/NewReportPage';
 import { useAuth } from './contexts/AuthContext';
 import TechLeadHomePage from './pages/TechLeadHomePage';
 import {UserAccountPage} from "./pages/UserAccountPage";
-import ChatPlaygroundPage from './pages/ChatPlayGroundPage';
 import UserReportsPage from './pages/UserReportsPage';
 import EmailConfirmationPage from './pages/EmailConfirmationPage';
 import { UserResponseDTO } from './DTOs/UserResponseDTO';
-import { RequireUnverifiedUser } from './routes/ProtectedRoute';
+import ProtectedRoute, { RequireUnverifiedUser } from './routes/ProtectedRoute';
 
 
 const queryClient = new QueryClient();

@@ -71,6 +71,6 @@ export function useConfirmEmail() {
 
     return {
         mutateAsync: async (code: string) => mutation.mutateAsync(code),
-        mutate: (code: string) => { void mutation.mutate(code); },
+        mutate: (code: string) => { mutation.mutate(code); },
     };
 }

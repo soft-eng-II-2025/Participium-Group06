@@ -35,6 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!('username' in (s as any))) return null;
         return s as UserResponseDTO;
       } catch (err) {
+        console.error("Failed to load user session:", err);
         return null;
       }
     },

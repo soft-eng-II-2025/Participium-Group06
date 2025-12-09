@@ -3,9 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import RegistrationForm from "../components/RegistrationForm";
 import { useRegisterMunicipalityOfficer } from "../hook/adminApi.hook";
-import { MunicipalityOfficerResponseDTO } from "../DTOs/MunicipalityOfficerResponseDTO";
 import { Container, Box } from "@mui/material";
-import {CreateUserRequestDTO} from "../DTOs/CreateUserRequestDTO";
 import {CreateOfficerRequestDTO} from "../DTOs/CreateOfficerRequestDTO";
 
 const AdminRegisterPage: React.FC = () => {

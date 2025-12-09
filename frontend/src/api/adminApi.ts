@@ -1,7 +1,6 @@
 import axios from "axios";
 import { MunicipalityOfficerResponseDTO } from "../DTOs/MunicipalityOfficerResponseDTO";
 import { RoleResponseDTO } from "../DTOs/RoleResponseDTO";
-import {CreateUserRequestDTO} from "../DTOs/CreateUserRequestDTO";
 import {AssignRoleRequestDTO} from "../DTOs/AssignRoleRequestDTO";
 import {CreateOfficerRequestDTO} from "../DTOs/CreateOfficerRequestDTO";
 

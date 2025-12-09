@@ -5,11 +5,9 @@ import type { RoleResponseDTO } from "../models/DTOs/RoleResponseDTO";
 import type { UserResponseDTO } from "../models/DTOs/UserResponseDTO";
 import type { MessageResponseDTO } from "../models/DTOs/MessageResponseDTO";
 import type { NotificationDTO } from "../models/DTOs/NotificationDTO";
-
 import { CreateReportRequestDTO } from "../models/DTOs/CreateReportRequestDTO";
 import { CreateOfficerRequestDTO } from "../models/DTOs/CreateOfficerRequestDTO";
 import { hashPassword } from "./passwordService";
-
 import { Category } from "../models/Category";
 import { MunicipalityOfficer } from "../models/MunicipalityOfficer";
 import { Report } from "../models/Report";
@@ -21,9 +19,7 @@ import { Message } from "../models/Message";
 import { Notification } from "../models/Notification";
 import { NotificationType } from "../models/NotificationType";
 import { SenderType } from "../models/SenderType";
-import { report } from "process";
 import { Chat } from "../models/Chat";
-import { ChatResponseDTO } from "../models/DTOs/ChatRespondeDTO";
 
 /* Helper */
 function removeNullAttributes<T extends Record<string, any>>(dto: T): Partial<T> {

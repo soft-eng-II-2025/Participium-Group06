@@ -84,57 +84,9 @@ export async function createAllBasicCategories(ds: DataSource, roles: Role[]): P
     return categories;
 }
 
-/*export async function createTestAdminRole(ds: DataSource): Promise<Role> {
-    const roleRepo = ds.getRepository(Role);
-    const adminRole = roleRepo.create({
-        title: 'ADMIN',
-        label: 'Administrator',
-    })
-    await roleRepo.save(adminRole);
-    return adminRole;
-}
- */
-
-/*
-export async function createTestOrganizationOfficerRole(ds: DataSource): Promise<Role> {
-    const roleRepo = ds.getRepository(Role);
-    const orgOfficerRole = roleRepo.create({
-        title: 'ORGANIZATION_OFFICER',
-        label: 'Organization Officer',
-    })
-    await roleRepo.save(orgOfficerRole);
-    return orgOfficerRole;
-}
- */
-
-/*
-export async function createTestLeadOfficerRole(ds: DataSource): Promise<Role> {
-    const roleRepo = ds.getRepository(Role);
-    const leadOfficerRole = roleRepo.create({
-        title: 'TECH_LEAD_INFRASTRUCTURE',
-        label: 'Tech Lead, Infrastructure',
-    })
-    await roleRepo.save(leadOfficerRole);
-    return leadOfficerRole;
-}
-
- */
-
 /**
  * Create a mocked role, with title: TECH_AGENT_INFRASTRUCTURE, in the db
  * @param ds
- */
-/*
-export async function createTestMunicipalityOfficerRole(ds: DataSource): Promise<Role> {
-    const roleRepo = ds.getRepository(Role);
-    const officerRole = roleRepo.create({
-        title: 'TECH_AGENT_INFRASTRUCTURE',
-        label: 'Tech Agent, Infrastructure',
-    })
-    await roleRepo.save(officerRole);
-    return officerRole;
-}
-
  */
 
 export async function createTestUser1(ds: DataSource): Promise<User> {
@@ -170,18 +122,6 @@ export async function createTestUser2(ds: DataSource): Promise<User> {
     await userRepo.save(user);
     return user;
 }
-
-/*
-export async function createTestCategory(ds: DataSource): Promise<Category> {
-    const role1 = await createTestMunicipalityOfficerRole(ds);
-    const role2 = await createTestLeadOfficerRole(ds);
-    return ds.getRepository(Category).save({
-        name: "Other",
-        roles: [role1, role2]
-    });
-}
-
- */
 
 /**
  * Function to retrieve roles already added to the database by their title.

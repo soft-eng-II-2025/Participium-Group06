@@ -42,13 +42,11 @@ describe("assignTechAgent (Integration Tests)", () => {
         await TestDataSource.initialize();
 
         //Reset completo DB per ogni test
-        //await TestDataSource.synchronize(true);
 
         adminController.initializeAdminRepositories(TestDataSource);
         reportController.initializeReportRepositories(TestDataSource, mockSocketIOServer as any);
         messagingController.initializeMessageRepositories(TestDataSource, mockSocketIOServer as any);
         reportRepo = TestDataSource.getRepository(Report);
-        officerRepo = TestDataSource.getRepository(MunicipalityOfficer);
 
         ready = await setupDb(TestDataSource)
 

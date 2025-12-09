@@ -157,7 +157,6 @@ export async function createTestAdmin(ds: DataSource): Promise<MunicipalityOffic
     // Recupera il ruolo ADMIN dal DB
     const adminRole = await retrieveRole(ds,'ADMIN')
 
-    //const adminRole = await createTestAdminRole(ds);
     const officer = officerRepo.create({
         username: 'admin',
         email: 'admin@gmail.com',

@@ -124,7 +124,7 @@ export default function EmailConfirmationPage() {
                     <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center'}} onPaste={handlePaste}>
                         {Array.from({ length: INPUT_COUNT }).map((_, i) => (
                             <TextField
-                                key={`otp-${i}`}
+                                key={i}
                                 inputRef={el => inputsRef.current[i] = el}
                                 value={codeDigits[i]}
                                 color='primary'

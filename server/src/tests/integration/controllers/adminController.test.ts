@@ -15,6 +15,9 @@ import {User} from "../../../models/User";
 import {StatusType} from "../../../models/StatusType";
 import {Category} from "../../../models/Category";
 import {Repository} from "typeorm";
+import { CreateOfficerRequestDTO } from "../../../models/DTOs/CreateOfficerRequestDTO";
+import { off } from "process";
+import { AssignRoleRequestDTO } from "../../../models/DTOs/AssignRoleRequestDTO";
 
 
 describe("assignTechAgent (Integration Tests)", () => {
@@ -139,5 +142,110 @@ describe("assignTechAgent (Integration Tests)", () => {
         ).rejects.toThrow("OFFICER_NOT_FOUND");
     });
 
+
+    describe("Create new Municipality Officer", () => {
+        it("dovrebbe creare un nuovo Municipality Officer", async () => {
+            const newOfficerData: CreateOfficerRequestDTO = {
+                username: "new_officer",
+                email: "new_officer@gmail.com",
+                password: "securePassword123",
+                first_name: "New",
+                last_name: "Officer",
+                external: false
+            }
+
+            const newOfficer = await adminController.addMunicipalityOfficer(newOfficerData);
+
+            expect(newOfficer).toBeDefined();
+            expect(newOfficer.username).toBe(newOfficerData.username);
+            expect(newOfficer.email).toBe(newOfficerData.email);
+            expect(newOfficer.first_name).toBe(newOfficerData.first_name);
+            expect(newOfficer.last_name).toBe(newOfficerData.last_name);
+            expect(newOfficer.external).toBe(newOfficerData.external);
+
+        });
+
+        it("dovrebbe lanciare errore se si prova a creare un officer senza password", async () => {
+            const newOfficerData: CreateOfficerRequestDTO = {
+                username: "new_officer",
+                email: "new_officer@gmail.com",
+                password: "",
+                first_name: "New",
+                last_name: "Officer",
+                external: false
+            }
+
+            await expect(adminController.addMunicipalityOfficer(newOfficerData)).rejects.toThrow("PASSWORD_REQUIRED");
+        });
+    });
+
+
+    describe("Get all Municipality Officers", () => {
+        it("dovrebbe ritornare tutti i Municipality Officers esistenti", async () => {
+            const allOfficers = await adminController.getAllMunicipalityOfficer();
+
+            expect(allOfficers).toBeDefined();
+            expect(allOfficers.length).toBe(3); // techLead, officer, externalOfficer (creati nel beforeEach)
+        });
+    });
+
+
+    describe("Update Municipality Officer", () => {
+        it("dovrebbe aggiornare un Municipality Officer assegnandogli un ruolo", async () => {
+            const newOfficerData: CreateOfficerRequestDTO = {
+                username: "new_officer",
+                email: "new_officer@gmail.com",
+                password: "securePassword123",
+                first_name: "New",
+                last_name: "Officer",
+                external: false
+            }
+
+            const newOfficer = await adminController.addMunicipalityOfficer(newOfficerData);
+            const officerData: AssignRoleRequestDTO = {
+                username: newOfficer.username,
+                roleTitle: "TECH_AGENT_INFRASTRUCTURE",
+                external: false,
+                companyName: null
+            }
+            const updatedOfficer = await adminController.updateMunicipalityOfficer(officerData);
+            expect(updatedOfficer).toBeDefined();
+            expect(updatedOfficer.username).toBe(newOfficer.username);
+            expect(updatedOfficer.role).toBeDefined();
+            expect(updatedOfficer.role).toBe("TECH_AGENT_INFRASTRUCTURE");
+        });
+
+        it("dovrebbe lanciare errore se si prova ad aggiornare l'admin", async () => {
+            const officerData: AssignRoleRequestDTO = {
+                username: "admin",
+                roleTitle: "TECH_AGENT_INFRASTRUCTURE",
+                external: false,
+                companyName: null
+            }
+            await expect(adminController.updateMunicipalityOfficer(officerData)).rejects.toThrow("FORBIDDEN_ADMIN_ACCOUNT");
+        });
+
+        it("dovrebbe lanciare errore se si prova ad aggiornare un officer non esistente", async () => {
+            const officerData: AssignRoleRequestDTO = {
+                username: "nonexistent_officer",
+                roleTitle: "TECH_AGENT_INFRASTRUCTURE",
+                external: false,
+                companyName: null
+            }
+            await expect(adminController.updateMunicipalityOfficer(officerData)).rejects.toThrow("OFFICER_NOT_FOUND");
+        });
+
+        it("dovrebbe lanciare errore se si prova ad assegnare un ruolo già assegnato", async () => {
+            const officerData: AssignRoleRequestDTO = {
+                username: officer.username,
+                roleTitle: "TECH_AGENT_INFRASTRUCTURE",
+                external: false,
+                companyName: null
+            }
+            // Prima assegnazione del ruolo
+            await expect(adminController.updateMunicipalityOfficer(officerData)).rejects.toThrow("ROLE_ALREADY_ASSIGNED");
+        });
+                
+    });
 
 });

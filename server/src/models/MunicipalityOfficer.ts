@@ -25,6 +25,9 @@ export class MunicipalityOfficer {
   @Column()
   external!: boolean;
 
+  @Column({ type: 'varchar', nullable: true })
+  companyName!: string | null;
+
   @ManyToOne(() => Role, (role) => role.municipalityOfficer, { nullable: true })
   @JoinColumn({ name: 'role' })
   role?: Role;

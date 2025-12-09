@@ -87,6 +87,11 @@ export async function updateMunicipalityOfficer(officerData: AssignRoleRequestDT
     if (!role) throw appErr("ROLE_NOT_FOUND", 404);
 
     existingOfficer.role = role;
+
+    if (officerData.external && !officerData.companyName) throw appErr("COMPANY_REQUIRED", 400);
+    existingOfficer.external = officerData.external;
+    existingOfficer.companyName = officerData.companyName;
+
     const updatedOfficer = await municipalityOfficerRepository.update(existingOfficer);
     return mapMunicipalityOfficerDAOToResponse(updatedOfficer);
 }

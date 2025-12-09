@@ -8,4 +8,5 @@ export interface MunicipalityOfficerResponseDTO {
     last_name: string;
     external: boolean;
     role: string | null;
+    companyName: string | null;
 }

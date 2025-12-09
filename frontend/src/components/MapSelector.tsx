@@ -11,7 +11,8 @@ import L, { LatLngExpression } from "leaflet";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import { point } from "@turf/helpers";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
+import ReportDrawer from "./ReportDrawer";
 import { ReportsApi } from "../api/reportsApi";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
@@ -21,6 +22,7 @@ import { ReportResponseDTO } from "../DTOs/ReportResponseDTO";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import ReportPreview from "./ReportPreview";
 
 
 // Fix default Leaflet marker icons
@@ -173,6 +175,8 @@ const MapSelector: React.FC<MapSelectorProps> = ({ onSelect }) => {
     const [geoData, setGeoData] = useState<any | null>(null);
     const [reports, setReports] = useState<ReportResponseDTO[]>([]);
     const [loading, setLoading] = useState(true);
+    const [openDrawer, setOpenDrawer] = useState(false);
+    const [selectedReport, setSelectedReport] = useState<ReportResponseDTO | null>(null);
 
     useEffect(() => {
         const load = async () => {
@@ -255,21 +259,30 @@ const MapSelector: React.FC<MapSelectorProps> = ({ onSelect }) => {
                       icon={existingReportIcon}
                   >
                       <Popup>
-                          <div>
-                              <strong>{r.title}</strong>
-                              <br />
-                              <em>{r.description}</em>
-                              <br />
-                              Reporter: {r.user?.first_name} {r.user?.last_name}
-                              <br />
-                              Status: {r.status}
-                              <br />
-                              Assigned Officer: {r.officer?.first_name} {r.officer?.last_name}
-                          </div>
+                          <Stack spacing={0.5}>
+                              <Typography variant="subtitle1" sx={{fontWeight:'bold'}}>{r.title}</Typography>
+                              <Typography variant="body2">{new Date(r.createdAt).toLocaleDateString()} - {r.category}</Typography>                            
+                              <Typography variant="body2">Reporter: {r.user?.first_name} {r.user?.last_name}</Typography>                            
+                          </Stack>
+                          <Button
+                              color="primary"
+                              variant="contained"
+                              className="partecipation-button"
+                              size="small"
+                              sx={{ marginTop: "8px", width: '100%' }}
+                              onClick={() => {
+                                  setOpenDrawer(true);
+                                  setSelectedReport(r);
+                              }}
+                          >
+                              View Details
+                          </Button>
                       </Popup>
                   </Marker>
               ))}
             </MarkerClusterGroup>
+
+            <ReportDrawer open={openDrawer} onClose={() => setOpenDrawer(false)} report={selectedReport} />
 
             {/* Click-to-add-report logic */}
             <ClickHandler onSelect={onSelect} geoData={geoData} />

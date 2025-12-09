@@ -24,4 +24,9 @@ export class AuthApi {
         const res = await api.get<UserResponseDTO | MunicipalityOfficerResponseDTO | null>(`/session`);
         return res.data;
     }
+
+    async confirmEmail(username: string, code: string) {
+        return api.post(`/verify`, { username, code });
+    }
+    
 }

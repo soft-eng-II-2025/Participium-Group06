@@ -14,10 +14,12 @@ import { NotificationType } from "../models/NotificationType";
 import { NotificationRepository } from "../repositories/NotificationRepository";
 import { SocketService } from "../services/socketService";
 import { Server } from "socket.io";
+import { createChatLeadExternal, createChatOfficerUser } from "./messagingController";
+
+
 let reportRepository: ReportRepository;
 let notificationRepository: NotificationRepository;
 let socketService: SocketService;
-
 
 
 export function initializeReportRepositories(dataSource: DataSource, io: Server) {
@@ -93,12 +95,20 @@ export async function updateReportStatus(
 }
 
 
-export async function updateReportOfficer(reportId: number, MunicipalityOfficer: MunicipalityOfficer): Promise<ReportResponseDTO> {
-    console.log(`Updating report ${reportId} to officer ${MunicipalityOfficer.username}`);
+export async function updateReportOfficer(reportId: number, municipalityOfficer: MunicipalityOfficer, techLead: MunicipalityOfficer): Promise<ReportResponseDTO> {
+    console.log(`Updating report ${reportId} to officer ${municipalityOfficer.username}`);
     const report = await reportRepository.findById(reportId);
     if (!report) throw appErr('REPORT_NOT_FOUND', 404);
     
-    report.officer = MunicipalityOfficer;  
+    if(municipalityOfficer.external) {
+        report.leadOfficer = techLead;
+        await createChatLeadExternal(reportId);
+        await createChatOfficerUser(reportId);
+    } else {
+        await createChatOfficerUser(reportId);
+    }
+
+    report.officer = municipalityOfficer;  
     const updatedReport = await reportRepository.update(report);
     return mapReportDAOToResponse(updatedReport);
 }

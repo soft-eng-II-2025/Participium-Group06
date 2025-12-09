@@ -23,4 +23,6 @@ export class UserResponseDTO {
     @IsBoolean() flag_email!: boolean;
 
     reports!: ReportResponseDTO[];
+
+    @IsBoolean() verified?: boolean;
 }

@@ -8,39 +8,46 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from './contexts/AuthContext';
 import AdminHomePage from "./pages/AdminHomePage";
 import AdminRegisterPage from "./pages/AdminRegisterPage";
 import TechAgentHomePage from './pages/TechAgentHomePage';
 import OrganizationOfficerHomePage from './pages/OrganizationOfficerHomePage';
 import RequireRole from './routes/RequireRole';
-import ProtectedRoute from './routes/ProtectedRoute';
 import GuestRoute from './routes/GuestRoute';
 import NewReportPage from './pages/NewReportPage';
 import { useAuth } from './contexts/AuthContext';
 import TechLeadHomePage from './pages/TechLeadHomePage';
 import {UserAccountPage} from "./pages/UserAccountPage";
-import ChatPlaygroundPage from './pages/ChatPlayGroundPage';
 import UserReportsPage from './pages/UserReportsPage';
+import EmailConfirmationPage from './pages/EmailConfirmationPage';
+import { UserResponseDTO } from './DTOs/UserResponseDTO';
+import ProtectedRoute, { RequireUnverifiedUser } from './routes/ProtectedRoute';
 
 
 const queryClient = new QueryClient();
 
 function App() {
     const HomeSelector: React.FC = () => {
-        const { isAuthenticated, role, loading } = useAuth();
+        const { isAuthenticated, role, loading, user } = useAuth();
         if (loading) return (
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
                 <CircularProgress />
             </Box>
         );
+        // if the user is authenticated but hasn't confirmed their email, send them to confirmation
+        if (isAuthenticated && (user as UserResponseDTO).verified === false) {
+            return <Navigate to="/confirm-email" replace />;
+        }
+
+
         if (!isAuthenticated) return <HomePage />;
-        if (role === 'ADMIN') return <AdminHomePage />;
-        if (role === 'USER') return <Map />;
-        if (role === 'ORGANIZATION_OFFICER') return <OrganizationOfficerHomePage />;
-        if (role?.startsWith('TECH_LEAD')) return <TechLeadHomePage />;
-        if (role?.startsWith('TECH_AGENT')) return <TechAgentHomePage />;
+        if (role === 'ADMIN') return <ProtectedRoute><AdminHomePage /></ProtectedRoute>;
+        if (role === 'USER') return <ProtectedRoute><Map /></ProtectedRoute>;
+        if (role === 'ORGANIZATION_OFFICER') return <ProtectedRoute><OrganizationOfficerHomePage /></ProtectedRoute>;
+        if (role?.startsWith('TECH_LEAD')) return <ProtectedRoute><TechLeadHomePage /></ProtectedRoute>;
+        if (role?.startsWith('TECH_AGENT')) return <ProtectedRoute><TechAgentHomePage /></ProtectedRoute>;
         else return <HomePage />;
     };
     return (
@@ -90,6 +97,10 @@ function App() {
                                         </RequireRole>
                                     </ProtectedRoute>
                                 } />
+                                <Route path="/confirm-email" element={
+                                    <RequireUnverifiedUser>
+                                        <EmailConfirmationPage />
+                                    </RequireUnverifiedUser>} />
                             </Routes>
                         </Layout>
                     </BrowserRouter>

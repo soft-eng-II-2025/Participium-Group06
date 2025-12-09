@@ -9,6 +9,10 @@ import {Report} from "../models/Report";
 import {ChatType} from "../models/ChatType";
 import {Message} from "../models/Message";
 import {SenderType} from "../models/SenderType";
+import {ReportResponseDTO} from "../models/DTOs/ReportResponseDTO";
+import {MunicipalityOfficerResponseDTO} from "../models/DTOs/MunicipalityOfficerResponseDTO";
+import {UserResponseDTO} from "../models/DTOs/UserResponseDTO";
+import {ChatResponseDTO} from "../models/DTOs/ChatRespondeDTO";
 
 
 /**
@@ -361,4 +365,114 @@ export async function createTestMessage(ds: DataSource): Promise<Message> {
     });
     await messageRepo.save(message);
     return message;
+}
+
+/**
+ * Creates a mock MunicipalityOfficer DAO for a Tech Lead (in memory, not saved to DB).
+ */
+export function mockTechLeadDAO(): MunicipalityOfficer {
+    const techLead = new MunicipalityOfficer();
+    techLead.id = 100;
+    techLead.username = 'mocktechlead';
+    techLead.email = 'mocktechlead@example.com';
+    techLead.first_name = 'Mock';
+    techLead.last_name = 'TechLead';
+    techLead.external = false;
+    techLead.role = {
+        id: 1,
+        title: 'TECH_LEAD_INFRASTRUCTURE',
+        label: 'Tech Lead, Infrastructure',
+    } as Role;
+    return techLead;
+}
+
+/**
+ * Creates a mock MunicipalityOfficer DAO for a Tech Agent (in memory, not saved to DB).
+ */
+export function mockTechAgentDAO(): MunicipalityOfficer {
+    const techAgent = new MunicipalityOfficer();
+    techAgent.id = 101;
+    techAgent.username = 'mocktechagent';
+    techAgent.email = 'mocktechagent@example.com';
+    techAgent.first_name = 'Mock';
+    techAgent.last_name = 'TechAgent';
+    techAgent.external = false;
+    techAgent.role = {
+        id: 2,
+        title: 'TECH_AGENT_INFRASTRUCTURE',
+        label: 'Tech Agent, Infrastructure',
+    } as Role;
+
+    return techAgent;
+}
+
+/**
+ * Creates a mock UserResponseDTO (in memory, for expected results in Unit Test).
+ */
+export function mockUserResponseDTO(): UserResponseDTO {
+    const dto = new UserResponseDTO();
+    dto.userId = 1;
+    dto.username = 'mockuser';
+    dto.email = 'mockuser@example.com';
+    dto.first_name = 'Mock';
+    dto.last_name = 'User';
+    dto.photo = null;
+    dto.telegram_id = null;
+    dto.flag_email = true;
+    dto.verified = true;
+    dto.reports = [];
+    return dto;
+}
+
+/**
+ * Creates a mock MunicipalityOfficerResponseDTO (in memory, for expected results in Unit Test).
+ */
+export function mockOfficerResponseDTO(isLead: boolean = false): MunicipalityOfficerResponseDTO {
+    const dto = new MunicipalityOfficerResponseDTO();
+    dto.id = isLead ? 100 : 101;
+    dto.username = isLead ? 'mocktechlead' : 'mocktechagent';
+    dto.email = isLead ? 'mocktechlead@example.com' : 'mocktechagent@example.com';
+    dto.first_name = isLead ? 'Mock' : 'Tech';
+    dto.last_name = isLead ? 'TechLead' : 'Agent';
+    dto.external = false;
+    dto.role = isLead ? 'Tech Lead, Infrastructure' : 'Tech Agent, Infrastructure';
+    return dto;
+}
+
+/**
+ * Creates a mock ChatResponseDTO array (in memory, for expected results in Unit Test).
+ */
+export function mockChatResponseDTOs(): ChatResponseDTO[] {
+    const chatDto = new ChatResponseDTO();
+    chatDto.id = 1;
+    chatDto.reportId = 1;
+    chatDto.type = 'OFFICER_USER';
+    return [chatDto];
+}
+
+/**
+ * Creates a mock ReportResponseDTO (in memory, for expected results in Unit Test).
+ */
+export function mockReportResponseDTO(
+    reportId: number = 1,
+    officer: MunicipalityOfficerResponseDTO = mockOfficerResponseDTO(false),
+    user: UserResponseDTO = mockUserResponseDTO(),
+    chats: ChatResponseDTO[] = mockChatResponseDTOs()
+): ReportResponseDTO {
+    const dto = new ReportResponseDTO();
+    dto.id = reportId;
+    dto.title = 'Mock Report Title';
+    dto.status = StatusType.Assigned;
+    dto.officer = officer;
+    dto.category = 'Water Supply – Drinking Water';
+    dto.longitude = 12.0;
+    dto.latitude = 45.0;
+    dto.description = 'Mock description';
+    dto.explanation = '';
+    dto.photos = [];
+    dto.createdAt = new Date();
+    dto.user = user;
+    dto.chats = chats;
+
+    return dto;
 }

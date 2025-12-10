@@ -222,7 +222,7 @@ export default function Header() {
                         <Box sx={{width: "100%", mt: 2}}>
                             <Stack direction="row" spacing={2} alignItems="center" sx={{mb: 2}}>
                                 <Avatar
-                                    src={`http://localhost:3000/api/users/uploads/${user?.photo}` || undefined}
+                                    src={user?.photo ? `http://localhost:3000/api/users/uploads/${user.photo}` : undefined}
                                     sx={{bgcolor: "secondary.main", width: 48, height: 48}}>
                                     {!user?.photo && initials}
                                 </Avatar>

@@ -58,10 +58,6 @@ describe("Messaging Controller Integration Tests", () => {
         adminController.initializeAdminRepositories(TestDataSource);
         notificationController.initializeNotificationController(TestDataSource);
 
-
-        reportRepo = TestDataSource.getRepository(Report);
-        chatRepo = TestDataSource.getRepository(Chat);
-
         ready = await setupDb(TestDataSource)
 
         if (!ready) {

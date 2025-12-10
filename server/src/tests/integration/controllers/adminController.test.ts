@@ -18,9 +18,12 @@ import {Repository} from "typeorm";
 import { CreateOfficerRequestDTO } from "../../../models/DTOs/CreateOfficerRequestDTO";
 import { off } from "process";
 import { AssignRoleRequestDTO } from "../../../models/DTOs/AssignRoleRequestDTO";
+import { LoginRequestDTO } from "../../../models/DTOs/LoginRequestDTO";
+import { MunicipalityOfficerResponseDTO } from "../../../models/DTOs/MunicipalityOfficerResponseDTO";
+import { ReportResponseDTO } from "../../../models/DTOs/ReportResponseDTO";
 
 
-describe("assignTechAgent (Integration Tests)", () => {
+describe("adminController (Integration Tests)", () => {
     let ready: boolean
     let reportRepo: Repository<Report>;
     let officerRepo: Repository<MunicipalityOfficer>;
@@ -248,4 +251,96 @@ describe("assignTechAgent (Integration Tests)", () => {
                 
     });
 
+
+    describe("Get Officer By Username", () => {
+        it("dovrebbe ritornare un officer dato l'username", async () => {
+            const retrievedOfficer = await adminController.getMunicipalityOfficerByUsername(officer.username);
+
+            expect(retrievedOfficer).toBeDefined();
+            expect(retrievedOfficer.first_name).toBe(officer.first_name);
+            expect(retrievedOfficer.last_name).toBe(officer.last_name);
+        });
+
+        it("dovrebbe lanciare errore di officer not found", async () => {
+            await expect(adminController.getMunicipalityOfficerByUsername("ciao")).rejects.toThrow("OFFICER_NOT_FOUND");
+        });
+    });
+
+
+    describe("Get Officer DAO for new request", () => {
+        it("dovrebbe lanciare errore No officer available", async () => {
+            await expect(adminController.getMunicipalityOfficerDAOForNewRequest()).rejects.toThrow("NO_OFFICER_AVAILABLE");
+        });
+    });
+
+
+    describe("get officerDAO by username", () => {
+        it("dovrebbe ritornare un officerDAO", async () => {
+            const retrievedOfficer: MunicipalityOfficer = await adminController.getMunicipalityOfficerDAOByUsername(officer.username);
+
+            expect(retrievedOfficer).toBeDefined();
+            expect(retrievedOfficer.username).toBe(officer.username);
+        });
+    });
+
+
+    describe("get agents by tech-lead username", () => {
+        it("dovrebbe ritornare la lista degli agenti che hanno il ruolo del tech lead", async () => {
+            const retrievedOfficers: MunicipalityOfficerResponseDTO[] = await adminController.getAgentsByTechLeadUsername(techLead.username);
+
+            expect(retrievedOfficers).toBeDefined();
+            expect(retrievedOfficers.length).toBe(2);
+        });
+    });
+
+
+    describe("get tech reports", () => {
+        it("dovrebbe ritornare la lista dei report associati a un tech agent", async () => {
+            await adminController.assignTechAgent(testReport.id, officer.username, techLead.username);
+            const retrievedReports: ReportResponseDTO[] = await adminController.getTechReports(officer.username);
+
+            expect(retrievedReports).toBeDefined();
+            expect(retrievedReports.length).toBe(1);
+        });
+    });
+
+
+    describe("get tech lead reports", () => {
+        it("dovrebbe ritornare la lista dei report associati a un tech agent", async () => {
+            const retrievedReports: ReportResponseDTO[] = await adminController.getTechLeadReports(techLead.username);
+
+            expect(retrievedReports).toBeDefined();
+            expect(retrievedReports.length).toBe(2);
+        });
+    });
+
+
+    describe("get officer by id", () => {
+        it("dovrebbe ritornare l'officer dato l'id", async () => {
+            const retrievedOfficer = await adminController.getOfficerById(officer.id);
+
+            expect(retrievedOfficer).toBeDefined();
+            expect(retrievedOfficer.username).toBe(officer.username);
+        });
+    })
+
+
+    describe("get officer id by email", () => {
+        it("dovrebbe ritornare l'officer id data l'email", async () => {
+            const retrievedOfficerId = await adminController.getOfficerIdByEmail(officer.email);
+
+            expect(retrievedOfficerId).toBeDefined();
+            expect(retrievedOfficerId).toBe(officer.id);
+        });
+    })
+
+
+    describe("get officer id by username", () => {
+        it("dovrebbe ritornare l'officer id dato l'username", async () => {
+            const retrievedOfficerId = await adminController.getOfficerIdByUsername(officer.username);
+
+            expect(retrievedOfficerId).toBeDefined();
+            expect(retrievedOfficerId).toBe(officer.id);
+        });
+    })
 });

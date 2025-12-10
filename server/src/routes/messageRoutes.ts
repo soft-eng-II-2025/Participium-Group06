@@ -32,14 +32,7 @@ router.post("/:chatId", requireAuth, async (req: Request, res: Response, next: N
 router.get("/:reportId/officer-user", requireAuth, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const reportId = +req.params.reportId;
-        if (isNaN(reportId)) return res.status(400).json({ error: "Invalid report ID" });
-        const chatType = ChatType.OFFICER_USER;
-        const messages = await messageController.getMessagesByReport(reportId, chatType);
-        res.status(200).json(messages);
-    } catch (err) {
-        next(err);
-    }
-});
+        if (Number.isNaN(reportId)) return res.status(400).json({ error: "Invalid report ID" });
 
 router.get("/:reportId/lead-external", requireAuth, async (req: Request, res: Response, next: NextFunction) => {
     try {

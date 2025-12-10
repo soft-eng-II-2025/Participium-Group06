@@ -1,7 +1,7 @@
 // import "./App.css";
 import 'leaflet/dist/leaflet.css';
 import { GlobalStyles, ThemeProvider, Box, CircularProgress} from "@mui/material";
-import Map from "../src/pages/Map";
+import StreetMap from "../src/pages/Map";
 import Layout from './layout/Layout';
 import theme from "./theme/index";
 import HomePage from './pages/HomePage';
@@ -43,11 +43,11 @@ function App() {
 
 
         if (!isAuthenticated) return <HomePage />;
-        if (role === 'ADMIN') return <ProtectedRoute><AdminHomePage /></ProtectedRoute>;
-        if (role === 'USER') return <ProtectedRoute><Map /></ProtectedRoute>;
-        if (role === 'ORGANIZATION_OFFICER') return <ProtectedRoute><OrganizationOfficerHomePage /></ProtectedRoute>;
-        if (role?.startsWith('TECH_LEAD')) return <ProtectedRoute><TechLeadHomePage /></ProtectedRoute>;
-        if (role?.startsWith('TECH_AGENT')) return <ProtectedRoute><TechAgentHomePage /></ProtectedRoute>;
+        if (role === 'ADMIN') return <AdminHomePage />;
+        if (role === 'USER') return <StreetMap />;
+        if (role === 'ORGANIZATION_OFFICER') return <OrganizationOfficerHomePage />;
+        if (role?.startsWith('TECH_LEAD')) return <TechLeadHomePage />;
+        if (role?.startsWith('TECH_AGENT')) return <TechAgentHomePage />;
         else return <HomePage />;
     };
     return (

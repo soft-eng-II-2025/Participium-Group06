@@ -288,6 +288,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       -- agent_energy password in chiaro: AgentEnergy1!
       -- lead_buildings password in chiaro: LeadBuildings1!
       -- agent_buildings password in chiaro: AgentBuildings1!
+      -- external password in chiaro: external
       INSERT INTO "municipality_officer"
         ("id","username","email","password","first_name","last_name","external","companyName","role")
       VALUES
@@ -329,7 +330,10 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
          'Alessandro','Gallo',false,NULL,13),
         (14,'agent_buildings','federica.moretti@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$cTNpaGhscjN4dnQwMDAwMA$EawaCPGuYrZKzo0ftbnaBMrq1D4ymmSp4TUsUK63Nec',
-         'Federica','Moretti',false,NULL,14)
+         'Federica','Moretti',false,NULL,14),
+        (15,'external','daniele.scrua@gtt.com',
+        '$argon2id$v=19$m=65536,t=3,p=1$VTZwOGREVW82TjJldWg5OQ$93lZipNlcgkt0qcA2jsgPohxTOsu0dz0C41JhvmBnFE',
+        'Daniele','Scrua',true,'GTT - Gruppo Trasporti Torinese',6)
       ON CONFLICT ("id") DO NOTHING
     `);
 

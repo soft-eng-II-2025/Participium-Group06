@@ -107,6 +107,7 @@ The frontend will run on http://localhost:8080
       -- agent_energy password: AgentEnergy1!
       -- lead_buildings password: LeadBuildings1!
       -- agent_buildings password: AgentBuildings1!
+      -- external password in chiaro: external
 
 
 ## Ports Configuration

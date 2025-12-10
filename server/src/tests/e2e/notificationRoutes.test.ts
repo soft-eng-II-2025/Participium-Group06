@@ -226,7 +226,7 @@ describe("Notification Routes E2E Tests", () => {
         it("should return 500 when trying to delete another user's notification", async () => {
             mockUser = { username: user1.username } as UserResponseDTO;
 
-            const response = await request(app)
+            await request(app)
                 .delete(`/api/notifications/${notification3.id}`)
                 .expect(500);
         });
@@ -284,7 +284,7 @@ describe("Notification Routes E2E Tests", () => {
         it("should return 500 when trying to mark another user's notification as read", async () => {
             mockUser = { username: user1.username } as UserResponseDTO;
 
-            const response = await request(app)
+            await request(app)
                 .patch(`/api/notifications/${notification3.id}/read`)
                 .expect(500);
         });

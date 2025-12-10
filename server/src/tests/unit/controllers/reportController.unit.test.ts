@@ -146,7 +146,7 @@ describe('reportController (unit)', () => {
   // updateReportOfficer: (internal) - reuse similar patterns as existing tests
   it('updateReportOfficer should assign internal officer and create only officer-user chat', async () => {
     const reportId = 10;
-    const reportDao: any = { id: reportId, status: StatusType.PendingApproval, officer: undefined, leadOfficer: undefined };
+    const reportDao: any = { id: reportId, status: StatusType.PendingApproval, officer: undefined, leadOfficer: undefined, chats: [] };
     const internalOfficer: MunicipalityOfficer = mockTechAgentDAO();
     const techLead: MunicipalityOfficer = mockTechLeadDAO();
 
@@ -156,7 +156,7 @@ describe('reportController (unit)', () => {
     const res = await updateReportOfficer(reportId, internalOfficer, techLead);
 
     expect(mockReportRepository.findById).toHaveBeenCalledWith(reportId);
-    expect(messagingController.createChatOfficerUser).toHaveBeenCalledWith(reportId);
+    expect(messagingController.createChatOfficerUser).toHaveBeenCalledWith(reportDao);
     expect(messagingController.createChatLeadExternal).not.toHaveBeenCalled();
     expect(mockReportRepository.update).toHaveBeenCalled();
     expect(res).toEqual(mockReportDTO);
@@ -164,7 +164,7 @@ describe('reportController (unit)', () => {
 
   it('updateReportOfficer should assign external officer, set leadOfficer and create both chats', async () => {
     const reportId = 20;
-    const reportDao: any = { id: reportId, status: StatusType.PendingApproval, officer: undefined, leadOfficer: undefined };
+    const reportDao: any = { id: reportId, status: StatusType.PendingApproval, officer: undefined, leadOfficer: undefined, chats: [] };
     const externalOfficer: MunicipalityOfficer = { ...mockTechAgentDAO(), external: true, username: 'ext' };
     const techLead: MunicipalityOfficer = mockTechLeadDAO();
 
@@ -174,12 +174,11 @@ describe('reportController (unit)', () => {
     const res = await updateReportOfficer(reportId, externalOfficer, techLead);
 
     expect(mockReportRepository.findById).toHaveBeenCalledWith(reportId);
-    expect(messagingController.createChatOfficerUser).toHaveBeenCalledWith(reportId);
-    expect(messagingController.createChatLeadExternal).toHaveBeenCalledWith(reportId);
+    expect(messagingController.createChatOfficerUser).toHaveBeenCalledWith(reportDao);
+    expect(messagingController.createChatLeadExternal).toHaveBeenCalledWith(reportDao);
     expect(mockReportRepository.update).toHaveBeenCalled();
     expect(res).toEqual(mockReportDTO);
   });
-
   it('updateReportOfficer should throw REPORT_NOT_FOUND when no report', async () => {
     mockReportRepository.findById.mockResolvedValueOnce(null);
     const p = updateReportOfficer(999, mockTechAgentDAO(), mockTechLeadDAO());

@@ -1,9 +1,5 @@
-import { MunicipalityOfficer } from "../MunicipalityOfficer";
-import { StatusType } from "../StatusType";
 import { MunicipalityOfficerResponseDTO } from "./MunicipalityOfficerResponseDTO";
 import { UserResponseDTO } from "./UserResponseDTO";
-import { CategoryResponseDTO } from "./CategoryResponseDTO";
-import { Chat } from "../Chat";
 import { ChatResponseDTO } from "./ChatRespondeDTO";
 
 export class ReportResponseDTO {
@@ -32,4 +28,6 @@ export class ReportResponseDTO {
     createdAt!: Date;
 
     chats!: ChatResponseDTO[];
+
+    leadOfficer!: MunicipalityOfficerResponseDTO;
 }

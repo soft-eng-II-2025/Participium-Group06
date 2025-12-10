@@ -6,7 +6,6 @@ import {
   Box,
   Typography,
 } from "@mui/material";
-import Chat from "../components/Chat";
 
 const ChatPlaygroundPage: React.FC = () => {
   const reportId = 1; // <-- fisso, statico
@@ -23,7 +22,7 @@ const ChatPlaygroundPage: React.FC = () => {
       </Box>
 
       <Box sx={{ maxWidth: 700 }}>
-        <Chat reportId={reportId} />
+        {/* <Chat reportId={reportId} /> */}
       </Box>
     </Container>
   );

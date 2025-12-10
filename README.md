@@ -21,6 +21,8 @@ The project is composed of:
 
 ## 1) 🐳 Docker Setup
 
+# To build the docker image of the application and run it 
+
 ```bash
 # Stop all containers
 docker compose down
@@ -40,6 +42,13 @@ Once completed, the migrator container will stop automatically.
 Builds and starts the Postgres container on port 5434.
 
 Automatically runs the TypeORM migrations to create and seed the database (roles, categories, admin user).
+
+# To run only the database container 
+
+```bash
+docker compose -f 'compose.yaml' up -d --build 'postgres' && cd ./server &&  npm run build && npx typeorm migration:run -d dist/data-source.js
+
+```
 
 
 ## 2) Backend Setup 

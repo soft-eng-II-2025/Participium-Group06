@@ -161,7 +161,7 @@ export async function getAgentsByTechLeadUsername(techLeadUsername :string):Prom
 }
 
 export async function getTechReports(officerUsername :string):Promise<ReportResponseDTO[]> {
-    const officer = await municipalityOfficerRepository.findByusername(officerUsername);
+    const officer = await municipalityOfficerRepository.findByUsername(officerUsername);
     if (!officer) {
         throw appErr("OFFICER_NOT_FOUND", 404);
     }

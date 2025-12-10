@@ -165,7 +165,7 @@ export default function Header() {
                     {/* MOBILE MENU BUTTON */}
                     {isMobile && (
                         <>
-                            <NotificationsMenu/>
+                            {role=="USER" && <NotificationsMenu />}
                             <IconButton color="inherit" onClick={() => setDrawerOpen(true)}>
                                 <MenuIcon/>
                             </IconButton>

@@ -100,16 +100,12 @@ export async function updateReportOfficer(reportId: number, municipalityOfficer:
     const report = await reportRepository.findById(reportId);
     if (!report) throw appErr('REPORT_NOT_FOUND', 404);
 
-    
+    report.chats.push(await createChatOfficerUser(report));
     if(municipalityOfficer.external) {
         report.leadOfficer = techLead;
-        await createChatLeadExternal(report);
-        await createChatOfficerUser(report);
-    } else {
-        await createChatOfficerUser(report);
-     
-    }
-
+        report.chats.push(await createChatLeadExternal(report));
+    };
+    
     report.officer = municipalityOfficer;  
     const updatedReport = await reportRepository.update(report);
     return mapReportDAOToResponse(updatedReport);

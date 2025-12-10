@@ -248,7 +248,6 @@ export function mapNotificationDAOToDTO(notificationDAO: Notification): Notifica
 }
 
 export function mapChatDAOToDTO(chatDAO: Chat): ChatResponseDTO {
-    console.log(`Mapping chat DAO to DTO for chat : ${chatDAO}`);
     const dto: ChatResponseDTO = {
         id: chatDAO.id,
         reportId: chatDAO?.report?.id,

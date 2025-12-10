@@ -20,6 +20,7 @@ import { Notification } from "../models/Notification";
 import { NotificationType } from "../models/NotificationType";
 import { SenderType } from "../models/SenderType";
 import { Chat } from "../models/Chat";
+import { ChatResponseDTO } from "../models/DTOs/ChatRespondeDTO";
 
 /* Helper */
 function removeNullAttributes<T extends Record<string, any>>(dto: T): Partial<T> {

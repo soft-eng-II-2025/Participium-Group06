@@ -75,7 +75,7 @@ describe("ReportRepository - Unit Test (Mock ORM)", () => {
     it("dovrebbe chiamare find con relazioni per findAll", async () => {
         await reportRepository.findAll();
         expect(mockOrmRepository.find).toHaveBeenCalledWith(expect.objectContaining({
-            relations: ['category', 'photos', 'user']
+            relations: ['category', 'photos', 'user', 'chats']
         }));
     });
 

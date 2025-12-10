@@ -13,6 +13,8 @@ import {ReportResponseDTO} from "../models/DTOs/ReportResponseDTO";
 import {MunicipalityOfficerResponseDTO} from "../models/DTOs/MunicipalityOfficerResponseDTO";
 import {UserResponseDTO} from "../models/DTOs/UserResponseDTO";
 import {ChatResponseDTO} from "../models/DTOs/ChatRespondeDTO";
+import {Notification} from "../models/Notification";
+import {NotificationType} from "../models/NotificationType";
 
 
 /**
@@ -118,6 +120,23 @@ export async function createTestUser2(ds: DataSource): Promise<User> {
         password: 'password123',
         first_name: 'Anna',
         last_name: 'Verdi',
+        photo: '',
+        telegram_id: '',
+        flag_email: true,
+        verified: true,
+    })
+    await userRepo.save(user);
+    return user;
+}
+
+export async function createTestUser3(ds: DataSource): Promise<User> {
+    const userRepo = ds.getRepository(User);
+    const user = userRepo.create({
+        username: 'giacomogialli',
+        email: 'giacomogialli@gmail.com',
+        password: 'password123',
+        first_name: 'Giacomo',
+        last_name: 'Gialli',
         photo: '',
         telegram_id: '',
         flag_email: true,
@@ -334,6 +353,28 @@ export async function createBasicReport(
     return report;
 }
 
+
+export async function createTestNotifications(ds: DataSource, user: User): Promise<Notification[]> {
+    const notificationRepo = ds.getRepository(Notification);
+    const notifications = notificationRepo.create([
+        {
+            type: NotificationType.ReportChanged,
+            content: 'Il tuo report è stato aggiornato.',
+            user,
+        },
+        {
+            type: NotificationType.NewMessage,
+            content: 'Hai ricevuto un nuovo messaggio.',
+            user,
+        },
+        {
+            type: NotificationType.NewMessage,
+            content: 'Secondo messaggio di test.',
+            user,
+        },
+    ]);
+    return await notificationRepo.save(notifications);
+}
 /* ###########################################################################
     LE FUNZIONI SOPRA ERANO PIENE DI "INTRECCI" QUINDI SI OTTENEVANO
     ERRORI DA PARTE DEL DB, adesso dovrebbero essere tutte sistemate
@@ -342,8 +383,7 @@ export async function createBasicReport(
 
     ############### ############### ############### ############### ##########
  */
-export async function createTestChat(ds: DataSource): Promise<Chat> {
-    const report = await createTestReport(ds);
+export async function createTestChatLeadExternal(ds: DataSource, report: Report): Promise<Chat> {
     const chatRepo = ds.getRepository(Chat);
     const chat = chatRepo.create({
         report: report,
@@ -354,12 +394,46 @@ export async function createTestChat(ds: DataSource): Promise<Chat> {
     return chat;
 }
 
-export async function createTestMessage(ds: DataSource): Promise<Message> {
-    const chat = await createTestChat(ds);
+export async function createTestChatOfficerUser(ds: DataSource, report: Report): Promise<Chat> {
+    const chatRepo = ds.getRepository(Chat);
+    const chat = chatRepo.create({
+        report: report,
+        type: ChatType.OFFICER_USER,
+        messages: [],
+    });
+    await chatRepo.save(chat);
+    return chat;
+}
+
+export async function createTestMessageLeadExternal(ds: DataSource, chat: Chat): Promise<Message> {
     const messageRepo = ds.getRepository(Message);
     const message = messageRepo.create({
         content: 'This is a test message.',
         sender: SenderType.LEAD,
+        created_at: new Date(),
+        chat: chat,
+    });
+    await messageRepo.save(message);
+    return message;
+}
+
+export async function createTestMessageExternalLead(ds: DataSource, chat: Chat): Promise<Message> {
+    const messageRepo = ds.getRepository(Message);
+    const message = messageRepo.create({
+        content: 'This is a test message.',
+        sender: SenderType.EXTERNAL,
+        created_at: new Date(),
+        chat: chat,
+    });
+    await messageRepo.save(message);
+    return message;
+}
+
+export async function createTestMessageOfficerUser(ds: DataSource, chat: Chat): Promise<Message> {
+    const messageRepo = ds.getRepository(Message);
+    const message = messageRepo.create({
+        content: 'This is a test message.',
+        sender: SenderType.OFFICER,
         created_at: new Date(),
         chat: chat,
     });

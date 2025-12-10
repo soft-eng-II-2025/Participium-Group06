@@ -18,7 +18,7 @@ import {Drawer, useMediaQuery, useTheme} from "@mui/material";
 
 export default function Header() {
     const navigate = useNavigate();
-    const {isAuthenticated, user, logout, role} = useAuth();
+    const {isAuthenticated, user, logout, role, isExternal, companyName} = useAuth();
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -72,9 +72,18 @@ export default function Header() {
 
     return (
         <>
-            <AppBar position="fixed" sx={{left: 0, right: 0}}>
+            <AppBar position="fixed" sx={{
+                left: 0,
+                right: 0,
+                // Se isExternal è true, usa il secondary
+                // Altrimenti, usa undefined che di default è primary
+                backgroundColor: isExternal ? theme.palette.secondary.dark : undefined,
+            }}
+            >
                 <Toolbar sx={{justifyContent: "flex-start"}}>
-                    <IconButton size="small" edge="start" color="inherit" sx={{mr: 2}} onClick={() => navigate("/")}>
+
+                    <IconButton size="small" edge="start" color="inherit" sx={{mr: 2}}
+                                onClick={() => navigate("/")}>
                         <img src={logo} alt="Logo" style={{width: "40px"}}/>
                     </IconButton>
 
@@ -147,9 +156,15 @@ export default function Header() {
                                 <Typography sx={{fontWeight: 600, fontSize: 14}}>
                                     {user?.first_name} {user?.last_name}
                                 </Typography>
-                                <Typography sx={{fontWeight: 400, fontSize: 12}}>
-                                    @{user?.username}
-                                </Typography>
+                                {isExternal ? (
+                                    <Typography sx={{fontWeight: 400, fontSize: 12}}>
+                                        {companyName}
+                                    </Typography>
+                                ) : (
+                                    <Typography sx={{fontWeight: 400, fontSize: 12}}>
+                                        @{user?.username}
+                                    </Typography>
+                                )}
                             </Stack>
                             <Button
                                 color="inherit"
@@ -165,7 +180,7 @@ export default function Header() {
                     {/* MOBILE MENU BUTTON */}
                     {isMobile && (
                         <>
-                            {role=="USER" && <NotificationsMenu />}
+                            {role == "USER" && <NotificationsMenu/>}
                             <IconButton color="inherit" onClick={() => setDrawerOpen(true)}>
                                 <MenuIcon/>
                             </IconButton>

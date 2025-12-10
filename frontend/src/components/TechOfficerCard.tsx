@@ -1,16 +1,11 @@
 import React from 'react';
-import { Card, CardContent, Box, Typography, CardActionArea } from '@mui/material';
+import { Card, CardContent, Box, Typography, CardActionArea, Chip } from '@mui/material';
 import { getInitials } from '../utils/stringUtilis';
+import { MunicipalityOfficerResponseDTO } from '../DTOs/MunicipalityOfficerResponseDTO';
 
-export type TechOfficer = {
-    userId?: number;
-    username: string;
-    first_name?: string;
-    last_name?: string;
-};
 
 type Props = {
-    user: TechOfficer;
+    user: MunicipalityOfficerResponseDTO;
     sx?: any;
     className?: string;
     onClick?: () => void;
@@ -41,9 +36,20 @@ const TechOfficerCard: React.FC<Props> = ({ user, sx, className, onClick, select
                         {initials}
                     </Box>
                     <Box sx={{ overflow: 'hidden' }}>
-                        <Typography sx={{ fontWeight: 600, fontSize: 13 }} noWrap>
-                            {user.first_name} {user.last_name}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography sx={{ fontWeight: 600, fontSize: 13 }} noWrap>
+                                {user.first_name} {user.last_name}
+                            </Typography>
+                            {user.external && (
+                                <Chip
+                                    label="External"
+                                    size="small"
+                                    color="secondary"
+                                    variant="outlined"
+                                    sx={{ height: 22, fontSize: 11, ml: 0.5 }}
+                                />
+                            )}
+                        </Box>
                         <Typography sx={{ fontSize: 11, color: 'text.secondary' }} noWrap>
                             @{user.username}
                         </Typography>

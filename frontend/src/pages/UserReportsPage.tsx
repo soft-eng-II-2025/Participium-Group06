@@ -5,6 +5,7 @@ import { useUserReports } from "../hook/useUserReports.hook";
 import ReportsList from "../components/ReportsList";
 import ReportPreview from "../components/ReportPreview";
 import Chat from "../components/Chat";
+import { ChatMode } from "../enums/ChatMode";
 
 const UserReportsPage: React.FC = () => {
   const { user } = useAuth();
@@ -14,6 +15,7 @@ const UserReportsPage: React.FC = () => {
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMode, setChatMode] = useState<ChatMode | null>(null);
 
   useEffect(() => {
     if (reports.length && selectedIndex === null) {
@@ -26,8 +28,24 @@ const UserReportsPage: React.FC = () => {
 
   const statuses = ["All"]; // Users cannot filter by status
 
-  function toggleChatOpen() {
-    setIsChatOpen((prev) => !prev);
+  function toggleChatOpen(mode?: ChatMode) {
+    if (mode !== undefined) {
+      if (isChatOpen && chatMode === mode) {
+        setIsChatOpen(false);
+        setChatMode(null);
+      } else {
+        setChatMode(mode);
+        setIsChatOpen(true);
+      }
+      return;
+    }
+
+    if (isChatOpen) {
+      setIsChatOpen(false);
+      setChatMode(null);
+    } else {
+      setIsChatOpen(true);
+    }
   }
 
   return (
@@ -65,7 +83,14 @@ const UserReportsPage: React.FC = () => {
             />
           </Grid>
           <Grid item xs={12} md={6}>
-            {selectedReport && <Chat reportId={selectedReport.id} />}
+            {selectedReport && (
+              <Chat
+                reportId={selectedReport.id}
+                chatId={selectedReport.chats?.find(c => c.type === chatMode)?.id}
+                chatMode={chatMode!}
+                closeChat={() => toggleChatOpen()}
+              />
+            )}
           </Grid>
         </Grid>
       )}

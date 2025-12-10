@@ -1,6 +1,7 @@
 import { Chat } from "../models/Chat";
 import { Repository, DataSource } from "typeorm";
 import { ChatType } from "../models/ChatType";
+import { Report } from "../models/Report";
 
 export class ChatRepository {
     protected chatRepository: Repository<Chat>;
@@ -24,6 +25,7 @@ export class ChatRepository {
             .leftJoinAndSelect("report.user", "user")
             .leftJoinAndSelect("report.officer", "officer")
             .leftJoinAndSelect("officer.role", "officerRole")
+            .leftJoinAndSelect("report.leadOfficer", "leadOfficer")
             .leftJoinAndSelect("chat.messages", "messages")
             .where("chat.id = :id", { id })
             .getOne();
@@ -47,18 +49,19 @@ export class ChatRepository {
         await this.chatRepository.remove(chat);
     }
 
-    async addReportToChatOfficerUser(reportId: number): Promise<Chat> {
+    async addReportToChatOfficerUser(report: Report): Promise<Chat> {
         const chat = new Chat();
         chat.type = ChatType.OFFICER_USER;
-        chat.report = { id: reportId } as any;
-        return this.chatRepository.save(chat);
+        chat.report = { id: report.id } as Report;
+        return await this.chatRepository.save(chat);
     }
 
-    async addReportToLeadExternalUser(reportId: number): Promise<Chat> {
+    async addReportToLeadExternalUser(report: Report): Promise<Chat> {
         const chat = new Chat();
         chat.type = ChatType.LEAD_EXTERNAL;
-        chat.report = { id: reportId } as any;
-        return this.chatRepository.save(chat);
+        console.log("Adding report to lead external user chat:", report.id);
+        chat.report = { id: report.id } as Report;
+        return await this.chatRepository.save(chat);
     }
 
 }

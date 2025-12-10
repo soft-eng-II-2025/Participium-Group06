@@ -142,23 +142,21 @@ describe('messagingController (unit)', () => {
 
   // createChatOfficerUser
   it('createChatOfficerUser should call chatRepository.addReportToChatOfficerUser', async () => {
-    const reportId = 5;
     mockChatRepository.addReportToChatOfficerUser.mockResolvedValueOnce(mockChat);
 
-    const res = await createChatOfficerUser(reportId);
+    const res = await createChatOfficerUser(mockReport);
 
-    expect(mockChatRepository.addReportToChatOfficerUser).toHaveBeenCalledWith(reportId);
+    expect(mockChatRepository.addReportToChatOfficerUser).toHaveBeenCalledWith(mockReport);
     expect(res).toEqual(mockChat);
   });
 
-  // createChatLeadExternal
-  it('createChatLeadExternal should call chatRepository.addReportToLeadExternalUser', async () => {
-    const reportId = 5;
-    mockChatRepository.addReportToLeadExternalUser.mockResolvedValueOnce(mockChat);
+  // createChatOfficerUser
+  it('createChatOfficerUser should call chatRepository.addReportToChatOfficerUser', async () => {
+    mockChatRepository.addReportToChatOfficerUser.mockResolvedValueOnce(mockChat);
 
-    const res = await createChatLeadExternal(reportId);
+    const res = await createChatOfficerUser(mockReport);
 
-    expect(mockChatRepository.addReportToLeadExternalUser).toHaveBeenCalledWith(reportId);
+    expect(mockChatRepository.addReportToChatOfficerUser).toHaveBeenCalledWith(mockReport);
     expect(res).toEqual(mockChat);
   });
 
@@ -207,22 +205,25 @@ describe('messagingController (unit)', () => {
     expect(res).toEqual(mockMessageDTO);
   });
 
-  // sendMessage: from LEAD
-  it('sendMessage from LEAD should send message to officer via socket', async () => {
+  // sendMessage: from LEAD (OFFICER_USER chat -> notify user)
+  it('sendMessage from LEAD should notify user when chat type is OFFICER_USER', async () => {
     const dto: CreateMessageDTO = { sender: SenderType.LEAD, content: 'Lead message' };
     const leadMessageDAO = { ...mockMessageDAO, sender: 'LEAD' };
 
     mockChatRepository.findById.mockResolvedValueOnce(mockChat);
     mockMessageRepository.add.mockResolvedValueOnce(leadMessageDAO);
+    // controller will call notificationRepository.add for this branch
+    mockNotificationRepository.add.mockResolvedValueOnce({ id: 77, content: 'New message' });
     (mockMapper.mapMessageDAOToDTO as jest.Mock).mockReturnValueOnce(mockMessageDTO);
 
     const res = await sendMessage(mockChat.id, dto);
 
     expect(mockMessageRepository.add).toHaveBeenCalledTimes(1);
-    expect(mockSocketService.sendMessageToOfficer).toHaveBeenCalledWith(mockOfficer.id, leadMessageDAO);
+    expect(mockNotificationRepository.add).toHaveBeenCalledTimes(1);
+    expect(mockSocketService.sendMessageToUser).toHaveBeenCalledWith(mockUser.id, leadMessageDAO);
+    expect(mockSocketService.sendNotificationToUser).toHaveBeenCalledWith(mockUser.id, { id: 77, content: 'New message' });
     expect(res).toEqual(mockMessageDTO);
   });
-
   // sendMessage: from external (else case)
   it('sendMessage from external (else) should send message to lead officer via socket', async () => {
     const dto: CreateMessageDTO = { sender: SenderType.EXTERNAL, content: 'External message' };

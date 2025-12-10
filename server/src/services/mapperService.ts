@@ -20,6 +20,7 @@ import { Notification } from "../models/Notification";
 import { NotificationType } from "../models/NotificationType";
 import { SenderType } from "../models/SenderType";
 import { Chat } from "../models/Chat";
+import { ChatResponseDTO } from "../models/DTOs/ChatRespondeDTO";
 
 /* Helper */
 function removeNullAttributes<T extends Record<string, any>>(dto: T): Partial<T> {
@@ -65,7 +66,8 @@ export function createReportDTO(
     officer?: MunicipalityOfficerResponseDTO,
     photos?: string[],
     createdAt?: Date,
-    chats?: Chat[]
+    chats?: ChatResponseDTO[],
+    leadOfficer?: MunicipalityOfficerResponseDTO
 ): ReportResponseDTO {
     return removeNullAttributes({
         id,
@@ -80,7 +82,8 @@ export function createReportDTO(
         officer,
         photos,
         createdAt,
-        chats: chats?.map((c: Chat) => mapChatDAOToDTO(c))
+        chats,
+        leadOfficer
     }) as unknown as ReportResponseDTO;
 }
 
@@ -189,7 +192,9 @@ export function mapReportDAOToDTO(reportDAO: Report): ReportResponseDTO {
         reportDAO.officer ? mapMunicipalityOfficerDAOToDTO(reportDAO.officer) : undefined,
         reportDAO.photos?.map((p: ReportPhoto) => p.photo),
         reportDAO.createdAt,
-        reportDAO.chats
+        reportDAO.chats?.map((c: Chat) => mapChatDAOToDTO(c)),
+        reportDAO.leadOfficer ? mapMunicipalityOfficerDAOToDTO(reportDAO.leadOfficer) : undefined,
+
     );
 }
 
@@ -216,11 +221,13 @@ export function mapUserDAOToDTO(userDAO: User): UserResponseDTO {
 }
 
 export function mapMessageDAOToDTO(messageDAO: Message): MessageResponseDTO {
-    let username = messageDAO.chat.report.user.username;
-    let role_label = messageDAO.chat.report.officer ? messageDAO.chat.report.officer.role?.label : undefined;
+    const reportId = messageDAO?.chat?.report?.id;
+    const chatId = messageDAO?.chat?.id;
+    const username = messageDAO?.chat?.report?.user?.username;
+    const role_label = messageDAO?.chat?.report?.officer?.role?.label;
     return createMessageResponseDTO(
-        messageDAO.chat.report.id,
-        messageDAO.chat.id,
+        reportId as any,
+        chatId as any,
         role_label,
         username,
         messageDAO.content,
@@ -240,11 +247,12 @@ export function mapNotificationDAOToDTO(notificationDAO: Notification): Notifica
     );
 }
 
-export function mapChatDAOToDTO(chatDAO: Chat): Chat {
-    const dto = new Chat();
-    dto.id = chatDAO.id;
-    dto.report.id = chatDAO.report.id;
-    dto.type = chatDAO.type;
+export function mapChatDAOToDTO(chatDAO: Chat): ChatResponseDTO {
+    const dto: ChatResponseDTO = {
+        id: chatDAO.id,
+        reportId: chatDAO?.report?.id,
+        type: chatDAO.type,
+    };
     return dto;
 }
 

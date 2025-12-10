@@ -16,6 +16,7 @@ import { CreateMessageDTO } from "../models/DTOs/CreateMessageDTO";
 import { ChatRepository } from "../repositories/ChatRepository";
 import { Chat } from "../models/Chat";
 import { ChatType } from "../models/ChatType";
+import { Report } from "../models/Report";
 
 
 let messageRepository: MessageRepository;
@@ -48,12 +49,13 @@ export function initializeMessageRepositories(
     chatRepository = new ChatRepository(dataSource);
 }
 
-export async function createChatOfficerUser(reportId: number) {
-    return chatRepository.addReportToChatOfficerUser(reportId);
+
+export async function createChatOfficerUser(report: Report): Promise<Chat> {
+    return await chatRepository.addReportToChatOfficerUser(report);
 }
 
-export async function createChatLeadExternal(reportId: number) {    
-    return chatRepository.addReportToLeadExternalUser(reportId);
+export async function createChatLeadExternal(report: Report): Promise<Chat> {
+    return await chatRepository.addReportToLeadExternalUser(report);
 }
 
 /**
@@ -94,8 +96,24 @@ export async function sendMessage(
         const officer = chat.report.officer as MunicipalityOfficer;
         socketService.sendMessageToOfficer(officer.id, savedMessage);
     } else if (sender === "LEAD") {
-        const externalOfficer = chat.report.officer as MunicipalityOfficer;
-        socketService.sendMessageToOfficer(externalOfficer.id, savedMessage);
+        
+        if (chat.type === "OFFICER_USER") {
+            const notif = new Notification();
+            const user = chat.report.user;
+            notif.user = user;
+            notif.content = "New message from officer"; // Same content as OFFICER sender
+            notif.type = NotificationType.NewMessage;
+            notif.is_read = false;
+            const savedNotif = await notificationRepository.add(notif);
+
+            // Send notification to the report user
+            socketService.sendMessageToUser(user.id, savedMessage);
+            socketService.sendNotificationToUser(user.id, savedNotif);
+        } else {
+            // It's a LEAD_EXTERNAL chat, no user notification needed
+            const externalOfficer = chat.report.officer as MunicipalityOfficer;
+            socketService.sendMessageToOfficer(externalOfficer.id, savedMessage);
+        }
     } else {
         const leadOfficer = chat.report.leadOfficer as MunicipalityOfficer;
         socketService.sendMessageToOfficer(leadOfficer.id, savedMessage);

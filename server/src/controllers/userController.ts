@@ -50,7 +50,7 @@ export async function createUser(userData: CreateUserRequestDTO): Promise<UserRe
     userDao.last_name = userData.last_name;
     userDao.photo = "";
     userDao.telegram_id = "";
-    userDao.flag_email = false;
+    userDao.flag_email = true;
 
     const addedUserDao = await userRepository.add(userDao);
     return mapUserDAOToResponse(addedUserDao); // password nulla in output

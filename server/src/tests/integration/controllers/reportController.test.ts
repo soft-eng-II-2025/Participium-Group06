@@ -19,10 +19,11 @@ import {Repository} from "typeorm";
 import {Chat} from "../../../models/Chat";
 import {ChatType} from "../../../models/ChatType"
 import * as adminController from "../../../controllers/adminController";
+import { CreateReportRequestDTO } from "../../../models/DTOs/CreateReportRequestDTO";
 
 
 
-describe("updateReportOfficer (Pure Integration Tests)", () => {
+describe("Report Controller (Pure Integration Tests)", () => {
     let ready: boolean
     let reportRepo: Repository<Report>;
     let chatRepo: Repository<Chat>;
@@ -153,5 +154,102 @@ describe("updateReportOfficer (Pure Integration Tests)", () => {
                 techLead
             )
         ).rejects.toThrow('REPORT_NOT_FOUND');
+    });
+
+
+    describe("add report", () => {
+        it("dovrebbe aggiungere un report", async () => {
+            const reportData: CreateReportRequestDTO = {
+                longitude: 0,
+                latitude: 0,
+                title: "prova",
+                description: "prova",
+                userId: 1,
+                categoryId: category.id,
+                photos: ["photo.jpg"]
+            }
+
+            const reportResponse = await reportController.addReport(reportData);
+
+            expect(reportResponse).toBeDefined();
+            expect(reportResponse.title).toBe(reportData.title);
+            expect(reportResponse.status).toBe("Pending Approval");
+        });
+    });
+
+
+    describe("update report status", () => {
+        it("dovrebbe aggiornare lo status del report", async () => {
+            const reportResponse = await reportController.updateReportStatus(1, StatusType.Rejected, "Wrong category");
+
+            expect(reportResponse).toBeDefined();
+            expect(reportResponse.status).toBe(StatusType.Rejected);
+            expect(reportResponse.explanation).toBe("Wrong category");
+        });
+    });
+
+
+    describe("get all reports", () => {
+        it("dovrebbe ritornare la lista di report", async () => {
+            const reportRetrieve = await reportController.getAllReports();
+
+            expect(reportRetrieve).toBeDefined();
+            expect(reportRetrieve.length).toBe(1);
+        });
+    });
+
+
+    describe("get report by id", () => {
+        it("dovrebbe ritornare il report dato l'id", async () => {
+            const retrievedReport = await reportController.getReportById(testReport.id);
+
+            expect(retrievedReport).toBeDefined();
+            expect(retrievedReport.title).toBe(testReport.title);
+        });
+
+        it("dovrebbe lanciare errore REPORT_NOT_FOUND", async () => {
+            await expect(reportController.getReportById(99)).rejects.toThrow("REPORT_NOT_FOUND");
+        });
+    });
+
+
+    describe("get reports by officer username", () => {
+        it("dovrebbe restituire la lista dei report dato l'username dell'officer", async () => {
+            await reportController.updateReportOfficer(testReport.id, internalOfficer, techLead);
+            const retrievedReport = await reportController.GetReportsByOfficerUsername(internalOfficer.username);
+
+            expect(retrievedReport).toBeDefined();
+            expect(retrievedReport.length).toBe(1);
+        });
+    });
+
+
+    describe("get all accepted reports", () => {
+        it("dovrebbe ritornare la lista dei report accettato (non rejected e non pending approval)", async () => {
+            const retrievedReport = await reportController.getAllAcceptedReports();
+
+            expect(retrievedReport).toBeDefined();
+            expect(retrievedReport.length).toBe(1);
+        });
+    });
+
+
+    describe("get reports by category id and status", () => {
+        it("dovrebbe ritornare i report di quella categoria con quello stato", async () => {
+            const retrievedReport = await reportController.getReportsByCategoryIdAndStatus(category.id, [StatusType.Assigned]);
+
+            expect(retrievedReport).toBeDefined();
+            expect(retrievedReport.length).toBe(1);
+        });;
+    });
+
+
+    describe("get user reports", () => {
+        it("dovrebbe ritornare la lista dei report di un utente", async () => {
+            const retrievedReport = await reportController.getUserReports(reporter.id);
+
+            expect(retrievedReport).toBeDefined();
+            expect(retrievedReport.length).toBe(1);
+        });
     });
 });

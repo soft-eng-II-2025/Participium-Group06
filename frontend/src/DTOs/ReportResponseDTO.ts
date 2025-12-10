@@ -18,4 +18,5 @@ export interface ReportResponseDTO {
     createdAt: Date;
     updatedAt: Date;
     chats: ChatResponseDTO[];
+    leadOfficer?: MunicipalityOfficerResponseDTO;
 }   

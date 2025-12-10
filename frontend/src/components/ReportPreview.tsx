@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Button, Card, CardContent, CardActions, Stack, TextField, Chip, Paper, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import { Box, Typography, Button, useTheme, useMediaQuery, Card, CardContent, CardActions, Stack, Dialog, TextField, Chip, Paper, Accordion, AccordionSummary, AccordionDetails, DialogContent, IconButton } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import CloseIcon from '@mui/icons-material/Close';
 import MapForReportPreview from "./MapForReportPreview";
 import { StatusType } from "../DTOs/StatusType";
 import { useGetAgentsByTechLead } from "../hook/techleadApi.hook";
@@ -9,9 +10,11 @@ import { useReportCategories } from "../hook/userApi.hook";
 import { useAuth } from "../contexts/AuthContext";
 import { MunicipalityOfficerResponseDTO } from "../DTOs/MunicipalityOfficerResponseDTO";
 import TechOfficerCard from "./TechOfficerCard";
+import TeamAssignmentCard from "./TeamAssignmentCard";
 import { setStatusChipColor } from "../utils/stringUtilis";
 import { useGetReportPhoto } from "../hook/userApi.hook";
 import { ReportResponseDTO } from "../DTOs/ReportResponseDTO";
+import { ChatMode } from "../enums/ChatMode";
 
 type Props = {
     report?: ReportResponseDTO | null;
@@ -23,28 +26,21 @@ type Props = {
     // callback used to notify parent of actions. action is 'approve' or 'reject'.
     // payload can contain optional data like { reason } or { newStatus }
     onAction?: (action: 'approve' | 'reject', payload?: { reason?: string; newStatus?: string; assignee?: string }) => void;
-    openChat?: () => void;
-    onChatToggle?: (open: boolean) => void;
+    // openChat can be called with a ChatMode to open that chat or with no args to toggle/close
+    openChat?: (chatType?: ChatMode) => void;
 };
 
 
 const statusesForUpdate = [StatusType.Assigned, StatusType.InProgress, StatusType.Resolved, StatusType.Suspended];
 
-export default function ReportPreview({ report, showApprovalActions = false, showTeamCard = false, showUpdateStatus = false, isFlat = false, onAction, showChat = false, openChat, onChatToggle }: Props) {
+export default function ReportPreview({ report, showApprovalActions = false, showTeamCard = false, showUpdateStatus = false, isFlat = false, onAction, showChat = false, openChat }: Props) {
     const [isRejected, setIsRejected] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [statusButton, setStatusButton] = useState<StatusType | null>(null);
     const [rejectComment, setRejectComment] = useState('');
     const [officeMembers, setOfficeMembers] = useState(null as MunicipalityOfficerResponseDTO[] | null);
-    const [selectedOfficerUsername, setSelectedOfficerUsername] = useState<string | null>(null);
-    // external maintainers are mocked for now
-    const mockExternalMaintainers = [
-        { username: 'ext_mant_1', first_name: 'Marco', last_name: 'Rossi' },
-        { username: 'ext_mant_2', first_name: 'Luca', last_name: 'Bianchi' },
-        { username: 'ext_mant_3', first_name: 'Sara', last_name: 'Neri' },
-    ];
-    const [selectedExternalUsername, setSelectedExternalUsername] = useState<string | null>(null);
-    const { user } = useAuth();
+    const [externalMembers, setExternalMembers] = useState(null as MunicipalityOfficerResponseDTO[] | null);
+    const { user, role, isExternal } = useAuth();
     const [chatOpen, setChatOpen] = useState(false);
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -79,9 +75,11 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
     useEffect(() => {
         setChatOpen(false);
         if (showTeamCard && report) {
-            setOfficeMembers(techLeadAgents ?? []);
+            setOfficeMembers(techLeadAgents?.filter(a => a.external === false) ?? []);
+            setExternalMembers(techLeadAgents?.filter(a => a.external === true) ?? []);
         } else {
             setOfficeMembers(null);
+            setExternalMembers(null);
         }
     }, [report, showTeamCard, techLeadAgents]);
 
@@ -92,7 +90,6 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
         setRejectComment('');
         setSelectedIndex(0);
         setStatusButton(null);
-        setSelectedOfficerUsername(null);
         setChatOpen(false);
     }, [report?.id]);
 
@@ -139,14 +136,69 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                         Report Details
                     </Typography>
                     {showChat && (
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            startIcon={<ChatBubbleOutlineIcon />}
-                            onClick={openChat}
-                        >
-                            chat
-                        </Button>
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            {/* Tech Lead sees both chats when officer is external */}
+                            {role?.startsWith('TECH_LEAD') && report.officer?.external && (
+                                <>
+                                    <Button
+                                        variant="outlined"
+                                        size="small"
+                                        startIcon={<ChatBubbleOutlineIcon />}
+                                        onClick={() => openChat?.(ChatMode.OFFICER_USER)}
+                                    >
+                                        Reporter
+                                    </Button>
+                                    <Button
+                                        variant="outlined"
+                                        size="small"
+                                        startIcon={<ChatBubbleOutlineIcon />}
+                                        onClick={() => openChat?.(ChatMode.LEAD_EXTERNAL)}
+                                    >
+                                        External Maintainer
+                                    </Button>
+                                </>
+                            )}
+
+                            {/* External maintainer chats with tech lead */}
+                            {isExternal && (
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    startIcon={<ChatBubbleOutlineIcon />}
+                                    onClick={() => openChat?.(ChatMode.LEAD_EXTERNAL)}
+                                >
+                                    Municipality Officer
+                                </Button>
+                            )}
+
+                            {/* Internal agent chats with reporter */}
+                            {role?.startsWith('TECH_AGENT') && !isExternal && (
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    startIcon={<ChatBubbleOutlineIcon />}
+                                    onClick={() => openChat?.(ChatMode.OFFICER_USER)}
+                                >
+                                    Reporter
+                                </Button>
+                            )}
+
+                            {/* Internal agent chats with reporter */}
+                            {role?.startsWith('USER') && (
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    startIcon={<ChatBubbleOutlineIcon />}
+                                    onClick={() => openChat?.(ChatMode.OFFICER_USER)}
+                                >
+                                   Officer
+                                </Button>
+                            )}
+
+                            {/* Close chat control (parent toggles visibility when called with no arg) */}
+                            {/* Close chat control moved to Chat header (arrow) */}
+
+                        </Box>
                     )}
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -316,102 +368,19 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                     </Box>
                 </Box>
             }
-            {(showTeamCard) && (
-                <Box sx={{ bgcolor: 'inherit', borderTop: '1px solid', borderColor: 'grey.300', flexShrink: 0 }}>
-                    {/* Internal team - opened by default */}
-                    <Accordion defaultExpanded disableGutters square sx={{ mb: 0, '&.Mui-expanded': { mb: 0 } }}>
-                        <AccordionSummary
-                            expandIcon={<ExpandMoreIcon />}
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                '& .MuiAccordionSummary-expandIconWrapper': { order: -1, mr: 1 },
-                                '& .MuiAccordionSummary-content': { marginLeft: 0 }
-                            }}
-                        >
-                            <Typography variant="h6" color="secondary">Assign to Office Member</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails sx={{ p: 2 }}>
-                            {!report.officer ? (
-                                <>
-                                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(4, 1fr)' }, gap: 1 }}>
-                                        {officeMembers?.map((user) => (
-                                            <TechOfficerCard
-                                                key={user.username}
-                                                user={user}
-                                                selected={selectedOfficerUsername === user.username}
-                                                onClick={() => { setSelectedOfficerUsername(prev => prev === user.username ? null : user.username); setSelectedExternalUsername(null); }}
-                                            />
-                                        ))}
-                                    </Box>
-                                    <Box sx={{ mt: 2 }}>
-                                        <Button
-                                            variant="contained"
-                                            className="partecipation-button"
-                                            color="secondary"
-                                            disabled={!selectedOfficerUsername}
-                                            onClick={() => {
-                                                if (onAction) {
-                                                    onAction('approve', { assignee: selectedOfficerUsername ?? undefined });
-                                                }
-                                            }}
-                                        >
-                                            Assign to officer
-                                        </Button>
-                                    </Box>
-                                </>
-                            ) : (
-                                <Box>
-                                    <Typography variant="h6" color="secondary" sx={{ mb: 1, }}>Assigned to:</Typography>
-                                    <Box sx={{ maxWidth: 300 }}>
-                                        <TechOfficerCard user={report.officer} selected={false} />
-                                    </Box>
-                                </Box>
-                            )}
-                        </AccordionDetails>
-                    </Accordion>
+            {(showTeamCard && !report.officer) && (
+                <TeamAssignmentCard reportId={report?.id} officeMembers={officeMembers} externalMembers={externalMembers} onAction={onAction} />
+            )}
 
-                    {/* External maintainers - mocked data for now */}
-                    <Accordion disableGutters square sx={{ mb: 0, '&.Mui-expanded': { mb: 0 } }}>
-                        <AccordionSummary
-                            expandIcon={<ExpandMoreIcon />}
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                '& .MuiAccordionSummary-expandIconWrapper': { order: -1, mr: 1 },
-                                '& .MuiAccordionSummary-content': { marginLeft: 0 }
-                            }}
-                        >
-                            <Typography variant="h6" color="secondary">Assign to External Maintainer</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails sx={{ p: 2 }}>
-                            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(3, 1fr)' }, gap: 1 }}>
-                                {mockExternalMaintainers.map((user) => (
-                                    <TechOfficerCard
-                                        key={user.username}
-                                        user={user as any}
-                                        selected={selectedExternalUsername === user.username}
-                                        onClick={() => { setSelectedExternalUsername(prev => prev === user.username ? null : user.username); setSelectedOfficerUsername(null); }}
-                                    />
-                                ))}
+            {(showTeamCard && report.officer) && (
+                <Box sx={{ bgcolor: 'inherit', borderTop: '1px solid', borderColor: 'grey.300', flexShrink: 0, p: 2, width: { xs: '100%', md: '33%' }, alignSelf: 'flex-start' }}>
+                    <Typography variant="h6" color="secondary" sx={{ mb: 2, fontWeight: 'bold' }}>Assigned Officer</Typography>
+                        {report.leadOfficer && (
+                            <Box sx={{ mb: 1 }}>
+                                <TechOfficerCard user={report.leadOfficer as any} selected={false} onClick={undefined} sx={{ width: '100%', mt: 1 }} />
                             </Box>
-                            <Box sx={{ mt: 2 }}>
-                                <Button
-                                    variant="contained"
-                                    className="partecipation-button"
-                                    color="secondary"
-                                    disabled={!selectedExternalUsername}
-                                    onClick={() => {
-                                        if (onAction) {
-                                            onAction('approve', { assignee: selectedExternalUsername ?? undefined });
-                                        }
-                                    }}
-                                >
-                                    Assign external maintainer
-                                </Button>
-                            </Box>
-                        </AccordionDetails>
-                    </Accordion>
+                        )}
+                        <TechOfficerCard user={report.officer} selected={false} onClick={undefined} sx={{ width: '100%' }} />
                 </Box>
             )}
 

@@ -342,8 +342,7 @@ export async function createBasicReport(
 
     ############### ############### ############### ############### ##########
  */
-export async function createTestChat(ds: DataSource): Promise<Chat> {
-    const report = await createTestReport(ds);
+export async function createTestChatLeadExternal(ds: DataSource, report: Report): Promise<Chat> {
     const chatRepo = ds.getRepository(Chat);
     const chat = chatRepo.create({
         report: report,
@@ -354,12 +353,46 @@ export async function createTestChat(ds: DataSource): Promise<Chat> {
     return chat;
 }
 
-export async function createTestMessage(ds: DataSource): Promise<Message> {
-    const chat = await createTestChat(ds);
+export async function createTestChatOfficerUser(ds: DataSource, report: Report): Promise<Chat> {
+    const chatRepo = ds.getRepository(Chat);
+    const chat = chatRepo.create({
+        report: report,
+        type: ChatType.OFFICER_USER,
+        messages: [],
+    });
+    await chatRepo.save(chat);
+    return chat;
+}
+
+export async function createTestMessageLeadExternal(ds: DataSource, chat: Chat): Promise<Message> {
     const messageRepo = ds.getRepository(Message);
     const message = messageRepo.create({
         content: 'This is a test message.',
         sender: SenderType.LEAD,
+        created_at: new Date(),
+        chat: chat,
+    });
+    await messageRepo.save(message);
+    return message;
+}
+
+export async function createTestMessageExternalLead(ds: DataSource, chat: Chat): Promise<Message> {
+    const messageRepo = ds.getRepository(Message);
+    const message = messageRepo.create({
+        content: 'This is a test message.',
+        sender: SenderType.EXTERNAL,
+        created_at: new Date(),
+        chat: chat,
+    });
+    await messageRepo.save(message);
+    return message;
+}
+
+export async function createTestMessageOfficerUser(ds: DataSource, chat: Chat): Promise<Message> {
+    const messageRepo = ds.getRepository(Message);
+    const message = messageRepo.create({
+        content: 'This is a test message.',
+        sender: SenderType.OFFICER,
         created_at: new Date(),
         chat: chat,
     });

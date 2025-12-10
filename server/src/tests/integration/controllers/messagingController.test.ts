@@ -6,7 +6,6 @@ import {
     createTestUser1,
     setupDb,
     retrieveCategories,
-    createTestExternalMunicipalityOfficer,
     createTestChatOfficerUser,
     createTestChatLeadExternal,
     createTestMessageOfficerUser
@@ -18,7 +17,6 @@ import * as messagingController from '../../../controllers/messagingController'
 import {User} from "../../../models/User";
 import {StatusType} from "../../../models/StatusType";
 import {Category} from "../../../models/Category";
-import {Repository} from "typeorm";
 import {Chat} from "../../../models/Chat";
 import {ChatType} from "../../../models/ChatType"
 import * as adminController from "../../../controllers/adminController";
@@ -29,12 +27,9 @@ import { SenderType } from "../../../models/SenderType";
 
 describe("Messaging Controller Integration Tests", () => {
     let ready: boolean
-    let reportRepo: Repository<Report>;
-    let chatRepo: Repository<Chat>;
     let testReport: Report;
     let techLead: MunicipalityOfficer;
     let internalOfficer: MunicipalityOfficer;
-    let externalOfficer: MunicipalityOfficer;
     let reporter: User;
     let category: Category;
     let chatUserOfficer: Chat;
@@ -67,7 +62,6 @@ describe("Messaging Controller Integration Tests", () => {
         // Creazione degli utenti e dei dati di base
         techLead = await createTestLeadOfficer(TestDataSource);
         internalOfficer = await createTestMunicipalityOfficer(TestDataSource);
-        externalOfficer = await createTestExternalMunicipalityOfficer(TestDataSource);
         reporter = await createTestUser1(TestDataSource)
         category = await retrieveCategories(TestDataSource, "Water Supply – Drinking Water")
 

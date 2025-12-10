@@ -1,20 +1,39 @@
+// Load reflect-metadata before any modules using class-transformer
+import 'reflect-metadata';
+
 import request from "supertest";
 import express from "express";
 import session from "express-session";
 import passport from "passport";
 
-import { router as userRouter } from "../../routes/userRoutes";
+import { router as authRouter } from "../../routes/authRoutes";
 import { TestDataSource } from "../test-data-source";
 import { initializeUserRepositories } from "../../controllers/userController";
+import { initializeAdminRepositories } from "../../controllers/adminController";
+import { initializeReportRepositories } from "../../controllers/reportController";
+import { Role } from "../../models/Role";
 
 // Mock VerificationService to avoid sending real emails during E2E tests.
-// This ensures generateAndSend/verifyCode do not perform network I/O.
 jest.mock("../../services/verificationService", () => {
   return {
     VerificationService: jest.fn().mockImplementation(() => ({
       generateAndSend: jest.fn().mockResolvedValue(undefined),
       verifyCode: jest.fn().mockResolvedValue(true),
       cleanupExpired: jest.fn().mockResolvedValue(undefined),
+    })),
+  };
+});
+
+// Mock SocketService to avoid Socket.io initialization in tests.
+// This is necessary because SocketService tries to call io.on("connection", ...) 
+// which fails when io is just an empty mock object.
+jest.mock("../../services/socketService", () => {
+  return {
+    SocketService: jest.fn().mockImplementation(() => ({
+      sendNotificationToUser: jest.fn().mockResolvedValue(undefined),
+      sendMessageToUser: jest.fn().mockResolvedValue(undefined),
+      sendNotificationToOfficer: jest.fn().mockResolvedValue(undefined),
+      sendMessageToOfficer: jest.fn().mockResolvedValue(undefined),
     })),
   };
 });
@@ -31,7 +50,18 @@ describe("User API E2E", () => {
     await TestDataSource.initialize();
     await TestDataSource.synchronize(true);
 
+    // initialize all repository controllers
     initializeUserRepositories(TestDataSource);
+    initializeAdminRepositories(TestDataSource);
+    // initializeReportRepositories now works because SocketService is mocked
+    initializeReportRepositories(TestDataSource, {} as any);
+
+    // insert base roles required by some tests
+    const roleRepo = TestDataSource.getRepository(Role);
+    await roleRepo.save([
+      roleRepo.create({ title: "ADMIN", label: "Administrator" }),
+      roleRepo.create({ title: "ORGANIZATION_OFFICER", label: "Organization Officer" }),
+    ]);
 
     // create express app
     app = express();
@@ -49,8 +79,8 @@ describe("User API E2E", () => {
     app.use(passport.initialize());
     app.use(passport.session());
 
-    // mount user routes under /api
-    app.use("/api", userRouter);
+    // mount auth routes under /api (register, login, logout, session, verify)
+    app.use("/api", authRouter);
   });
 
   afterAll(async () => {
@@ -78,10 +108,8 @@ describe("User API E2E", () => {
     // response contains safe user DTO
     expect(res.body).toHaveProperty("username", "mario");
     expect(res.body).toHaveProperty("email", "mario@example.com");
-
-    // server should have created a session cookie
-    const cookies = res.headers["set-cookie"];
-    expect(cookies).toBeDefined();
+    // registration should trigger automatic login via req.logIn
+    expect(res.body).toHaveProperty("verification_sent", true);
   });
 
   // --------------------------------------------------

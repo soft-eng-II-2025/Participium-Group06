@@ -123,7 +123,7 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
             sx={{
                 height: isFlat ? '100%' : '85vh',
                 borderRadius: isFlat ? 0 : 5,
-                width : '100%',
+                width: '100%',
                 display: 'flex',
                 flexDirection: 'column',
                 bgcolor: isFlat ? 'transparent' : undefined,
@@ -191,7 +191,7 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                                     startIcon={<ChatBubbleOutlineIcon />}
                                     onClick={() => openChat?.(ChatMode.OFFICER_USER)}
                                 >
-                                   Officer
+                                    Officer
                                 </Button>
                             )}
 
@@ -268,7 +268,7 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                 />
                 {report.photos && report.photos.length > 1 && (
                     <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-                                {report.photos.map((p, i) => (
+                        {report.photos.map((p, i) => (
                             <Box
                                 key={i}
                                 component="img"
@@ -283,22 +283,22 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                                     border: selectedIndex === i ? '2px solid' : '2px solid transparent',
                                     borderColor: selectedIndex === i ? 'primary.main' : 'transparent'
                                 }}
-                                    onClick={() => { setSelectedIndex(i); openImage(getPhotoUrl(p)); }}
+                                onClick={() => { setSelectedIndex(i); openImage(getPhotoUrl(p)); }}
                             />
                         ))}
                     </Stack>
                 )}
 
-            <Dialog fullScreen open={imageOpen} onClose={() => setImageOpen(false)} PaperProps={{ sx: { backgroundColor: 'rgba(0,0,0,0.9)' } }}>
-                <Box sx={{ position: 'absolute', right: 8, top: 8, zIndex: 1400 }}>
-                    <IconButton onClick={() => setImageOpen(false)} size="large" sx={{ color: 'common.white' }}><CloseIcon /></IconButton>
-                </Box>
-                <DialogContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 0, height: '100vh' }}>
-                    {imageOpenSrc && (
-                        <Box component="img" src={imageOpenSrc} alt="full-photo" sx={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-                    )}
-                </DialogContent>
-            </Dialog>
+                <Dialog fullScreen open={imageOpen} onClose={() => setImageOpen(false)} PaperProps={{ sx: { backgroundColor: 'rgba(0,0,0,0.9)' } }}>
+                    <Box sx={{ position: 'absolute', right: 8, top: 8, zIndex: 1400 }}>
+                        <IconButton onClick={() => setImageOpen(false)} size="large" sx={{ color: 'common.white' }}><CloseIcon /></IconButton>
+                    </Box>
+                    <DialogContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 0, height: '100vh' }}>
+                        {imageOpenSrc && (
+                            <Box component="img" src={imageOpenSrc} alt="full-photo" sx={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                        )}
+                    </DialogContent>
+                </Dialog>
             </CardContent>
 
             {report.status === StatusType.Rejected && report.explanation && (
@@ -373,14 +373,25 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
             )}
 
             {(showTeamCard && report.officer) && (
-                <Box sx={{ bgcolor: 'inherit', borderTop: '1px solid', borderColor: 'grey.300', flexShrink: 0, p: 2, width: { xs: '100%', md: '33%' }, alignSelf: 'flex-start' }}>
+                <Box sx={{ bgcolor: 'inherit', borderTop: '1px solid', borderColor: 'grey.300', flexShrink: 0, p: 2, width: { xs: '100%', md: '100%' }, alignSelf: 'flex-start' }}>
                     <Typography variant="h6" color="secondary" sx={{ mb: 2, fontWeight: 'bold' }}>Assigned Officer</Typography>
+
+                    <Box sx={{
+                        display: 'flex',
+                        gap: 2,
+                        flexWrap: 'wrap',
+                        alignItems: 'flex-start'
+                    }}>
                         {report.leadOfficer && (
-                            <Box sx={{ mb: 1 }}>
-                                <TechOfficerCard user={report.leadOfficer as any} selected={false} onClick={undefined} sx={{ width: '100%', mt: 1 }} />
+                            <Box sx={{ width: { xs: '100%', md: '33%' } }}>
+                                <TechOfficerCard user={report.leadOfficer as any} selected={false} onClick={undefined} sx={{ width: '100%' }} />
                             </Box>
                         )}
-                        <TechOfficerCard user={report.officer} selected={false} onClick={undefined} sx={{ width: '100%' }} />
+
+                        <Box sx={{ width: { xs: '100%', md: '33%' } }}>
+                            <TechOfficerCard user={report.officer} selected={false} onClick={undefined} sx={{ width: '100%' }} />
+                        </Box>
+                    </Box>
                 </Box>
             )}
 

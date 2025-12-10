@@ -103,10 +103,10 @@ export async function updateReportOfficer(reportId: number, municipalityOfficer:
     
     if(municipalityOfficer.external) {
         report.leadOfficer = techLead;
-        await createChatLeadExternal(report);
-        await createChatOfficerUser(report);
+        report.chats.push(await createChatLeadExternal(report)) ;
+        report.chats.push(await createChatOfficerUser(report));
     } else {
-        await createChatOfficerUser(report);
+        report.chats.push(await createChatOfficerUser(report));
      
     }
 

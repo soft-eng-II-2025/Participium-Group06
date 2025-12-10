@@ -50,11 +50,11 @@ export function initializeMessageRepositories(
 }
 
 
-export async function createChatOfficerUser(report: Report) {
+export async function createChatOfficerUser(report: Report): Promise<Chat> {
     return await chatRepository.addReportToChatOfficerUser(report);
 }
 
-export async function createChatLeadExternal(report: Report) {    
+export async function createChatLeadExternal(report: Report): Promise<Chat> {
     return await chatRepository.addReportToLeadExternalUser(report);
 }
 

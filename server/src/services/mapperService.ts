@@ -23,7 +23,7 @@ import { Chat } from "../models/Chat";
 import { ChatResponseDTO } from "../models/DTOs/ChatRespondeDTO";
 
 /* Helper */
-function removeNullAttributes<T extends Record<string, any>>(dto: T): Partial<T> {
+export function removeNullAttributes<T extends Record<string, any>>(dto: T): Partial<T> {
     return Object.fromEntries(
         Object.entries(dto).filter(
             ([, value]) =>

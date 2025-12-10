@@ -11,11 +11,9 @@ import { NotificationRepository } from '../../../repositories/NotificationReposi
 import { ReportRepository } from '../../../repositories/ReportRepository';
 import { ChatRepository } from '../../../repositories/ChatRepository';
 import { SocketService } from '../../../services/socketService';
-import * as mapperService from '../../../services/mapperService';
 import { DataSource } from 'typeorm';
 import { Server as SocketIoServer } from 'socket.io';
 import { Message } from '../../../models/Message';
-import { Notification } from '../../../models/Notification';
 import { Chat } from '../../../models/Chat';
 import { Report } from '../../../models/Report';
 import { User } from '../../../models/User';
@@ -26,9 +24,7 @@ import { CreateMessageDTO } from '../../../models/DTOs/CreateMessageDTO';
 import { SenderType } from '../../../models/SenderType';
 
 import {
-  mockTechAgentDAO,
-  mockUserResponseDTO,
-  mockReportResponseDTO
+  mockTechAgentDAO
 } from '../../utils';
 
 // Mock external modules

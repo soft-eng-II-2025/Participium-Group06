@@ -352,8 +352,8 @@ describe("Message Routes E2E", () => {
     // Create a new report without lead-external messages
     const reportRepo = TestDataSource.getRepository(Report);
     const newReport = reportRepo.create({
-      longitude: 11.0,
-      latitude: 21.0,
+      longitude: 11,
+      latitude: 21,
       title: "New report without messages",
       description: "Test",
       status: StatusType.PendingApproval,

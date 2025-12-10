@@ -23,7 +23,7 @@ const ChatPlaygroundPage: React.FC = () => {
       </Box>
 
       <Box sx={{ maxWidth: 700 }}>
-        <Chat reportId={reportId} />
+        {/* <Chat reportId={reportId} /> */}
       </Box>
     </Container>
   );

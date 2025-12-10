@@ -3,9 +3,8 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import RegistrationForm from "../components/RegistrationForm";
 import { useRegisterMunicipalityOfficer } from "../hook/adminApi.hook";
-import { MunicipalityOfficerResponseDTO } from "../DTOs/MunicipalityOfficerResponseDTO";
 import { Container, Box } from "@mui/material";
-import {CreateUserRequestDTO} from "../DTOs/CreateUserRequestDTO";
+import {CreateOfficerRequestDTO} from "../DTOs/CreateOfficerRequestDTO";
 
 const AdminRegisterPage: React.FC = () => {
     const navigate = useNavigate();
@@ -14,7 +13,8 @@ const AdminRegisterPage: React.FC = () => {
 
     const serverErrorMessage = error ? "Registration failed. Please try again." : null;
 
-    const handleAdminRegister = async (payload: CreateUserRequestDTO) => {
+    const handleAdminRegister = async (payload: CreateOfficerRequestDTO) => {
+        payload.external = false;
         const res = await registerMunicipalityOfficer(payload);
         // Se il tuo hook non restituisce 'status', ti basta navigare su successo:
         if (!res || res.status === 201) navigate("/");

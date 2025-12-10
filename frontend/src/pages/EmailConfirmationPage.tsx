@@ -14,7 +14,7 @@ export default function EmailConfirmationPage() {
     const confirmEmail = useConfirmEmail();
 
     const INPUT_COUNT = 6; // generator creates 6-digit codes
-    const [codeDigits, setCodeDigits] = useState<string[]>(Array(INPUT_COUNT).fill(''));
+    const [codeDigits, setCodeDigits] = useState<string[]>(new Array(INPUT_COUNT).fill(''));
     const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
 
     useEffect(() => {
@@ -23,13 +23,13 @@ export default function EmailConfirmationPage() {
     }, [codeDigits]);
 
     const validateCode = (value: string) => {
-        return /^[0-9]{6}$/.test(value.trim());
+        return /^\d{6}$/.test(value.trim());
     };
 
     // Handle single-digit input: allow '' or one digit, update codeDigits
     // immutably and focus the next input when appropriate.
     const handleDigitChange = (idx: number, val: string) => {
-        if (!/^[0-9]?$/.test(val)) return; // only allow single digit or empty
+        if (!/^\d?$/.test(val)) return; // only allow single digit or empty
         setCodeDigits(prev => {
             const copy = [...prev];
             copy[idx] = val;
@@ -75,9 +75,9 @@ export default function EmailConfirmationPage() {
     // - focus the last filled input and prevent the default paste behavior
     const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
         const text = e.clipboardData.getData('text').trim();
-        const digits = text.replace(/\D/g, '');
+        const digits = text.replaceAll(/\D/g, '');
         if (!digits) return;
-        const arr = Array(INPUT_COUNT).fill('');
+        const arr = new Array(INPUT_COUNT).fill('');
         for (let i = 0; i < Math.min(digits.length, INPUT_COUNT); i++) arr[i] = digits[i];
         setCodeDigits(arr);
         const focusIdx = Math.min(digits.length, INPUT_COUNT) - 1;
@@ -128,7 +128,7 @@ export default function EmailConfirmationPage() {
                                 inputRef={el => inputsRef.current[i] = el}
                                 value={codeDigits[i]}
                                 color='primary'
-                                onChange={(e) => handleDigitChange(i, e.target.value.replace(/[^0-9]/g, ''))}
+                                onChange={(e) => handleDigitChange(i, e.target.value.replaceAll(/\D/g, ''))}
                                 onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(e, i)}
                                 inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 1, style: { textAlign: 'center', fontSize: 20 } }}
                                 variant="outlined"

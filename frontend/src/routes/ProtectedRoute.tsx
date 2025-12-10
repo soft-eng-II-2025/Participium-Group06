@@ -1,9 +1,8 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { UserResponseDTO } from "../DTOs/UserResponseDTO";
 
-export default function ProtectedRoute({ children }: { children: React.ReactElement }) {
+export default function ProtectedRoute({ children }: { readonly children: React.ReactElement }) {
   const { isAuthenticated, loading, user, role } = useAuth();
   const location = useLocation();
 
@@ -22,7 +21,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactElem
   return isAuthenticated ? children : <Navigate to="/login" state={{ from: location }} replace />;
 }
 
-export function RequireUnverifiedUser({ children }: { children: React.ReactElement }) {
+export function RequireUnverifiedUser({ children }: { readonly children: React.ReactElement }) {
   const { isAuthenticated, loading, user, role } = useAuth();
   const location = useLocation();
 
@@ -30,7 +29,7 @@ export function RequireUnverifiedUser({ children }: { children: React.ReactEleme
 
   const isUnverifiedUser = !!(
     user && role === "USER" && (
-      ((user as UserResponseDTO).verified === false)
+      (user?.verified === false)
     )
   );
 

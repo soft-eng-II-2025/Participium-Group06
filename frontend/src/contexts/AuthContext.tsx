@@ -11,6 +11,7 @@ type AuthContextType = {
   loading: boolean;            // true while initial session fetch is pending
   isAuthenticated: boolean;
   role: string | null;
+  isExternal: boolean;
   login: (creds: LoginDTO) => Promise<UserResponseDTO | MunicipalityOfficerResponseDTO | null>;
   register: (payload: CreateUserRequestDTO) => Promise<UserResponseDTO | null>;
   logout: () => Promise<void>;
@@ -35,6 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!('username' in (s as any))) return null;
         return s as UserResponseDTO;
       } catch (err) {
+        console.error("Failed to load user session:", err);
         return null;
       }
     },
@@ -112,6 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     register,
     logout,
     setUser,
+    isExternal: user ? (user as MunicipalityOfficerResponseDTO).external === true : false,
   }), [user, isLoading]); // keep stable identity
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

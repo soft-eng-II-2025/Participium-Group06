@@ -15,4 +15,6 @@ export class MunicipalityOfficerResponseDTO {
     @IsNotEmpty() external!: boolean;
 
     role: string | null = null;
+
+    companyName!: string | null;
 }

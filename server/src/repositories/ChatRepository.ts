@@ -12,7 +12,7 @@ export class ChatRepository {
     async findAllByReportId(reportId: number): Promise<Chat[]> {
         return this.chatRepository.find({
             where: { report: { id: reportId } },
-            relations: ["messages", "report"]
+            relations: ["messages", "report", "report.user", "report.officer", "report.leadOfficer"]
         });
     }
 
@@ -24,6 +24,7 @@ export class ChatRepository {
             .leftJoinAndSelect("report.user", "user")
             .leftJoinAndSelect("report.officer", "officer")
             .leftJoinAndSelect("officer.role", "officerRole")
+            .leftJoinAndSelect("report.leadOfficer", "leadOfficer")
             .leftJoinAndSelect("chat.messages", "messages")
             .where("chat.id = :id", { id })
             .getOne();
@@ -33,6 +34,9 @@ export class ChatRepository {
         return this.chatRepository
             .createQueryBuilder("chat")
             .leftJoinAndSelect("chat.report", "report")
+            .leftJoinAndSelect("report.user", "user")
+            .leftJoinAndSelect("report.officer", "officer")
+            .leftJoinAndSelect("report.leadOfficer", "leadOfficer")
             .leftJoinAndSelect("chat.messages", "messages")
             .where("report.id = :reportId", { reportId })
             .andWhere("chat.type = :type", { type })

@@ -42,8 +42,7 @@ jest.mock("../../../repositories/VerificationCodeRepository", () => ({
 // ========================
 import { DataSource } from "typeorm";
 import { VerificationService } from "../../../services/verificationService";
-import crypto from "crypto";
-import { sendVerificationEmail } from "../../../services/emailService";
+import crypto from "node:crypto";
 import { User } from "../../../models/User";
 import { UserResponseDTO } from "../../../models/DTOs/UserResponseDTO";
 

@@ -69,9 +69,9 @@ describe('SocketService', () => {
         // Alias per gli handler del mockSocket
         (mockSocket.on as jest.Mock).mock.calls.forEach(([event, handler]) => {
             // Assegniamo i mock handler alle nuove proprietà esplicite
-            if (event === 'registerUser') (mockSocket as MockSocket).onRegisterUserHandler = handler;
-            if (event === 'registerOfficer') (mockSocket as MockSocket).onRegisterOfficerHandler = handler;
-            if (event === 'disconnect') (mockSocket as MockSocket).onDisconnectHandler = handler;
+            if (event === 'registerUser') (mockSocket).onRegisterUserHandler = handler;
+            if (event === 'registerOfficer') (mockSocket).onRegisterOfficerHandler = handler;
+            if (event === 'disconnect') (mockSocket).onDisconnectHandler = handler;
         });
         
         // Reset dei mock per i metodi di mappatura

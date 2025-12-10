@@ -3,10 +3,10 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import EmailConfirmationPage from '../pages/EmailConfirmationPage';
+import EmailConfirmationPage from '../../pages/EmailConfirmationPage';
 
 // Mock AuthContext
-jest.mock('../contexts/AuthContext', () => ({
+jest.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
     user: { username: 'john', verified: false },
     isAuthenticated: true,
@@ -17,7 +17,7 @@ jest.mock('../contexts/AuthContext', () => ({
 
 // Mock API hook
 const mockMutateAsync = jest.fn();
-jest.mock('../hook/authApi.hook', () => ({
+jest.mock('../../hook/authApi.hook', () => ({
   useConfirmEmail: () => ({
     mutateAsync: mockMutateAsync,
   }),

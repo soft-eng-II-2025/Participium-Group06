@@ -44,6 +44,11 @@
       "react-app/jest"
     ]
   },
+  "jest": {
+    "transformIgnorePatterns": [
+      "node_modules/(?!(react-leaflet|@react-leaflet|leaflet|leaflet.markercluster|axios)/)"
+    ]
+  },
   "browserslist": {
     "production": [
       ">0.2%",

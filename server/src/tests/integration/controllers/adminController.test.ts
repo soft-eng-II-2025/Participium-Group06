@@ -16,9 +16,7 @@ import {StatusType} from "../../../models/StatusType";
 import {Category} from "../../../models/Category";
 import {Repository} from "typeorm";
 import { CreateOfficerRequestDTO } from "../../../models/DTOs/CreateOfficerRequestDTO";
-import { off } from "process";
 import { AssignRoleRequestDTO } from "../../../models/DTOs/AssignRoleRequestDTO";
-import { LoginRequestDTO } from "../../../models/DTOs/LoginRequestDTO";
 import { MunicipalityOfficerResponseDTO } from "../../../models/DTOs/MunicipalityOfficerResponseDTO";
 import { ReportResponseDTO } from "../../../models/DTOs/ReportResponseDTO";
 

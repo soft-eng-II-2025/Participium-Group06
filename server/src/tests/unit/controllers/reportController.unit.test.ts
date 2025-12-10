@@ -1,4 +1,3 @@
-import { DataSource } from 'typeorm';
 import {
   addReport,
   updateReportStatus,
@@ -25,8 +24,7 @@ import { MunicipalityOfficer } from '../../../models/MunicipalityOfficer';
 import {
   mockTechAgentDAO,
   mockReportResponseDTO,
-  mockTechLeadDAO,
-  mockUserResponseDTO
+  mockTechLeadDAO
 } from '../../utils';
 
 // Mock external modules

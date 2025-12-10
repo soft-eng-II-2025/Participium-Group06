@@ -99,7 +99,7 @@ export async function sendMessage(
         
         if (chat.type === "OFFICER_USER") {
             const notif = new Notification();
-            const user = chat.report.user as User;
+            const user = chat.report.user;
             notif.user = user;
             notif.content = "New message from officer"; // Same content as OFFICER sender
             notif.type = NotificationType.NewMessage;

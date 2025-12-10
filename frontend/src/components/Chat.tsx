@@ -25,7 +25,6 @@ import {
   subscribeToNewMessages,
   unsubscribeFromNewMessages,
 } from "../services/socketClient";
-import { ReportResponseDTO } from "../DTOs/ReportResponseDTO";
 import { ChatMode } from "../enums/ChatMode";
 
 interface ChatProps {

@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Button, useTheme, useMediaQuery, Card, CardContent, CardActions, Stack, Dialog, TextField, Chip, Paper, Accordion, AccordionSummary, AccordionDetails, DialogContent, IconButton } from "@mui/material";
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Box, Typography, Button, useTheme, useMediaQuery, Card, CardContent, CardActions, Stack, Dialog, TextField, Chip, Paper, DialogContent, IconButton } from "@mui/material";
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import CloseIcon from '@mui/icons-material/Close';
 import MapForReportPreview from "./MapForReportPreview";
 import { StatusType } from "../DTOs/StatusType";
 import { useGetAgentsByTechLead } from "../hook/techleadApi.hook";
-import { useReportCategories } from "../hook/userApi.hook";
 import { useAuth } from "../contexts/AuthContext";
 import { MunicipalityOfficerResponseDTO } from "../DTOs/MunicipalityOfficerResponseDTO";
 import TechOfficerCard from "./TechOfficerCard";
@@ -40,7 +38,7 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
     const [rejectComment, setRejectComment] = useState('');
     const [officeMembers, setOfficeMembers] = useState(null as MunicipalityOfficerResponseDTO[] | null);
     const [externalMembers, setExternalMembers] = useState(null as MunicipalityOfficerResponseDTO[] | null);
-    const { user, role, isExternal } = useAuth();
+    const { role, isExternal } = useAuth();
     const [chatOpen, setChatOpen] = useState(false);
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));

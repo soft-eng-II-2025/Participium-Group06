@@ -1,7 +1,6 @@
 import React from 'react';
 import { Card, CardContent, Box, Typography, CardActionArea, Chip } from '@mui/material';
 import { getInitials } from '../utils/stringUtilis';
-import { UserResponseDTO } from '../DTOs/UserResponseDTO';
 import { MunicipalityOfficerResponseDTO } from '../DTOs/MunicipalityOfficerResponseDTO';
 
 

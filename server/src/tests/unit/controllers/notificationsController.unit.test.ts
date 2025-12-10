@@ -7,7 +7,6 @@ import {
 
 import { NotificationRepository } from '../../../repositories/NotificationRepository';
 import { UserRepository } from '../../../repositories/UserRepository';
-import * as mapperService from '../../../services/mapperService';
 import { DataSource } from 'typeorm';
 import { Notification } from '../../../models/Notification';
 import { User } from '../../../models/User';

@@ -18,8 +18,7 @@ import {
 } from '../../../controllers/adminController';
 
 import {
-  updateReportOfficer,
-  getReportsByCategoryIdAndStatus
+  updateReportOfficer
 } from '../../../controllers/reportController';
 
 import {

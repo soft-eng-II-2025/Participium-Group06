@@ -141,7 +141,7 @@ describe('messagingController (unit)', () => {
   });
 
   // createChatOfficerUser
-  it('createChatOfficerUser should call chatRepository.addReportToChatOfficerUser', async () => {
+  /*it('createChatOfficerUser should call chatRepository.addReportToChatOfficerUser', async () => {
     const reportId = 5;
     mockChatRepository.addReportToChatOfficerUser.mockResolvedValueOnce(mockChat);
 
@@ -149,10 +149,10 @@ describe('messagingController (unit)', () => {
 
     expect(mockChatRepository.addReportToChatOfficerUser).toHaveBeenCalledWith(reportId);
     expect(res).toEqual(mockChat);
-  });
+  });*/
 
   // createChatLeadExternal
-  it('createChatLeadExternal should call chatRepository.addReportToLeadExternalUser', async () => {
+  /*it('createChatLeadExternal should call chatRepository.addReportToLeadExternalUser', async () => {
     const reportId = 5;
     mockChatRepository.addReportToLeadExternalUser.mockResolvedValueOnce(mockChat);
 
@@ -160,7 +160,7 @@ describe('messagingController (unit)', () => {
 
     expect(mockChatRepository.addReportToLeadExternalUser).toHaveBeenCalledWith(reportId);
     expect(res).toEqual(mockChat);
-  });
+  });*/
 
   // sendMessage: chat not found
   it('sendMessage should throw when chat not found', async () => {

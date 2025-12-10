@@ -12,6 +12,7 @@ type AuthContextType = {
   isAuthenticated: boolean;
   role: string | null;
   isExternal: boolean;
+  companyName: string | null;
   login: (creds: LoginDTO) => Promise<UserResponseDTO | MunicipalityOfficerResponseDTO | null>;
   register: (payload: CreateUserRequestDTO) => Promise<UserResponseDTO | null>;
   logout: () => Promise<void>;
@@ -115,6 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout,
     setUser,
     isExternal: user ? (user as MunicipalityOfficerResponseDTO).external === true : false,
+    companyName: user ? (user as MunicipalityOfficerResponseDTO).companyName : null,
   }), [user, isLoading]); // keep stable identity
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

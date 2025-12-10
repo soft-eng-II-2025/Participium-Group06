@@ -203,7 +203,7 @@ describe('adminController - other functions', () => {
 
   it('addMunicipalityOfficer should throw when password missing', async () => {
     const createDto: any = { username: 'u', email: 'e' }; // no password
-    await expect(addMunicipalityOfficer(createDto as any)).rejects.toHaveProperty('message', 'PASSWORD_REQUIRED');
+    await expect(addMunicipalityOfficer(createDto)).rejects.toHaveProperty('message', 'PASSWORD_REQUIRED');
   });
 
   // getAllMunicipalityOfficer

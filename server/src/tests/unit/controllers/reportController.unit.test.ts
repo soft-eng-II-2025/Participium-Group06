@@ -16,12 +16,10 @@ import * as adminController from '../../../controllers/adminController';
 import { ReportRepository } from '../../../repositories/ReportRepository';
 import { NotificationRepository } from '../../../repositories/NotificationRepository';
 import { SocketService } from '../../../services/socketService';
-import * as mapperService from '../../../services/mapperService';
 import * as messagingController from '../../../controllers/messagingController';
 import { Server } from 'socket.io';
 import { StatusType } from '../../../models/StatusType';
 import { MunicipalityOfficer } from '../../../models/MunicipalityOfficer';
-import { Report } from '../../../models/Report';
 
 // utils mocks
 import {
@@ -46,7 +44,6 @@ describe('reportController (unit)', () => {
   const mockMapper = require('../../../services/mapperService');
 
   const mockReportDTO = mockReportResponseDTO(1);
-  const mockUserDto = mockUserResponseDTO();
 
   beforeEach(() => {
     jest.clearAllMocks();

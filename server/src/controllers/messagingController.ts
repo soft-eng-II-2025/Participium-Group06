@@ -16,6 +16,7 @@ import { CreateMessageDTO } from "../models/DTOs/CreateMessageDTO";
 import { ChatRepository } from "../repositories/ChatRepository";
 import { Chat } from "../models/Chat";
 import { ChatType } from "../models/ChatType";
+import { Report } from "../models/Report";
 
 
 let messageRepository: MessageRepository;
@@ -48,12 +49,13 @@ export function initializeMessageRepositories(
     chatRepository = new ChatRepository(dataSource);
 }
 
-export async function createChatOfficerUser(reportId: number) {
-    return chatRepository.addReportToChatOfficerUser(reportId);
+
+export async function createChatOfficerUser(report: Report) {
+    return await chatRepository.addReportToChatOfficerUser(report);
 }
 
-export async function createChatLeadExternal(reportId: number) {    
-    return chatRepository.addReportToLeadExternalUser(reportId);
+export async function createChatLeadExternal(report: Report) {    
+    return await chatRepository.addReportToLeadExternalUser(report);
 }
 
 /**
@@ -97,8 +99,8 @@ export async function sendMessage(
         const externalOfficer = chat.report.officer as MunicipalityOfficer;
         socketService.sendMessageToOfficer(externalOfficer.id, savedMessage);
     } else {
-        const leadOfficer = chat.report.leadOfficer as MunicipalityOfficer;
-        socketService.sendMessageToOfficer(leadOfficer.id, savedMessage);
+        // const leadOfficer = chat.report.leadOfficer as MunicipalityOfficer;
+        // socketService.sendMessageToOfficer(leadOfficer.id, savedMessage);
     }
 
     return mapMessageDAOToDTO(savedMessage);

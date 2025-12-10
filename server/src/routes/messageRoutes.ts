@@ -22,6 +22,7 @@ router.post("/:chatId", requireAuth, async (req: Request, res: Response, next: N
         const result = await messageController.sendMessage(chatId, dto);
         res.json(result);
     } catch (err: any) {
+        console.error(err);
         res.status(400).json({ error: err.message });
     }
 });

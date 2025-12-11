@@ -8,10 +8,15 @@ import {
   CircularProgress,
   Paper,
 } from "@mui/material";
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SendIcon from "@mui/icons-material/Send";
 
 import { MessageResponseDTO } from "../DTOs/MessageResponseDTO";
-import { useMessagesByReport, useSendMessage } from "../hook/messagesApi.hook";
+import {
+  useMessagesByReportLeadExternal,
+  useMessagesByReportOfficerUser,
+  useSendMessage,
+} from "../hook/messagesApi.hook";
 import { useChatIdentity } from "../hook/useChatIdentity";
 import { CreateMessageDTO } from "../api/messageApi";
 import { useAuth } from "../contexts/AuthContext";
@@ -20,27 +25,52 @@ import {
   subscribeToNewMessages,
   unsubscribeFromNewMessages,
 } from "../services/socketClient";
+import { ChatMode } from "../enums/ChatMode";
 
 interface ChatProps {
   reportId: number;
+  chatId?: number;
+  chatMode?: ChatMode;
   socketBaseUrl?: string;
+  closeChat?: () => void;
 }
 
 const Chat: React.FC<ChatProps> = ({
   reportId,
+  chatId,
+  chatMode,
   socketBaseUrl = "http://localhost:3000",
+  closeChat,
 }) => {
-  const { senderType, isUser, isOfficer } = useChatIdentity();
+  const { senderType, isUser, isOfficer, isLead } = useChatIdentity();
   const { user, loading: authLoading } = useAuth();
 
-  const { data: rawMessages = [], isLoading: messagesLoading } =
-    useMessagesByReport(reportId, !!reportId);
+  // Se lead/external → usiamo hook LeadExternal, altrimenti OfficerUser
+  // Hooks sempre chiamati, ma con enabled che li rende "inerti"
+  // Determina quale usare (lead/external vs officer/user)
+  const isLeadExternalChat = chatMode === ChatMode.LEAD_EXTERNAL;
+
+
+  // Call both hooks but enable only the one we need. This keeps hook order stable
+  // while preventing unnecessary network calls.
+  const officerUserQuery = useMessagesByReportOfficerUser(reportId, !isLeadExternalChat);
+  const leadExternalQuery = useMessagesByReportLeadExternal(reportId, isLeadExternalChat);
+
+
+  // Select the active query's data (note: choose leadExternal when isLeadExternalChat === true)
+  const rawMessages = isLeadExternalChat
+    ? leadExternalQuery.data || []
+    : officerUserQuery.data || [];
+
+
+  const messagesLoading = isLeadExternalChat
+    ? leadExternalQuery.isLoading
+    : officerUserQuery.isLoading;
+
 
   const { mutateAsync: sendMessage, isPending: sending } = useSendMessage();
 
-  const [socketReceivedMessages, setSocketReceivedMessages] = useState<
-    MessageResponseDTO[]
-  >([]);
+  const [socketReceivedMessages, setSocketReceivedMessages] = useState<MessageResponseDTO[]>([]);
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
@@ -57,18 +87,26 @@ const Chat: React.FC<ChatProps> = ({
               new Date(sm.created_at).getTime()
         )
     );
-
     return [...rawMessages, ...uniqueSocketMessages].sort(
       (a, b) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
   }, [rawMessages, socketReceivedMessages]);
 
-  // Officer chat: get the other user's name
+  // Other side username (for header)
   const otherSideUsername = React.useMemo(() => {
-    if (!allMessages.length || !isOfficer) return undefined;
-    return allMessages[0].username;
-  }, [allMessages, isOfficer]);
+    if (!allMessages.length) return undefined;
+
+    if (isUser) {
+      return allMessages.find((m) => m.sender !== "USER")?.username;
+    } else if (isOfficer) {
+      return allMessages.find((m) => m.sender === "USER")?.username;
+    } else if (isLead) {
+      return allMessages.find((m) => m.sender === "EXTERNAL")?.username;
+    } else if (senderType === "EXTERNAL") {
+      return allMessages.find((m) => m.sender === "LEAD")?.username;
+    }
+  }, [allMessages, isUser, isOfficer, isLead, senderType]);
 
   // Auto-scroll
   useEffect(() => {
@@ -78,10 +116,12 @@ const Chat: React.FC<ChatProps> = ({
   // Socket setup
   useEffect(() => {
     if (!senderType || !user) return;
+
     initSocketClient({
       baseUrl: socketBaseUrl,
       UserUsername: isUser ? user.username : undefined,
       OfficerUsername: isOfficer ? user.username : undefined,
+      // aggiungiamo eventuale Lead / External se necessario
     });
 
     const handleNewMessage = (m: MessageResponseDTO) => {
@@ -100,10 +140,11 @@ const Chat: React.FC<ChatProps> = ({
     setError(null);
 
     const dto: CreateMessageDTO = {
-      report_id: reportId,
+      chat_id: chatId as number,
       content: input.trim(),
       sender: senderType,
     };
+
 
     try {
       await sendMessage(dto);
@@ -111,9 +152,7 @@ const Chat: React.FC<ChatProps> = ({
     } catch (err: any) {
       console.error(err);
       setError(
-        err.response?.data?.error ||
-          err.message ||
-          "Failed to send message"
+        err.response?.data?.error || err.message || "Failed to send message"
       );
     }
   }
@@ -169,14 +208,41 @@ const Chat: React.FC<ChatProps> = ({
   }
 
   // Header subtitle
-  let subtitle = "";
-  if (isOfficer) {
-    subtitle = otherSideUsername
-      ? `Chat with user ${otherSideUsername}`
-      : `Chat with report user`;
-  } else if (isUser) {
-    subtitle = `Chat with the assigned officer`;
+  function getSubtitle(): string {
+    if (isLead) {
+      if (chatMode === ChatMode.LEAD_EXTERNAL){
+        return 'Chat with External Officer';
+      }
+      return `Chat with Reporter  ${otherSideUsername ? ` (${otherSideUsername})` : ""}`;
+    }
+
+    if (isOfficer && senderType !== "EXTERNAL") {
+      return `Chat with Reporter ${otherSideUsername ? ` (${otherSideUsername})` : ""}`;
+    }
+    if (isUser) {
+      return 'Chat with Officer';
+    }
+    if (senderType === "EXTERNAL" && chatMode === ChatMode.LEAD_EXTERNAL) {
+      return 'Chat with Officer';
+    }
+    return "";
   }
+
+  function getUsername(m: MessageResponseDTO): string {
+    switch (m.sender) {
+      case "USER":
+        return m.username || "User";
+      case "OFFICER":
+        return "Officer";
+      case "LEAD":
+        return "Officer";
+      case "EXTERNAL":
+        return "External Officer";
+      default:
+        return "Unknown";
+    }
+  }
+
 
   return (
     <Paper
@@ -185,6 +251,7 @@ const Chat: React.FC<ChatProps> = ({
         display: "flex",
         flexDirection: "column",
         height: "85vh",
+        borderRadius: 4,
       }}
     >
       {/* Header */}
@@ -194,13 +261,28 @@ const Chat: React.FC<ChatProps> = ({
           py: 1,
           borderBottom: "1px solid",
           borderColor: "divider",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
         }}
       >
-        {subtitle && (
-          <Typography variant="caption" color="text.secondary">
-            {subtitle}
-          </Typography>
-        )}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {/** back arrow to close the chat and clear mode in parent */}
+          {/** show only if parent passed a closeChat callback */}
+          {typeof closeChat === 'function' && (
+            <IconButton size="small" onClick={() => closeChat?.()} sx={{ mr: 1 }} color="primary">
+              <ArrowBackIcon />
+            </IconButton>
+          )}
+          {getSubtitle() && (
+            <Typography
+              variant="subtitle1"
+              sx={{ color: 'primary.main', fontWeight: 700, fontSize: { xs: '0.95rem', sm: '1rem' } }}
+            >
+              {getSubtitle()}
+            </Typography>
+          )}
+        </Box>
       </Box>
 
       {/* Messages */}
@@ -210,7 +292,7 @@ const Chat: React.FC<ChatProps> = ({
           px: 2,
           py: 1,
           overflowY: "auto",
-          bgcolor: "grey.50",
+          // bgcolor: "grey.50",
         }}
       >
         {messagesLoading && (
@@ -261,8 +343,12 @@ const Chat: React.FC<ChatProps> = ({
                     opacity: 0.8,
                   }}
                 >
-                  <span>{own ? "You" : m.username || m.sender}</span>
-                  <span>{formatTime(m.created_at)}</span>
+                  <Typography variant="caption" color="text.main" sx={{mr: 1}}>
+                    {own ? "You" : getUsername(m)}
+                  </Typography>
+                  <Typography variant="caption" color="text.main">
+                    {formatTime(m.created_at)}
+                  </Typography>
                 </Box>
                 <Typography variant="body2">{m.content}</Typography>
               </Box>
@@ -273,7 +359,7 @@ const Chat: React.FC<ChatProps> = ({
         <div ref={endRef} />
       </Box>
 
-      {/* Input (officers only) */}
+      {/* Input (officers, lead, external only) */}
       {!isUser && (
         <Box
           component="form"

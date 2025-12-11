@@ -23,7 +23,7 @@ export class ReportRepository {
     }
 
     async findAll(): Promise<Report[]> {
-        return this.ormRepository.find({ relations: ['category', 'photos', 'user'] });
+        return this.ormRepository.find({ relations: ['category', 'photos', 'user', 'chats'] });
     }
 
     async findByCategory(categoryId: number): Promise<Report[]> {
@@ -36,7 +36,7 @@ export class ReportRepository {
     async findById(reportId: number): Promise<Report | null> {
         return this.ormRepository.findOne({
             where: { id: reportId },
-            relations: ['category', 'photos', 'user', 'officer']
+            relations: ['category', 'photos', 'user', 'officer', 'chats']
         });
     }
 
@@ -53,14 +53,14 @@ export class ReportRepository {
     async findApproved(): Promise<Report[]> {
         return this.ormRepository.find({
             where: { status: StatusType.Assigned },
-            relations: ["user", "category", "photos", "officer"],
+            relations: ["user", "category", "photos", "officer", "chats"],
             order: { createdAt: "DESC" }
         });
     }
     async findByOfficer(officer: MunicipalityOfficer): Promise<Report[]> {
         return this.ormRepository.find({
             where: { officer: { id: officer.id } },
-            relations: ['category', 'photos', 'user', 'officer']
+            relations: ['category', 'photos', 'user', 'officer', 'chats', 'leadOfficer']
         });
     }
 
@@ -138,7 +138,7 @@ export class ReportRepository {
     async findByCategoryId(categoryId: number): Promise<Report[]> { 
         return this.ormRepository.find({
             where: { category: { id: categoryId } },
-            relations: ['category', 'photos', 'user', 'officer']
+            relations: ['category', 'photos', 'user', 'officer', 'chats', 'leadOfficer']
         });
     }
 }

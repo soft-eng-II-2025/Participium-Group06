@@ -1,6 +1,6 @@
 import {AuthApi} from "../api/authApi";
 import { useAuth } from '../contexts/AuthContext';
-import {useMutation} from "@tanstack/react-query";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {UserResponseDTO} from "../DTOs/UserResponseDTO";
 import {LoginDTO} from "../DTOs/LoginDTO";
 import {CreateUserRequestDTO} from "../DTOs/CreateUserRequestDTO";
@@ -48,5 +48,29 @@ export function useLogout() {
             return await logout();
         },
         mutate: () => { void logout(); },
+    };
+}
+
+export function useConfirmEmail() {
+    const { user } = useAuth();
+    const qc = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: (code: string) => {
+            if (!user) return Promise.reject(new Error('NO_USER'));
+            return authApi.confirmEmail(user.username, code);
+        },
+        onSuccess: () => {
+            // Update session cache so AuthContext sees the verified flag immediately
+            qc.setQueryData(['session'], (old: any) => {
+                if (!old) return old;
+                return { ...old, verified: true };
+            });
+        }
+    });
+
+    return {
+        mutateAsync: async (code: string) => mutation.mutateAsync(code),
+        mutate: (code: string) => { mutation.mutate(code); },
     };
 }

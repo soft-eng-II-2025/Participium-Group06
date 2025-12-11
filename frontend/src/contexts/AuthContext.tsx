@@ -11,6 +11,8 @@ type AuthContextType = {
   loading: boolean;            // true while initial session fetch is pending
   isAuthenticated: boolean;
   role: string | null;
+  isExternal: boolean;
+  companyName: string | null;
   login: (creds: LoginDTO) => Promise<UserResponseDTO | MunicipalityOfficerResponseDTO | null>;
   register: (payload: CreateUserRequestDTO) => Promise<UserResponseDTO | null>;
   logout: () => Promise<void>;
@@ -26,7 +28,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 1) initial session load — AuthProvider owns the query
   const { data: user, isLoading } = useQuery<UserResponseDTO | null>({
     queryKey: ['session'],
-    queryFn: () => authApi.getSession(),
+    queryFn: async () => {
+      try {
+        const s = await authApi.getSession();
+        // normalize: only accept a proper user-shaped object, otherwise return null
+        if (!s || typeof s !== 'object') return null;
+        // check if user has username property
+        if (!('username' in (s as any))) return null;
+        return s as UserResponseDTO;
+      } catch (err) {
+        console.error("Failed to load user session:", err);
+        return null;
+      }
+    },
     retry: false,
     refetchOnWindowFocus: true,
   });
@@ -101,6 +115,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     register,
     logout,
     setUser,
+    isExternal: user ? (user as MunicipalityOfficerResponseDTO).external === true : false,
+    companyName: user ? (user as MunicipalityOfficerResponseDTO).companyName : null,
   }), [user, isLoading]); // keep stable identity
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

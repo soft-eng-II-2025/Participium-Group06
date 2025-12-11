@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Report } from './Report';
+import { Notification } from './Notification';
 
 @Entity('app_user')
 export class User {
@@ -30,6 +31,12 @@ export class User {
   @Column({ type: "boolean", default: false })
   flag_email?: boolean;
 
+  @Column({ type: "boolean", default: false })
+  verified?: boolean;
+
   @OneToMany(() => Report, (report) => report.user)
   reports!: Report[];
+
+  @OneToMany(() => Notification, notif => notif.user)
+  notifications!: Notification[];
 }

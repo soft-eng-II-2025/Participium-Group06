@@ -3,7 +3,9 @@ import { Box, Grid, Button, useMediaQuery, useTheme } from "@mui/material";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ReportsList from "../components/ReportsList";
 import ReportPreview from "../components/ReportPreview";
+import Chat from "../components/Chat";
 import { StatusType } from "../DTOs/StatusType";
+import { ChatMode } from "../enums/ChatMode";
 import { useGetTechLeadReports, useAssignTechAgent } from "../hook/techleadApi.hook";
 import ConfirmDialog from "../components/ConfirmDialog";
 
@@ -18,10 +20,34 @@ const TechLeadHomePage: React.FC = () => {
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [chatMode, setChatMode] = useState<ChatMode | null>(null);
 
     const selectedReport = selectedIndex !== null ? reports?.[selectedIndex] : null;
 
     const assignTechAgentMutation = useAssignTechAgent();
+
+    function toggleChatOpen(mode?: ChatMode) {
+        // If a specific mode is requested, toggle that chat: close if it's already open, otherwise open it.
+        if (mode !== undefined) {
+            if (isChatOpen && chatMode === mode) {
+                setIsChatOpen(false);
+                setChatMode(null);
+            } else {
+                setChatMode(mode);
+                setIsChatOpen(true);
+            }
+            return;
+        }
+
+        // No mode passed: toggle visibility. If closing, clear mode.
+        if (isChatOpen) {
+            setIsChatOpen(false);
+            setChatMode(null);
+        } else {
+            setIsChatOpen(true);
+        }
+    }
 
     function assignReportToOfficer(action: 'approve'| 'reject', payload?: { assignee?: string }) {
         setConfirmOpen(true);
@@ -48,15 +74,15 @@ const TechLeadHomePage: React.FC = () => {
     const statuses = [StatusType.Assigned, StatusType.InProgress, StatusType.Resolved, StatusType.Suspended, "All" ];
     return (
         <>
-               <Box sx={{ pt: 4, pb: 4, px: 2, height: "100vh", }}>
-                <Grid container spacing={2}>
-                    {isMobile ? (
+               <Box sx={{ pt: 4, pb: 4, px: 2, height: "fullvh", }}>
+                {!isChatOpen ? (
+                    isMobile ? (
                         showPreview ? (
                             <Grid item xs={12}>
                                 <Box sx={{ mb: 1 }}>
                                     <Button variant="outlined" className="partecipation-button" startIcon={<ArrowBackIcon />} onClick={() => setShowPreview(false)}>Back to list</Button>
                                 </Box>
-                                <ReportPreview report={selectedReport} showTeamCard={true} onAction={assignReportToOfficer} />
+                                <ReportPreview report={selectedReport} showTeamCard={true} onAction={assignReportToOfficer} showChat={true} openChat={toggleChatOpen} />
                             </Grid>
                         ) : (
                             <Grid item xs={12}>
@@ -64,16 +90,33 @@ const TechLeadHomePage: React.FC = () => {
                             </Grid>
                         )
                     ) : (
-                        <>
+                        <Grid container spacing={2}>
                             <Grid item xs={12} md={4}>
                                 <ReportsList reports={reports ?? []} selectedIndex={selectedIndex} onSelect={handleSelect} statuses={statuses} />
                             </Grid>
                             <Grid item xs={12} md={8}>
-                                <ReportPreview report={selectedReport} showTeamCard={true} onAction={assignReportToOfficer} />
+                                <ReportPreview report={selectedReport} showTeamCard={true} onAction={assignReportToOfficer} showChat={true} openChat={toggleChatOpen} />
                             </Grid>
-                        </>
-                    )}
-                </Grid>
+                        </Grid>
+                    )
+                ) : (
+                    <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                            <ReportPreview report={selectedReport} showTeamCard={true} onAction={assignReportToOfficer} showChat={true} openChat={toggleChatOpen} />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+
+                            {selectedReport ? (
+                                <Chat
+                                    reportId={selectedReport.id}
+                                    chatId={selectedReport.chats?.find((chat) => chat.type === chatMode)?.id}
+                                    chatMode={chatMode!}
+                                    closeChat={() => toggleChatOpen()}
+                                />
+                            ) : null}
+                        </Grid>
+                    </Grid>
+                )}
             </Box>
 
         <ConfirmDialog

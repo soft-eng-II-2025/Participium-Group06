@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Button, Card, CardContent, CardActions, Stack, TextField, Chip, Paper } from "@mui/material";
+import { Box, Typography, Button, useTheme, useMediaQuery, Card, CardContent, CardActions, Stack, Dialog, TextField, Chip, Paper, DialogContent, IconButton } from "@mui/material";
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import CloseIcon from '@mui/icons-material/Close';
 import MapForReportPreview from "./MapForReportPreview";
 import { StatusType } from "../DTOs/StatusType";
 import { useGetAgentsByTechLead } from "../hook/techleadApi.hook";
-import { useReportCategories } from "../hook/userApi.hook";
 import { useAuth } from "../contexts/AuthContext";
 import { MunicipalityOfficerResponseDTO } from "../DTOs/MunicipalityOfficerResponseDTO";
 import TechOfficerCard from "./TechOfficerCard";
+import TeamAssignmentCard from "./TeamAssignmentCard";
 import { setStatusChipColor } from "../utils/stringUtilis";
 import { useGetReportPhoto } from "../hook/userApi.hook";
 import { ReportResponseDTO } from "../DTOs/ReportResponseDTO";
+import { ChatMode } from "../enums/ChatMode";
 
 type Props = {
     report?: ReportResponseDTO | null;
@@ -18,31 +20,36 @@ type Props = {
     showTeamCard?: boolean;
     showUpdateStatus?: boolean;
     showChat?: boolean;
+    isFlat?: boolean;
     // callback used to notify parent of actions. action is 'approve' or 'reject'.
     // payload can contain optional data like { reason } or { newStatus }
     onAction?: (action: 'approve' | 'reject', payload?: { reason?: string; newStatus?: string; assignee?: string }) => void;
-    openChat?: () => void;
-    onChatToggle?: (open: boolean) => void;
+    // openChat can be called with a ChatMode to open that chat or with no args to toggle/close
+    openChat?: (chatType?: ChatMode) => void;
 };
 
 
 const statusesForUpdate = [StatusType.Assigned, StatusType.InProgress, StatusType.Resolved, StatusType.Suspended];
 
-export default function ReportPreview({ report, showApprovalActions = false, showTeamCard = false, showUpdateStatus = false, onAction, showChat = false, openChat, onChatToggle }: Props) {
+export default function ReportPreview({ report, showApprovalActions = false, showTeamCard = false, showUpdateStatus = false, isFlat = false, onAction, showChat = false, openChat }: Props) {
     const [isRejected, setIsRejected] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [statusButton, setStatusButton] = useState<StatusType | null>(null);
     const [rejectComment, setRejectComment] = useState('');
     const [officeMembers, setOfficeMembers] = useState(null as MunicipalityOfficerResponseDTO[] | null);
-    const [selectedOfficerUsername, setSelectedOfficerUsername] = useState<string | null>(null);
-    const { user } = useAuth();
+    const [externalMembers, setExternalMembers] = useState(null as MunicipalityOfficerResponseDTO[] | null);
+    const { role, isExternal } = useAuth();
     const [chatOpen, setChatOpen] = useState(false);
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
     const photoPath = report?.photos?.[selectedIndex];
 
     // only fetch blob for the currently selected photo
     const { data: photoBlob, isLoading: photoLoading } = useGetReportPhoto(photoPath, !!photoPath);
     const [photoSrc, setPhotoSrc] = useState<string | null>(null);
+    const [imageOpen, setImageOpen] = useState(false);
+    const [imageOpenSrc, setImageOpenSrc] = useState<string | null>(null);
 
     useEffect(() => {
         if (!photoBlob) {
@@ -54,17 +61,35 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
         return () => { URL.revokeObjectURL(url); };
     }, [photoBlob]);
 
+    function openImage(src?: string | null) {
+        if (!src) return;
+        setImageOpenSrc(src);
+        setImageOpen(true);
+    }
+
     // only fetch agents when showTeamCard is true
     const { data: techLeadAgents, isLoading: agentsLoading, isError: agentsError } = useGetAgentsByTechLead(showTeamCard);
 
     useEffect(() => {
         setChatOpen(false);
         if (showTeamCard && report) {
-            setOfficeMembers(techLeadAgents ?? []);
+            setOfficeMembers(techLeadAgents?.filter(a => a.external === false) ?? []);
+            setExternalMembers(techLeadAgents?.filter(a => a.external === true) ?? []);
         } else {
             setOfficeMembers(null);
+            setExternalMembers(null);
         }
     }, [report, showTeamCard, techLeadAgents]);
+
+    // Reset transient UI state whenever a different report is selected
+    useEffect(() => {
+        // use report?.id so effect runs only when the selected report changes
+        setIsRejected(false);
+        setRejectComment('');
+        setSelectedIndex(0);
+        setStatusButton(null);
+        setChatOpen(false);
+    }, [report?.id]);
 
     function getPhotoUrl(p: string) {
         if (!p) return '';
@@ -90,24 +115,88 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
     }
 
 
-
-
     return (
-        <Card sx={{ height: "85vh", borderRadius: 5, display: "flex", flexDirection: "column" }}>
-            <CardContent sx={{ flex: 1, overflow: 'auto' }}>
+        <Card
+            elevation={isFlat ? 0 : undefined}
+            sx={{
+                height: isFlat ? '100%' : '85vh',
+                borderRadius: isFlat ? 0 : 5,
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                bgcolor: isFlat ? 'transparent' : undefined,
+                boxShadow: isFlat ? 'none' : undefined,
+            }}
+        >
+            <CardContent sx={{ flex: 1, overflow: 'auto', p: isFlat ? 0 : undefined }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h5" color="primary" gutterBottom fontWeight={600}>
                         Report Details
                     </Typography>
                     {showChat && (
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            startIcon={<ChatBubbleOutlineIcon />}
-                            onClick={openChat}
-                        >
-                            chat
-                        </Button>
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            {/* Tech Lead sees both chats when officer is external */}
+                            {role?.startsWith('TECH_LEAD') && report.officer?.external && (
+                                <>
+                                    <Button
+                                        variant="outlined"
+                                        size="small"
+                                        startIcon={<ChatBubbleOutlineIcon />}
+                                        onClick={() => openChat?.(ChatMode.OFFICER_USER)}
+                                    >
+                                        Reporter
+                                    </Button>
+                                    <Button
+                                        variant="outlined"
+                                        size="small"
+                                        startIcon={<ChatBubbleOutlineIcon />}
+                                        onClick={() => openChat?.(ChatMode.LEAD_EXTERNAL)}
+                                    >
+                                        External Maintainer
+                                    </Button>
+                                </>
+                            )}
+
+                            {/* External maintainer chats with tech lead */}
+                            {isExternal && (
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    startIcon={<ChatBubbleOutlineIcon />}
+                                    onClick={() => openChat?.(ChatMode.LEAD_EXTERNAL)}
+                                >
+                                    Municipality Officer
+                                </Button>
+                            )}
+
+                            {/* Internal agent chats with reporter */}
+                            {role?.startsWith('TECH_AGENT') && !isExternal && (
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    startIcon={<ChatBubbleOutlineIcon />}
+                                    onClick={() => openChat?.(ChatMode.OFFICER_USER)}
+                                >
+                                    Reporter
+                                </Button>
+                            )}
+
+                            {/* Internal agent chats with reporter */}
+                            {role?.startsWith('USER') && (
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    startIcon={<ChatBubbleOutlineIcon />}
+                                    onClick={() => openChat?.(ChatMode.OFFICER_USER)}
+                                >
+                                    Officer
+                                </Button>
+                            )}
+
+                            {/* Close chat control (parent toggles visibility when called with no arg) */}
+                            {/* Close chat control moved to Chat header (arrow) */}
+
+                        </Box>
                     )}
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -122,27 +211,33 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                     />
                 </Box>
 
-                <MapForReportPreview latitude={report.latitude} longitude={report.longitude} interactive={false} zoom={14} />
+                <MapForReportPreview latitude={report.latitude} longitude={report.longitude} interactive={false} zoom={14} isDrawer={isFlat} />
 
                 <Stack direction="row" spacing={2} sx={{ mb: 1, mt: 2 }}>
                     <Typography variant="body2" color="text.secondary">Cordinates:</Typography>
 
                     <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>{report.latitude}, {report.longitude}</Typography>
-                    
+
                 </Stack>
                 <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
                     <Typography variant="body2" color="text.secondary">Reporter:</Typography>
                     <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
                         {report.user?.first_name || report.user?.username} {report.user?.last_name ?? ''}
                     </Typography>
-                    
+
                 </Stack>
                 <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
                     <Typography variant="body2" color="text.secondary">Category:</Typography>
                     <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
                         {report.category}
                     </Typography>
-                    
+                </Stack>
+
+                <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary">Date:</Typography>
+                    <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
+                        {new Date(report.createdAt).toLocaleString()}
+                    </Typography>
                 </Stack>
 
                 <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
@@ -156,9 +251,11 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                     component="img"
                     src={photoSrc ?? undefined}
                     alt="Report photo"
+                    onClick={() => openImage(photoSrc ?? getPhotoUrl(report.photos?.[0] ?? ''))}
                     sx={{
                         maxWidth: { xs: '100%', md: 300 },
                         width: '100%',
+                        cursor: 'zoom-in',
                         // constrain tall (vertical) images so they don't dominate the layout
                         maxHeight: { xs: 160, md: 200 },
                         objectFit: 'contain',
@@ -184,13 +281,34 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                                     border: selectedIndex === i ? '2px solid' : '2px solid transparent',
                                     borderColor: selectedIndex === i ? 'primary.main' : 'transparent'
                                 }}
-                                onClick={() => setSelectedIndex(i)}
+                                onClick={() => { setSelectedIndex(i); openImage(getPhotoUrl(p)); }}
                             />
                         ))}
                     </Stack>
                 )}
+
+                <Dialog fullScreen open={imageOpen} onClose={() => setImageOpen(false)} PaperProps={{ sx: { backgroundColor: 'rgba(0,0,0,0.9)' } }}>
+                    <Box sx={{ position: 'absolute', right: 8, top: 8, zIndex: 1400 }}>
+                        <IconButton onClick={() => setImageOpen(false)} size="large" sx={{ color: 'common.white' }}><CloseIcon /></IconButton>
+                    </Box>
+                    <DialogContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 0, height: '100vh' }}>
+                        {imageOpenSrc && (
+                            <Box component="img" src={imageOpenSrc} alt="full-photo" sx={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                        )}
+                    </DialogContent>
+                </Dialog>
             </CardContent>
 
+            {report.status === StatusType.Rejected && report.explanation && (
+                <Paper elevation={0} sx={{ p: 2, borderRadius: 1, mb: 2 }}>
+                    <Typography variant="subtitle1" color="secondary" sx={{ mb: 1, fontWeight: 'bold' }}>
+                        This report was rejected for the following reason:
+                    </Typography>
+                    <Typography variant="body2" color="text.primary">
+                        {report.explanation}
+                    </Typography>
+                </Paper>
+            )}
             {!isRejected && showApprovalActions && report.status === StatusType.PendingApproval && <CardActions sx={{ mb: 2, flexShrink: 0 }}>
                 <Button
                     color="success"
@@ -248,97 +366,76 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                     </Box>
                 </Box>
             }
-            {(showTeamCard) && (
+            {(showTeamCard && !report.officer) && (
+                <TeamAssignmentCard reportId={report?.id} officeMembers={officeMembers} externalMembers={externalMembers} onAction={onAction} />
+            )}
 
-                (!report.officer) ? (<CardContent sx={{ bgcolor: 'inherit', borderTop: '1px solid', borderColor: 'grey.300', flexShrink: 0 }}>
-                    <Typography variant="h6" color="secondary" sx={{ mb: 1 }}>Assign this report to:</Typography>
+            {(showTeamCard && report.officer) && (
+                <Box sx={{ bgcolor: 'inherit', borderTop: '1px solid', borderColor: 'grey.300', flexShrink: 0, p: 2, width: { xs: '100%', md: '100%' }, alignSelf: 'flex-start' }}>
+                    <Typography variant="h6" color="secondary" sx={{ mb: 2, fontWeight: 'bold' }}>Assigned Officer</Typography>
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(4, 1fr)' }, gap: 1, }}>
-                        {officeMembers?.map((user) => {
-                            return (
-                                <TechOfficerCard
-                                    user={user}
-                                    selected={selectedOfficerUsername === user.username}
-                                    onClick={() => setSelectedOfficerUsername(prev => prev === user.username ? null : user.username)}
-                                />
-                            );
-                        })}
+                    <Box sx={{
+                        display: 'flex',
+                        gap: 2,
+                        flexWrap: 'wrap',
+                        alignItems: 'flex-start'
+                    }}>
+                        {report.leadOfficer && (
+                            <Box sx={{ width: { xs: '100%', md: '33%' } }}>
+                                <TechOfficerCard user={report.leadOfficer as any} selected={false} onClick={undefined} sx={{ width: '100%' }} />
+                            </Box>
+                        )}
 
-
-                    </Box>
-                    <Box sx={{ mt: 2 }}>
-                        <Button
-                            variant="contained"
-                            className="partecipation-button"
-                            color="secondary"
-                            disabled={!selectedOfficerUsername}
-                            onClick={() => {
-                                if (onAction) {
-                                    onAction('approve', { assignee: selectedOfficerUsername ?? undefined });
-                                }
-                            }}
-                        >
-                            Assign to officer
-                        </Button>
-                    </Box>
-                </CardContent>
-                ) : (
-                    <CardContent sx={{ bgcolor: 'inherit', borderTop: '1px solid', borderColor: 'grey.300', flexShrink: 0 }}>
-                        <Typography variant="h6" color="secondary" sx={{ mb: 1, }}>Assigned to:</Typography>
-                        <Box sx={{ maxWidth: 300 }}>
-                            <TechOfficerCard
-                                user={report.officer}
-                                selected={false}
-                            />
+                        <Box sx={{ width: { xs: '100%', md: '33%' } }}>
+                            <TechOfficerCard user={report.officer} selected={false} onClick={undefined} sx={{ width: '100%' }} />
                         </Box>
-                    </CardContent>
-                )
-
+                    </Box>
+                </Box>
             )}
 
             {(showUpdateStatus) && (report.status === StatusType.Assigned
                 || report.status === StatusType.InProgress
                 || report.status === StatusType.Suspended) && (
-                <CardContent sx={{ bgcolor: 'inherit', borderTop: '1px solid', borderColor: 'grey.300', flexShrink: 0 }}>
-                    <Typography variant="h6" color="secondary" sx={{ mb: 1, fontWeight: 'bold' }}>Update report status</Typography>
-                    <Paper elevation={0} sx={{ p: 2, borderRadius: 2, mb: 1 }}>
-                        <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
-                            {statusesForUpdate.filter((s) => s !== StatusType.Assigned).map((status) => (
+                    <CardContent sx={{ bgcolor: 'inherit', borderTop: '1px solid', borderColor: 'grey.300', flexShrink: 0 }}>
+                        <Typography variant="h6" color="secondary" sx={{ mb: 1, fontWeight: 'bold' }}>Update report status</Typography>
+                        <Paper elevation={0} sx={{ p: 2, borderRadius: 2, mb: 1 }}>
+                            <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
+                                {statusesForUpdate.filter((s) => s !== StatusType.Assigned).map((status) => (
+                                    <Button
+                                        key={status}
+                                        variant={statusButton === status ? 'contained' : 'outlined'}
+                                        color="secondary"
+                                        className="partecipation-button"
+                                        sx={{ mr: 1, mb: 1, minWidth: 140, textTransform: 'none' }}
+                                        onClick={() => setStatusButton(prev => prev === status ? null : status)}
+                                    >
+                                        {status}
+                                    </Button>
+                                ))}
+                            </Stack>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Choose a status and update the report
+                                </Typography>
                                 <Button
-                                    key={status}
-                                    variant={statusButton === status ? 'contained' : 'outlined'}
-                                    color="secondary"
+                                    variant="contained"
+                                    color="success"
                                     className="partecipation-button"
-                                    sx={{ mr: 1, mb: 1, minWidth: 140, textTransform: 'none' }}
-                                    onClick={() => setStatusButton(prev => prev === status ? null : status)}
+                                    sx={{ ml: 2 }}
+                                    disabled={!statusButton}
+                                    onClick={() => {
+                                        // send an explicit newStatus to parent so it can update without confirmation
+                                        if (onAction && statusButton) {
+                                            onAction('approve', { newStatus: statusButton as string });
+                                        }
+                                    }}
                                 >
-                                    {status}
+                                    Update
                                 </Button>
-                            ))}
-                        </Stack>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
-                            <Typography variant="body2" color="text.secondary">
-                                Choose a status and update the report
-                            </Typography>
-                            <Button
-                                variant="contained"
-                                color="success"
-                                className="partecipation-button"
-                                sx={{ ml: 2 }}
-                                disabled={!statusButton}
-                                onClick={() => {
-                                    // send an explicit newStatus to parent so it can update without confirmation
-                                    if (onAction && statusButton) {
-                                        onAction('approve', { newStatus: statusButton as string });
-                                    }
-                                }}
-                            >
-                                Update
-                            </Button>
-                        </Box>
-                    </Paper>
-                </CardContent>
-            )}
+                            </Box>
+                        </Paper>
+                    </CardContent>
+                )}
 
         </Card >
     );

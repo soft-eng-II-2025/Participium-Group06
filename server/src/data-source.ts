@@ -9,7 +9,9 @@ import { ReportPhoto } from './models/ReportPhoto';
 import { MunicipalityOfficer } from './models/MunicipalityOfficer';
 import { Message } from './models/Message';
 import { Notification } from './models/Notification';
+import { Chat } from './models/Chat';
 import path from 'path';
+import { VerificationCode } from './models/VerificationCode';
 
 export const AppDataSource= new DataSource({
     type: 'postgres',
@@ -20,7 +22,7 @@ export const AppDataSource= new DataSource({
     database: process.env.DB_NAME ?? 'participium',
     synchronize: false,
     logging: false,
-    entities: [User, Role, Category, Report, ReportPhoto, MunicipalityOfficer, Message, Notification],
+    entities: [User, Role, Category, Report, ReportPhoto, MunicipalityOfficer, Message, Notification, VerificationCode, Chat],
     migrations: ['dist/migrations/*.js'],
 
 });

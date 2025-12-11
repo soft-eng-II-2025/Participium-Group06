@@ -1,374 +1,261 @@
-// src/tests/unit/reportController.unit.test.ts
-
 import {
-    initializeReportRepositories,
-    getAllAcceptedReports,
-    addReport,
-    updateReportStatus,
-    updateReportOfficer,
-    getAllReports,
-    getReportById,
-    GetReportsByOfficerUsername,
-    getReportsByCategoryIdAndStatus,
-} from "../../../controllers/reportController";
+  addReport,
+  updateReportStatus,
+  updateReportOfficer,
+  getAllReports,
+  getReportById,
+  GetReportsByOfficerUsername,
+  getAllAcceptedReports,
+  getReportsByCategoryIdAndStatus,
+  getUserReports,
+  initializeReportRepositories
+} from '../../../controllers/reportController';
+
+import * as adminController from '../../../controllers/adminController';
+import { ReportRepository } from '../../../repositories/ReportRepository';
+import { NotificationRepository } from '../../../repositories/NotificationRepository';
+import { SocketService } from '../../../services/socketService';
+import * as messagingController from '../../../controllers/messagingController';
+import { Server } from 'socket.io';
+import { StatusType } from '../../../models/StatusType';
+import { MunicipalityOfficer } from '../../../models/MunicipalityOfficer';
+
+// utils mocks
 import {
-    mapCreateReportRequestToDAO,
-    mapReportDAOToDTO as mapReportDAOToResponse
-} from "../../../services/mapperService";
-import { ReportRepository } from "../../../repositories/ReportRepository";
-import { NotificationRepository } from "../../../repositories/NotificationRepository";
-import { SocketService } from "../../../services/socketService";
-import { ReportResponseDTO } from "../../../models/DTOs/ReportResponseDTO";
-import { MunicipalityOfficerResponseDTO } from "../../../models/DTOs/MunicipalityOfficerResponseDTO";
-import { UserResponseDTO } from "../../../models/DTOs/UserResponseDTO";
-import { ReportPhoto } from "../../../models/ReportPhoto";
-import { StatusType } from "../../../models/StatusType";
-import {
-    getMunicipalityOfficerDAOForNewRequest,
-    getMunicipalityOfficerDAOByUsername,
-} from "../../../controllers/adminController";
-import { CreateReportRequestDTO } from "../../../models/DTOs/CreateReportRequestDTO";
-import { Server as SocketIOServer } from "socket.io";
+  mockTechAgentDAO,
+  mockReportResponseDTO,
+  mockTechLeadDAO
+} from '../../utils';
 
-// ------------------------------------------------------------------
-// 1. OGGETTI MOCK GLOBALI
-// ------------------------------------------------------------------
-const mockOfficerDao = { id: 10, username: "org_officer", role: { title: "ORGANIZATION_OFFICER" } };
-const mockReportDaoIn = { title: "R1", status: StatusType.PendingApproval, user: { id: 1 } };
-const mockReportDaoAdded = { id: 1, ...mockReportDaoIn };
-const mockReportDto = { id: 1, title: "R1 DTO", status: "PendingApproval" };
-const mockPhotoUrls = ["photo1.jpg", "photo2.jpg"];
+// Mock external modules
+jest.mock('../../../repositories/ReportRepository');
+jest.mock('../../../repositories/NotificationRepository');
+jest.mock('../../../services/socketService');
+jest.mock('../../../services/mapperService');
+jest.mock('../../../controllers/messagingController');
+jest.mock('../../../controllers/adminController');
 
-// ------------------------------------------------------------------
-// 2. MOCK DIPENDENZE
-// ------------------------------------------------------------------
-// Mock di adminController per le funzioni richiamate
-jest.mock("../../../controllers/adminController", () => ({
-    getMunicipalityOfficerDAOForNewRequest: jest.fn(),
-    getMunicipalityOfficerDAOByUsername: jest.fn(),
-}));
+describe('reportController (unit)', () => {
+  let mockReportRepository: any;
+  let mockNotificationRepository: any;
+  let mockSocketService: any;
+  const mockMapper = require('../../../services/mapperService');
 
-// Mock delle dipendenze
-jest.mock("../../../repositories/ReportRepository");
-jest.mock("../../../repositories/NotificationRepository");
-jest.mock("../../../services/socketService");
-jest.mock("../../../services/mapperService");
+  const mockReportDTO = mockReportResponseDTO(1);
 
-// ------------------------------------------------------------------
-// 3. ISTANZA MOCK DEL REPOSITORY (Deve essere definita qui per lo scope globale)
-// ------------------------------------------------------------------
-const reportRepositoryMock = {
-    add: jest.fn(),
-    update: jest.fn(),
-    findById: jest.fn(),
-    findAll: jest.fn(),
-    findByOfficer: jest.fn(),
-    findByCategoryId: jest.fn(),
-    findApproved: jest.fn(),
-    addPhotosToReport: jest.fn(),
-};
-
-// ------------------------------------------------------------------
-// 4. SETUP GENERALE PER TUTTE LE SUITE
-// ------------------------------------------------------------------
-
-beforeEach(() => {
-    // 4.1 Re-implementa ReportRepository con l'istanza mock
-    (ReportRepository as unknown as jest.Mock).mockImplementation(
-        () => reportRepositoryMock as any,
-    );
-    const io = new SocketIOServer();
-    // 4.2 Re-inizializza il controller per iniettare l'istanza mock
-    initializeReportRepositories({} as any, io);
-
-    // 4.3 Pulisci tutti i mock prima di ogni test
+  beforeEach(() => {
     jest.clearAllMocks();
 
-    // 4.4 Resetta le implementazioni di base
-    reportRepositoryMock.add.mockResolvedValue(mockReportDaoAdded);
-    reportRepositoryMock.update.mockResolvedValue(mockReportDaoAdded);
-    reportRepositoryMock.findById.mockResolvedValue(mockReportDaoAdded);
-    reportRepositoryMock.findAll.mockResolvedValue([]);
-    reportRepositoryMock.findByOfficer.mockResolvedValue([]);
-    reportRepositoryMock.findByCategoryId.mockResolvedValue([]);
-    reportRepositoryMock.findApproved.mockResolvedValue([]);
-    reportRepositoryMock.addPhotosToReport.mockResolvedValue([]);
+    mockReportRepository = {
+      add: jest.fn(),
+      addPhotosToReport: jest.fn(),
+      findById: jest.fn(),
+      update: jest.fn(),
+      findAll: jest.fn(),
+      findByCategoryId: jest.fn(),
+      findApproved: jest.fn(),
+      findByUserId: jest.fn(),
+      findByOfficer: jest.fn()
+    };
 
-    (getMunicipalityOfficerDAOForNewRequest as jest.Mock).mockResolvedValue(mockOfficerDao);
-    (getMunicipalityOfficerDAOByUsername as jest.Mock).mockResolvedValue(mockOfficerDao);
-    (mapReportDAOToResponse as jest.Mock).mockReturnValue(mockReportDto);
-    (mapCreateReportRequestToDAO as jest.Mock).mockReturnValue({ ...mockReportDaoIn });
-});
+    mockNotificationRepository = {
+      add: jest.fn()
+    };
 
-// ------------------------------------------------------------------
-// 5. SUITE: getAllAcceptedReports (Test esistente)
-// ------------------------------------------------------------------
+    mockSocketService = {
+      sendNotificationToUser: jest.fn()
+    };
 
-describe("getAllAcceptedReports - unit test puro", () => {
-    const mockReportsDAO = [
-        { id: 1, title: "Report 1", status: "Approved" },
-        { id: 2, title: "Report 2", status: "Approved" },
-    ];
+    (ReportRepository as unknown as jest.Mock).mockImplementation(() => mockReportRepository);
+    (NotificationRepository as unknown as jest.Mock).mockImplementation(() => mockNotificationRepository);
+    (SocketService as unknown as jest.Mock).mockImplementation(() => mockSocketService);
 
-    const mockMappedReports: ReportResponseDTO[] = [
-        // Uso un subset del DTO per semplificare, ma mantengo l'identificazione
-        { id: 1, title: "Report 1", status: "Approved" } as ReportResponseDTO,
-        { id: 2, title: "Report 2", status: "Approved" } as ReportResponseDTO,
-    ];
-
-    beforeEach(() => {
-        // Mock del mapper: dato un DAO (identificato dal title), ritorna il DTO corrispondente
-        (mapReportDAOToResponse as jest.Mock).mockImplementation((dao: any) => {
-            return mockMappedReports.find(r => r.title === dao.title) ?? mockReportDto;
-        });
+    // default mapper behavior
+    (mockMapper.mapReportDAOToDTO as jest.Mock).mockReturnValue(mockReportDTO);
+    (mockMapper.mapCreateReportRequestToDAO as jest.Mock).mockImplementation((r: any) => {
+      return { ...r }; // simple passthrough DAO-like object
     });
 
-    it("should return mapped approved reports", async () => {
-        reportRepositoryMock.findApproved.mockResolvedValue(mockReportsDAO);
+    // messaging controller
+    (messagingController.createChatOfficerUser as jest.Mock).mockResolvedValue(true);
+    (messagingController.createChatLeadExternal as jest.Mock).mockResolvedValue(true);
 
-        const result = await getAllAcceptedReports();
+    const mockIo = {} as unknown as Server;
+    initializeReportRepositories({} as any, mockIo);
+  });
 
-        expect(result).toEqual(mockMappedReports);
-        expect(reportRepositoryMock.findApproved).toHaveBeenCalledTimes(1);
-        expect(mapReportDAOToResponse).toHaveBeenCalledTimes(mockReportsDAO.length);
+  // addReport
+  it('addReport should set status, call add and photos and return mapped DTO', async () => {
+    const reportData: any = {
+      title: 'T',
+      description: 'D',
+      photos: ['uploads/1.jpg'],
+      user: { id: 7 }
+    };
+
+    const addedReportDao = { id: 11, ...reportData, photos: [] };
+    mockReportRepository.add.mockResolvedValueOnce(addedReportDao);
+    mockReportRepository.addPhotosToReport.mockResolvedValueOnce(true);
+    (mockMapper.mapReportDAOToDTO as jest.Mock).mockReturnValueOnce(mockReportDTO);
+
+    const res = await addReport(reportData);
+
+    expect(mockReportRepository.add).toHaveBeenCalledTimes(1);
+    // after add, addPhotosToReport should be called
+    expect(mockReportRepository.addPhotosToReport).toHaveBeenCalledTimes(1);
+    expect(res).toEqual(mockReportDTO);
+  });
+
+  // updateReportStatus: not found
+  it('updateReportStatus should throw REPORT_NOT_FOUND when report missing', async () => {
+    mockReportRepository.findById.mockResolvedValueOnce(null);
+    const p = updateReportStatus(999, StatusType.Resolved, 'ok');
+    await expect(p).rejects.toHaveProperty('message', 'REPORT_NOT_FOUND');
+    await expect(p).rejects.toHaveProperty('status', 404);
+  });
+
+  // updateReportStatus: success with notification
+  it('updateReportStatus should update status, create notification and send via socket', async () => {
+    const reportDao: any = {
+      id: 5,
+      title: 'R',
+      status: StatusType.PendingApproval,
+      user: { id: 42 }
+    };
+    const updatedDao: any = { ...reportDao, status: StatusType.Resolved, explanation: 'fix' };
+
+    mockReportRepository.findById.mockResolvedValueOnce(reportDao);
+    mockReportRepository.update.mockResolvedValueOnce(updatedDao);
+    mockNotificationRepository.add.mockResolvedValueOnce({ id: 77, content: '...' });
+    (mockMapper.mapReportDAOToDTO as jest.Mock).mockReturnValueOnce(mockReportDTO);
+
+    const res = await updateReportStatus(reportDao.id, StatusType.Resolved, 'fix');
+
+    expect(mockReportRepository.findById).toHaveBeenCalledWith(reportDao.id);
+    expect(mockReportRepository.update).toHaveBeenCalledWith({
+      ...reportDao,
+      officer: reportDao.officer,
+      status: StatusType.Resolved,
+      explanation: 'fix'
     });
+    expect(mockNotificationRepository.add).toHaveBeenCalledTimes(1);
+    expect(mockSocketService.sendNotificationToUser).toHaveBeenCalledWith(reportDao.user.id, { id: 77, content: '...' });
+    expect(res).toEqual(mockReportDTO);
+  });
 
-    it("should return empty array if no approved reports", async () => {
-        reportRepositoryMock.findApproved.mockResolvedValue([]);
+  // updateReportOfficer: (internal) - reuse similar patterns as existing tests
+  it('updateReportOfficer should assign internal officer and create only officer-user chat', async () => {
+    const reportId = 10;
+    const reportDao: any = { id: reportId, status: StatusType.PendingApproval, officer: undefined, leadOfficer: undefined, chats: [] };
+    const internalOfficer: MunicipalityOfficer = mockTechAgentDAO();
+    const techLead: MunicipalityOfficer = mockTechLeadDAO();
 
-        const result = await getAllAcceptedReports();
+    mockReportRepository.findById.mockResolvedValueOnce(reportDao);
+    mockReportRepository.update.mockResolvedValueOnce({ ...reportDao, officer: internalOfficer });
 
-        expect(result).toEqual([]);
-        expect(reportRepositoryMock.findApproved).toHaveBeenCalledTimes(1);
-        expect(mapReportDAOToResponse).not.toHaveBeenCalled();
-    });
-});
+    const res = await updateReportOfficer(reportId, internalOfficer, techLead);
 
-// ------------------------------------------------------------------
-// 6. SUITE: Funzioni CRUD (Test esistenti e corretti)
-// ------------------------------------------------------------------
+    expect(mockReportRepository.findById).toHaveBeenCalledWith(reportId);
+    expect(messagingController.createChatOfficerUser).toHaveBeenCalledWith(reportDao);
+    expect(messagingController.createChatLeadExternal).not.toHaveBeenCalled();
+    expect(mockReportRepository.update).toHaveBeenCalled();
+    expect(res).toEqual(mockReportDTO);
+  });
 
-describe("reportController - Funzioni CRUD e Find", () => {
-    // ------------------------------------------------------------------
-    // updateReportStatus
-    // ------------------------------------------------------------------
-    describe("updateReportStatus", () => {
-        it("dovrebbe aggiornare lo stato e la spiegazione di un report", async () => {
-            const updatedReportDao = { ...mockReportDaoAdded, status: StatusType.Resolved, explanation: "Done" };
-            reportRepositoryMock.findById.mockResolvedValue(mockReportDaoAdded);
-            reportRepositoryMock.update.mockResolvedValue(updatedReportDao);
+  it('updateReportOfficer should assign external officer, set leadOfficer and create both chats', async () => {
+    const reportId = 20;
+    const reportDao: any = { id: reportId, status: StatusType.PendingApproval, officer: undefined, leadOfficer: undefined, chats: [] };
+    const externalOfficer: MunicipalityOfficer = { ...mockTechAgentDAO(), external: true, username: 'ext' };
+    const techLead: MunicipalityOfficer = mockTechLeadDAO();
 
-            await updateReportStatus(1, StatusType.Resolved, "Done");
+    mockReportRepository.findById.mockResolvedValueOnce(reportDao);
+    mockReportRepository.update.mockResolvedValueOnce({ ...reportDao, officer: externalOfficer, leadOfficer: techLead });
 
-            expect(reportRepositoryMock.findById).toHaveBeenCalledWith(1);
-            expect(reportRepositoryMock.update).toHaveBeenCalledWith(
-                expect.objectContaining({ status: StatusType.Resolved, explanation: "Done" })
-            );
-        });
+    const res = await updateReportOfficer(reportId, externalOfficer, techLead);
 
-        it("dovrebbe lanciare REPORT_NOT_FOUND se il report non esiste", async () => {
-            reportRepositoryMock.findById.mockResolvedValue(null);
+    expect(mockReportRepository.findById).toHaveBeenCalledWith(reportId);
+    expect(messagingController.createChatOfficerUser).toHaveBeenCalledWith(reportDao);
+    expect(messagingController.createChatLeadExternal).toHaveBeenCalledWith(reportDao);
+    expect(mockReportRepository.update).toHaveBeenCalled();
+    expect(res).toEqual(mockReportDTO);
+  });
+  it('updateReportOfficer should throw REPORT_NOT_FOUND when no report', async () => {
+    mockReportRepository.findById.mockResolvedValueOnce(null);
+    const p = updateReportOfficer(999, mockTechAgentDAO(), mockTechLeadDAO());
+    await expect(p).rejects.toHaveProperty('message', 'REPORT_NOT_FOUND');
+    await expect(p).rejects.toHaveProperty('status', 404);
+  });
 
-            await expect(
-                updateReportStatus(99, StatusType.Resolved, "Done")
-            ).rejects.toThrow("REPORT_NOT_FOUND");
-        });
-    });
+  // getAllReports
+  it('getAllReports should return mapped list', async () => {
+    const daoList = [{ id: 1 }, { id: 2 }];
+    mockReportRepository.findAll.mockResolvedValueOnce(daoList);
+    (mockMapper.mapReportDAOToDTO as jest.Mock).mockImplementation((dao: any) => ({ id: dao.id }));
 
-    // ------------------------------------------------------------------
-    // updateReportOfficer
-    // ------------------------------------------------------------------
-    describe("updateReportOfficer", () => {
-        it("dovrebbe aggiornare l'ufficiale di un report", async () => {
-            reportRepositoryMock.findById.mockResolvedValue(mockReportDaoAdded);
-            const newOfficer = { id: 20, username: "new_officer" };
-            const updatedReportDao = { ...mockReportDaoAdded, officer: newOfficer };
-            reportRepositoryMock.update.mockResolvedValue(updatedReportDao);
+    const res = await getAllReports();
+    expect(mockReportRepository.findAll).toHaveBeenCalledTimes(1);
+    expect(res).toEqual([{ id: 1 }, { id: 2 }]);
+  });
 
-            await updateReportOfficer(1, newOfficer as any);
+  // getReportById
+  it('getReportById should return mapped DTO', async () => {
+    const dao = { id: 7 };
+    mockReportRepository.findById.mockResolvedValueOnce(dao);
+    (mockMapper.mapReportDAOToDTO as jest.Mock).mockReturnValueOnce(mockReportDTO);
 
-            expect(reportRepositoryMock.findById).toHaveBeenCalledWith(1);
-            expect(reportRepositoryMock.update).toHaveBeenCalledWith(
-                expect.objectContaining({ officer: newOfficer })
-            );
-        });
-    });
+    const res = await getReportById(7);
+    expect(mockReportRepository.findById).toHaveBeenCalledWith(7);
+    expect(res).toEqual(mockReportDTO);
+  });
 
-    // ------------------------------------------------------------------
-    // getAllReports
-    // ------------------------------------------------------------------
-    describe("getAllReports", () => {
-        it("dovrebbe restituire tutti i report mappati", async () => {
-            const mockReportsDao = [{ id: 1 }, { id: 2 }];
-            reportRepositoryMock.findAll.mockResolvedValue(mockReportsDao);
-            (mapReportDAOToResponse as jest.Mock).mockImplementation(dao => ({ id: dao.id }));
+  it('getReportById should throw REPORT_NOT_FOUND when not found', async () => {
+    mockReportRepository.findById.mockResolvedValueOnce(null);
+    await expect(getReportById(999)).rejects.toHaveProperty('message', 'REPORT_NOT_FOUND');
+  });
 
-            const result = await getAllReports();
+  // GetReportsByOfficerUsername
+  it('GetReportsByOfficerUsername should call adminController.getMunicipalityOfficerDAOByUsername and return mapped reports', async () => {
+    const officer = mockTechAgentDAO();
+    (adminController.getMunicipalityOfficerDAOByUsername as jest.Mock).mockResolvedValueOnce(officer);
+    mockReportRepository.findByOfficer.mockResolvedValueOnce([{ id: 33 }]);
+    (mockMapper.mapReportDAOToDTO as jest.Mock).mockReturnValueOnce(mockReportDTO);
 
-            expect(reportRepositoryMock.findAll).toHaveBeenCalledTimes(1);
-            expect(result).toEqual([{ id: 1 }, { id: 2 }]);
-        });
-    });
+    const res = await GetReportsByOfficerUsername(officer.username);
+    expect(adminController.getMunicipalityOfficerDAOByUsername).toHaveBeenCalledWith(officer.username);
+    expect(mockReportRepository.findByOfficer).toHaveBeenCalledWith(officer);
+    expect(res).toEqual([mockReportDTO]);
+  });
 
-    // ------------------------------------------------------------------
-    // getReportById
-    // ------------------------------------------------------------------
-    describe("getReportById", () => {
-        it("dovrebbe restituire un report specifico", async () => {
-            reportRepositoryMock.findById.mockResolvedValue(mockReportDaoAdded);
-            await getReportById(1);
-            expect(reportRepositoryMock.findById).toHaveBeenCalledWith(1);
-            expect(mapReportDAOToResponse).toHaveBeenCalledWith(mockReportDaoAdded);
-        });
+  // getAllAcceptedReports
+  it('getAllAcceptedReports should return approved reports mapped', async () => {
+    mockReportRepository.findApproved.mockResolvedValueOnce([{ id: 5 }]);
+    (mockMapper.mapReportDAOToDTO as jest.Mock).mockReturnValueOnce(mockReportDTO);
 
-        it("dovrebbe lanciare REPORT_NOT_FOUND", async () => {
-            reportRepositoryMock.findById.mockResolvedValue(null);
-            await expect(getReportById(99)).rejects.toThrow("REPORT_NOT_FOUND");
-        });
-    });
+    const res = await getAllAcceptedReports();
+    expect(mockReportRepository.findApproved).toHaveBeenCalledTimes(1);
+    expect(res).toEqual([mockReportDTO]);
+  });
 
-    // ------------------------------------------------------------------
-    // GetReportsByOfficerUsername
-    // ------------------------------------------------------------------
-    describe("GetReportsByOfficerUsername", () => {
-        it("dovrebbe restituire i report per username dell'ufficiale", async () => {
-            const reportsDao = [{ id: 1 }, { id: 2 }];
-            reportRepositoryMock.findByOfficer.mockResolvedValue(reportsDao);
+  // getReportsByCategoryIdAndStatus
+  it('getReportsByCategoryIdAndStatus should filter by provided statuses', async () => {
+    const r1 = { id: 1, status: StatusType.Assigned };
+    const r2 = { id: 2, status: StatusType.PendingApproval };
+    const r3 = { id: 3, status: StatusType.Resolved };
+    mockReportRepository.findByCategoryId.mockResolvedValueOnce([r1, r2, r3]);
+    (mockMapper.mapReportDAOToDTO as jest.Mock).mockImplementation((dao: any) => ({ id: dao.id }));
 
-            const result = await GetReportsByOfficerUsername("org_officer");
+    const res = await getReportsByCategoryIdAndStatus(99, [StatusType.Assigned, StatusType.Resolved]);
+    expect(mockReportRepository.findByCategoryId).toHaveBeenCalledWith(99);
+    expect(res).toEqual([{ id: 1 }, { id: 3 }]);
+  });
 
-            expect(getMunicipalityOfficerDAOByUsername).toHaveBeenCalledWith("org_officer");
-            expect(reportRepositoryMock.findByOfficer).toHaveBeenCalledWith(mockOfficerDao);
-            expect(result.length).toBe(reportsDao.length);
-        });
-    });
+  // getUserReports
+  it('getUserReports should return mapped reports for user', async () => {
+    mockReportRepository.findByUserId.mockResolvedValueOnce([{ id: 12 }]);
+    (mockMapper.mapReportDAOToDTO as jest.Mock).mockReturnValueOnce(mockReportDTO);
 
-    // ------------------------------------------------------------------
-    // getReportsByCategoryIdAndStatus
-    // ------------------------------------------------------------------
-    describe("getReportsByCategoryIdAndStatus", () => {
-        it("dovrebbe filtrare i report per stato dopo averli trovati per categoria", async () => {
-            const statusFilter = [StatusType.Assigned, StatusType.InProgress];
-            const rawReports = [
-                { id: 1, status: StatusType.Assigned },
-                { id: 2, status: StatusType.Resolved },
-                { id: 3, status: StatusType.InProgress },
-                { id: 4, status: StatusType.PendingApproval },
-            ];
-            reportRepositoryMock.findByCategoryId.mockResolvedValue(rawReports);
-            (mapReportDAOToResponse as jest.Mock).mockImplementation(dao => ({
-                id: dao.id,
-                status: dao.status,
-            }));
-
-            const result = await getReportsByCategoryIdAndStatus(1, statusFilter);
-
-            expect(reportRepositoryMock.findByCategoryId).toHaveBeenCalledWith(1);
-            expect(result.length).toBe(2);
-            expect(result).toEqual(
-                expect.arrayContaining([
-                    expect.objectContaining({ id: 1, status: StatusType.Assigned }),
-                    expect.objectContaining({ id: 3, status: StatusType.InProgress }),
-                ])
-            );
-        });
-    });
-});
-
-
-// ------------------------------------------------------------------
-// 7. SUITE: addReport (Corretta)
-// ------------------------------------------------------------------
-
-describe("addReport - Copertura Completa", () => {
-
-    // ------------------------------------------------------------------
-    // Caso 1: Successo con foto
-    // ------------------------------------------------------------------
-    it("dovrebbe salvare il report e le foto (Officer undefined come da logica attuale)", async () => {
-        const reportData: CreateReportRequestDTO = {
-            title: "R1", description: "D", latitude: 10, longitude: 20, userId: 1, categoryId: 5,
-            photos: mockPhotoUrls,
-        };
-        const reportDaoWithPhotos = { ...mockReportDaoAdded, photos: [{ photo: 'photo1.jpg' } as ReportPhoto] };
-
-        // Simula il DAO ritornato che contiene le foto aggiunte
-        reportRepositoryMock.add.mockResolvedValue(reportDaoWithPhotos);
-        (mapReportDAOToResponse as jest.Mock).mockReturnValue({
-            ...mockReportDto,
-            photos: mockPhotoUrls
-        });
-
-        await addReport(reportData);
-
-        // 1. ADATTAMENTO: Verifica che l'assegnazione NON avvenga (come da tuo codice attuale)
-        expect(getMunicipalityOfficerDAOForNewRequest).not.toHaveBeenCalled();
-
-        // 2. ADATTAMENTO: Verifica che reportDAO.officer sia undefined
-        const reportDAO = (mapCreateReportRequestToDAO as jest.Mock).mock.results[0].value;
-        expect(reportDAO.officer).toBeUndefined();
-        expect(reportDAO.status).toBe(StatusType.PendingApproval);
-
-        // 3. Verifica il salvataggio del report
-        expect(reportRepositoryMock.add).toHaveBeenCalledTimes(1);
-
-        // 4. Verifica il salvataggio delle foto
-        expect(reportRepositoryMock.addPhotosToReport).toHaveBeenCalledTimes(1);
-        const [reportForPhotos, photoDAOs] = reportRepositoryMock.addPhotosToReport.mock.calls[0];
-
-        expect(reportForPhotos).toBe(reportDaoWithPhotos);
-        expect(photoDAOs.length).toBe(mockPhotoUrls.length);
-        expect(photoDAOs[0]).toBeInstanceOf(ReportPhoto);
-    });
-
-    // ------------------------------------------------------------------
-    // Caso 2: Successo senza foto
-    // ------------------------------------------------------------------
-    it("dovrebbe salvare il report e NON chiamare addPhotosToReport se mancano le foto", async () => {
-        const reportData: CreateReportRequestDTO = {
-            title: "R2", description: "D", latitude: 10, longitude: 20, userId: 1, categoryId: 5,
-            photos: [],
-        };
-
-        await addReport(reportData);
-
-        // ADATTAMENTO: Non ci aspettiamo chiamate all'assegnazione officer
-        expect(getMunicipalityOfficerDAOForNewRequest).not.toHaveBeenCalled();
-
-        expect(reportRepositoryMock.add).toHaveBeenCalledTimes(1);
-        expect(reportRepositoryMock.addPhotosToReport).not.toHaveBeenCalled();
-    });
-
-    // ------------------------------------------------------------------
-    // Caso 3: Fallimento assegnazione Ufficiale
-    // ------------------------------------------------------------------
-    // NOTA: Usiamo it.skip perché questo test non può passare finché
-    // il controller non chiama effettivamente getMunicipalityOfficerDAOForNewRequest.
-    // Il test fallirebbe con "Received promise resolved instead of rejected".
-    it.skip("dovrebbe propagare l'errore se getMunicipalityOfficerDAOForNewRequest fallisce", async () => {
-        (getMunicipalityOfficerDAOForNewRequest as jest.Mock).mockRejectedValue(new Error("NO_OFFICER_AVAILABLE"));
-
-        const reportData: CreateReportRequestDTO = {
-            title: "R3", description: "D", latitude: 10, longitude: 20, userId: 1, categoryId: 5, photos: [],
-        };
-
-        await expect(addReport(reportData)).rejects.toThrow("NO_OFFICER_AVAILABLE");
-        expect(reportRepositoryMock.add).not.toHaveBeenCalled();
-    });
-
-    // ------------------------------------------------------------------
-    // Caso 4: Fallimento salvataggio Report (es. User/Category ID non valido)
-    // ------------------------------------------------------------------
-    it("dovrebbe propagare l'errore se reportRepository.add fallisce", async () => {
-        // Questo test rimane valido perché reportRepository.add viene chiamata
-        reportRepositoryMock.add.mockRejectedValue(new Error("Category not found for report creation."));
-
-        const reportData: CreateReportRequestDTO = {
-            title: "R4", description: "D", latitude: 10, longitude: 20, userId: 1, categoryId: 999, photos: [],
-        };
-
-        await expect(addReport(reportData)).rejects.toThrow("Category not found for report creation.");
-
-        expect(reportRepositoryMock.addPhotosToReport).not.toHaveBeenCalled();
-    });
+    const res = await getUserReports(55);
+    expect(mockReportRepository.findByUserId).toHaveBeenCalledWith(55);
+    expect(res).toEqual([mockReportDTO]);
+  });
 });

@@ -147,7 +147,7 @@ export default function Header() {
                         <Stack direction="row" spacing={2} alignItems="center">
                             {role == "USER" && <NotificationsMenu/>}
                             <Avatar
-                                src={`http://localhost:3000/api/users/uploads/${user?.photo}` || undefined}
+                                src={`http://localhost:3000/api/users/uploads/${user?.photo}`}
                                 sx={{width: 36, height: 36, bgcolor: 'secondary.main', fontSize: 16, fontWeight: 600}}
                                 onClick={handleNavigate}>
                                 {!user?.photo && initials}

@@ -1,7 +1,7 @@
 // import "./App.css";
 import 'leaflet/dist/leaflet.css';
 import { GlobalStyles, ThemeProvider, Box, CircularProgress} from "@mui/material";
-import Map from "../src/pages/Map";
+import StreetMap from "../src/pages/Map";
 import Layout from './layout/Layout';
 import theme from "./theme/index";
 import HomePage from './pages/HomePage';

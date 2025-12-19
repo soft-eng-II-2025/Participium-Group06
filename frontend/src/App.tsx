@@ -44,7 +44,7 @@ function App() {
 
         if (!isAuthenticated) return <HomePage />;
         if (role === 'ADMIN') return <ProtectedRoute><AdminHomePage /></ProtectedRoute>;
-        if (role === 'USER') return <ProtectedRoute><Map /></ProtectedRoute>;
+        if (role === 'USER') return <ProtectedRoute><StreetMap /></ProtectedRoute>;
         if (role === 'ORGANIZATION_OFFICER') return <ProtectedRoute><OrganizationOfficerHomePage /></ProtectedRoute>;
         if (role?.startsWith('TECH_LEAD')) return <ProtectedRoute><TechLeadHomePage /></ProtectedRoute>;
         if (role?.startsWith('TECH_AGENT')) return <ProtectedRoute><TechAgentHomePage /></ProtectedRoute>;

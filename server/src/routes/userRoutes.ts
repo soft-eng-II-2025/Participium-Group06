@@ -91,7 +91,7 @@ router.post('/reports', requireUser, async (req: Request, res: Response) => {
     email: 'temp@x.com',
     first_name: 'Temp',
     last_name: 'User',
-    role: 'TempRole'
+    roles: ['TempRole']
     } as MunicipalityOfficerResponseDTO;
 
     req.body = adapted;

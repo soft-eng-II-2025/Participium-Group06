@@ -13,8 +13,11 @@ export class Role {
   @Column()
   label!: string;
 
-  @OneToMany(() => MunicipalityOfficer, (municipalityOfficer) => municipalityOfficer.role)
-  municipalityOfficer!: MunicipalityOfficer[];
+  @ManyToMany(
+  () => MunicipalityOfficer,
+  (municipalityOfficer) => municipalityOfficer.roles
+  )
+  municipalityOfficers!: MunicipalityOfficer[];
 
   @ManyToMany(() => Category, (category) => category.roles)
   @JoinTable({

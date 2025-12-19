@@ -13,14 +13,14 @@ export class MunicipalityOfficerRepository {
     // elenco completo (con join ruolo)
     async findAll(): Promise<MunicipalityOfficer[]> {
         return this.ormRepository.find({
-            relations: ["role"],
+            relations: ["roles"],
         });
     }
     async findByusername(user: string): Promise<MunicipalityOfficer | null> {
         return this.ormRepository.findOne(
             {
                 where: {username: user},
-                relations: ['role'],
+                // relations: ['roles'],
             }
         );
     }
@@ -29,7 +29,7 @@ export class MunicipalityOfficerRepository {
     async findAllVisible(): Promise<MunicipalityOfficer[]> {
         return this.ormRepository
             .createQueryBuilder("u")
-            .leftJoinAndSelect("u.role", "role")
+            .leftJoinAndSelect("u.roles", "roles") // a modifier probablement
             .where("LOWER(u.username) <> :admin", { admin: "admin" })
             .getMany();
     }
@@ -41,7 +41,7 @@ export class MunicipalityOfficerRepository {
     async findByUsername(username: string): Promise<MunicipalityOfficer | null> {
         return this.ormRepository.findOne({
             where: { username },
-            relations: ["role"],
+            relations: ["roles"],
         });
     }
 
@@ -52,14 +52,14 @@ export class MunicipalityOfficerRepository {
     async findById(id: number): Promise<MunicipalityOfficer | null> {
         return this.ormRepository.findOne({
             where: { id },
-            relations: ["role"],
+            relations: ["roles"],
         });
     }
 
     async findByRoleTitle(roleTitle: string): Promise<MunicipalityOfficer[]> {
         return this.ormRepository.find({
-            where: { role: { title: roleTitle } },
-            relations: ["role"],
+            where: { roles: { title: roleTitle } },
+            relations: ["roles"],
         });
     }
 

@@ -20,7 +20,7 @@ export class MunicipalityOfficerRepository {
         return this.ormRepository.findOne(
             {
                 where: {username: user},
-                // relations: ['roles'],
+                relations: ['roles'],
             }
         );
     }

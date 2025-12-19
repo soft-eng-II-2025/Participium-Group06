@@ -121,14 +121,14 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
     )`);
 
     // 3. M2M join table role <-> MunicipalityOfficer
-    await queryRunner.query(`CREATE TABLE "role_municipality_officer" (
+    await queryRunner.query(`CREATE TABLE "municipality_officer_roles" (
+      "municipality_officer_id" INT NOT NULL,
       "role_id" INT NOT NULL,
-      "MunicipalityOfficer_id" INT NOT NULL,
-      PRIMARY KEY ("role_id","MunicipalityOfficer_id"),
+      PRIMARY KEY ("role_id","municipality_officer_id"),
       CONSTRAINT "FK_role_municipality_officer_role"
         FOREIGN KEY ("role_id") REFERENCES "role"("id") ON DELETE CASCADE,
       CONSTRAINT "FK_role_municipality_officer_municipality_officer"
-        FOREIGN KEY ("MunicipalityOfficer_id") REFERENCES "municipality_officer"("id") ON DELETE CASCADE
+        FOREIGN KEY ("municipality_officer_id") REFERENCES "municipality_officer"("id") ON DELETE CASCADE
     )`);
 
     await queryRunner.query(`CREATE TABLE "chat" (
@@ -347,7 +347,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      INSERT INTO "role_municipality_officer" ("role_id","MunicipalityOfficer_id") VALUES
+      INSERT INTO "municipality_officer_roles" ("municipality_officer_id","role_id") VALUES
       (1,1),
       (2,2),
       (3,3),
@@ -362,7 +362,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       (12,12),
       (13,13),
       (14,14),
-      (6,15)
+      (15,6)
       `);
 
     // Allineamento sequence municipality_officer

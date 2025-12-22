@@ -129,7 +129,7 @@
 //     password: await hashPassword("password123"),
 //     first_name: "Agent",
 //     last_name: "One",
-//     role: techAgentRole,
+//     roles: [techAgentRole],
 //     external: true,
 //   });
 
@@ -139,7 +139,7 @@
 //     password: await hashPassword("password123"),
 //     first_name: "Tech",
 //     last_name: "Lead",
-//     role: techLeadRole,
+//     roles: [techLeadRole],
 //     external: false,
 //   });
 //   await officerRepo.save([testOfficer, testLeadOfficer]);

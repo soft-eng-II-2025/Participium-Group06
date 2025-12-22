@@ -181,7 +181,7 @@ describe("Mapper & DTO helper functions", () => {
   });
 
   test("mapMessageDAOToDTO maps correctly", () => {
-    const chat = { report: { id: 1, user: { username: "u" }, officer: { role: { label: "R" } } } } as any;
+    const chat = { report: { id: 1, user: { username: "u" }, officer: { roles: [{ label: "R" }] } } } as any;
     const msg = { chat, content: "Hello", created_at: new Date(), sender: SenderType.USER } as Message;
     const dto = mapMessageDAOToDTO(msg);
     expect(dto.content).toBe("Hello");

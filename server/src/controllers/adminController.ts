@@ -156,15 +156,20 @@ export async function getAgentsByTechLeadUsername(techLeadUsername :string):Prom
     if (officerRoles === undefined) {
         throw appErr("OFFICER_NOT_FOUND", 404);
     }
+    let istechLead = false;
     for (var role of officerRoles) {
-    const officerTitle = role?.title;
-    if (!officerTitle) {
-        throw appErr("OFFICER_NOT_FOUND", 404);
+        const officerTitle = role?.title;
+        if (!officerTitle) {
+            throw appErr("OFFICER_NOT_FOUND", 404);
+        }
+        if (!(officerTitle.slice(0,9) != "TECH_LEAD")) {
+            istechLead = true;
+            const tech_agent_title= "TECH_AGENT"+officerTitle.slice(9,officerTitle.length);
+            const tech_agents = await municipalityOfficerRepository.findByRoleTitle(tech_agent_title);
+            tech_agents_tot = tech_agents_tot.concat(tech_agents.map(mapMunicipalityOfficerDAOToResponse));}}
+    if (!istechLead) {
+        throw appErr("INVALID_TECH_LEAD_LABEL", 404);
     }
-    if (!(officerTitle.slice(0,9) != "TECH_LEAD")) {
-    const tech_agent_title= "TECH_AGENT"+officerTitle.slice(9,officerTitle.length);
-    const tech_agents = await municipalityOfficerRepository.findByRoleTitle(tech_agent_title);
-    tech_agents_tot = tech_agents_tot.concat(tech_agents.map(mapMunicipalityOfficerDAOToResponse));}}
     if (tech_agents_tot.length === 0) {
         throw appErr("NO_TECH_AGENT_AVAILABLE", 404);
     }

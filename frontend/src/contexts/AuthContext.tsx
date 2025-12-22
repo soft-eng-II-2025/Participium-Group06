@@ -124,10 +124,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 const resolveRole = (user: any): string | null => {
   if (!user) return null;
 
-  if (!("role" in user)) return "USER"; // regular user has no role property
-  if (user.role === null) return null; // officer with no assigned role
+  if (!("roles" in user)) return "USER"; // regular user has no role property
+  if (user.roles === null) return null; // officer with no assigned role
 
-  return user.role; 
+
+
+  return user.roles[0] ?? null; 
 };
 
 export function useAuth(): AuthContextType {

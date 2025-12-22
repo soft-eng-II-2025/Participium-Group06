@@ -75,8 +75,8 @@ describe("Mapper & DTO helper functions", () => {
     user.last_name = "L";
     user.reports = [];
     user.flag_email = true;
-    const dto = createReportDTO(1, 12, 34, "Title", "Desc", user);
-    expect(dto.user.username).toBe("u1");
+    const dto = createReportDTO(1, 12, 34, "Title", "Desc", user, false);
+    expect(dto.user?.username).toBe("u1");
     expect(dto.title).toBe("Title");
   });
 
@@ -156,7 +156,7 @@ describe("Mapper & DTO helper functions", () => {
     report.leadOfficer = undefined;
 
     const dto = mapReportDAOToDTO(report);
-    expect(dto.user.username).toBe("u");
+    expect(dto.user?.username).toBe("u");
     expect(dto.category).toBe("Cat1");
     expect(dto.photos).toEqual(["p1"]);
   });
@@ -207,7 +207,7 @@ describe("Mapper & DTO helper functions", () => {
   // Request -> DAO mappers
   // ------------------------
   test("mapCreateReportRequestToDAO maps correctly", () => {
-    const dto: CreateReportRequestDTO = { longitude: 10, latitude: 20, title: "T", description: "D", userId: 1, categoryId: 2, photos: ["p"] };
+    const dto: CreateReportRequestDTO = { longitude: 10, latitude: 20, title: "T", description: "D", userId: 1, categoryId: 2, photos: ["p"], anonymous: false };
     const dao = mapCreateReportRequestToDAO(dto);
     expect(dao.longitude).toBe(10);
     expect(dao.latitude).toBe(20);

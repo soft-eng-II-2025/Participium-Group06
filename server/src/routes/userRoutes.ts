@@ -73,6 +73,7 @@ async function adaptCreateReportBody(body: any): Promise<CreateReportRequestDTO>
         categoryId: Number(categoryId),
         officer: body.officer,
         photos: Array.isArray(body.photos) ? body.photos.map(String) : [],
+        anonymous: body.anonymous
     };
 }
 

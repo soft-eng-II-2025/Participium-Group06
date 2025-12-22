@@ -59,7 +59,8 @@ export function createReportDTO(
     latitude: number,
     title: string,
     description: string,
-    user: User, 
+    user: User,
+    anonymous: boolean,
     category?: CategoryResponseDTO,
     status?: string,
     explanation?: string,
@@ -83,7 +84,8 @@ export function createReportDTO(
         photos,
         createdAt,
         chats,
-        leadOfficer
+        leadOfficer,
+        anonymous
     }) as unknown as ReportResponseDTO;
 }
 
@@ -186,6 +188,7 @@ export function mapReportDAOToDTO(reportDAO: Report): ReportResponseDTO {
         reportDAO.title,
         reportDAO.description,
         reportDAO.user,
+        reportDAO.anonymous,
         reportDAO.category ? mapCategoryDAOToDTO(reportDAO.category) : undefined,
         reportDAO.status,
         reportDAO.explanation,
@@ -273,6 +276,8 @@ export function mapCreateReportRequestToDAO(dto: CreateReportRequestDTO): Report
     dao.explanation = "";
     dao.category = new Category();
     dao.category.id = dto.categoryId;
+
+    dao.anonymous = dto.anonymous;
 
     return dao;
 }

@@ -13,7 +13,8 @@ export class ReportResponseDTO {
 
     description!: string;
 
-    user!: UserResponseDTO;
+    // se il report è anonimo, lo user è undefined
+    user?: UserResponseDTO;
 
     category!: string;
 
@@ -30,4 +31,6 @@ export class ReportResponseDTO {
     chats!: ChatResponseDTO[];
 
     leadOfficer!: MunicipalityOfficerResponseDTO;
+
+    anonymous!: boolean;
 }

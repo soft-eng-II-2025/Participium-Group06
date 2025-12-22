@@ -131,7 +131,15 @@ export async function GetReportsByOfficerUsername(username: string):Promise<Repo
 
 export async function getAllAcceptedReports():Promise<ReportResponseDTO[]> {
     const reports = await reportRepository.findApproved();
-    return reports.map(mapReportDAOToResponse);
+    const reportsDto = reports.map(mapReportDAOToResponse);
+
+    // se il report è anonimo, user = undefined
+    reportsDto.forEach(r => {
+        if(r.anonymous)
+            r.user = undefined;
+    })
+
+    return reportsDto;
 }
 
 export async function getReportsByCategoryIdAndStatus(categoryId :number, Status : StatusType[]):Promise<ReportResponseDTO[]> {

@@ -1,293 +1,397 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-    MapContainer,
-    TileLayer,
-    Marker,
-    Popup,
-    GeoJSON,
-    useMapEvents,
+  MapContainer,
+  TileLayer,
+  Marker,
+  GeoJSON,
+  useMapEvents,
+  Circle,
+  Popup,
 } from "react-leaflet";
 import L, { LatLngExpression } from "leaflet";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import { point } from "@turf/helpers";
 import { useNavigate } from "react-router-dom";
-import { Button, Stack, Typography } from "@mui/material";
-import ReportDrawer from "./ReportDrawer";
-import { ReportsApi } from "../api/reportsApi";
+import {
+  Button,
+  Typography,
+  Box,
+  TextField,
+  IconButton,
+} from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 import MarkerClusterGroup from "react-leaflet-markercluster";
+import { ReportsApi } from "../api/reportsApi";
+import ReportDrawer from "./ReportDrawer";
+import { ReportResponseDTO } from "../DTOs/ReportResponseDTO";
+
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { ReportResponseDTO } from "../DTOs/ReportResponseDTO";
+
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
-import ReportPreview from "./ReportPreview";
 
+export const TURIN_BBOX = "7.550,45.000,7.800,45.150";
 
-// Fix default Leaflet marker icons
+/* ----------------------------- ICON FIX ---------------------------- */
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-    iconRetinaUrl: markerIcon2x,
-    iconUrl: markerIcon,
-    shadowUrl: markerShadow,
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
 });
 
-// Custom marker for new report with inner white circle
-const myCustomColour = "#d33"; // main pin color
+/* -------------------------- HELPER FUNCTIONS ---------------------- */
+function haversineDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+) {
+  const R = 6371e3;
+  const toRad = (v: number) => (v * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
 
-const markerHtmlStyles = `
-  position: relative;
-  width: 2rem;
-  height: 2rem;
-  background-color: ${myCustomColour};
-  border-radius: 2rem 2rem 0;
-  transform: rotate(45deg);
-  border: 1px solid #FFFFFF;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) ** 2;
 
-const innerCircleStyles = `
-  width: 0.7rem;
-  height: 0.7rem;
-  background-color: white;
-  border-radius: 50%;
-  transform: rotate(-45deg); /* counter rotate to stay circular */
-`;
-
-export const newReportIcon = L.divIcon({
-  className: "my-custom-pin",
-  html: `<span style="${markerHtmlStyles}"><span style="${innerCircleStyles}"></span></span>`,
-  iconSize: [32, 32],
-  iconAnchor: [16, 28],
-  popupAnchor: [0, -30],
-});
-
-
-
-// Default icon for existing reports
-const existingReportIcon = new L.Icon({
-    iconUrl: markerIcon,
-    iconRetinaUrl: markerIcon2x,
-    shadowUrl: markerShadow,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41],
-});
-
-interface MapSelectorProps {
-    onSelect: (lat: number, lng: number) => void;
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-/* ------------------------- CLICK HANDLER ------------------------- */
+/* ---------------------------- ICONS -------------------------------- */
+const newReportIcon = L.divIcon({
+  className: "new-report-pin",
+  html: `<div style="
+    width: 28px;
+    height: 28px;
+    background:#d33;
+    border-radius:50% 50% 50% 0;
+    transform:rotate(-45deg);
+    border:2px solid white;"></div>`,
+  iconSize: [28, 28],
+  iconAnchor: [14, 28],
+});
+
+/* ---------------------------- CLICK HANDLER ------------------------ */
 const ClickHandler: React.FC<{
-    onSelect: (lat: number, lng: number) => void;
-    geoData: any | null;
-}> = ({ onSelect, geoData }) => {
-    const [position, setPosition] = useState<LatLngExpression | null>(null);
-    const [tempInvalid, setTempInvalid] = useState<LatLngExpression | null>(null);
-    const markerRef = React.useRef<L.Marker>(null);
-    const navigate = useNavigate();
+  geoData: any;
+  onSelect: (lat: number, lng: number) => void;
+}> = ({ geoData, onSelect }) => {
+  const navigate = useNavigate();
+  const [position, setPosition] = useState<LatLngExpression | null>(null);
 
-    useMapEvents({
-        click(e) {
-            const { lat, lng } = e.latlng;
-            if (!geoData) return;
+  useMapEvents({
+    click(e) {
+      const polygon = geoData?.features?.[0]?.geometry;
+      if (!polygon) return;
 
-            const polygonGeometry =
-                geoData.type === "FeatureCollection"
-                    ? geoData.features[0]?.geometry
-                    : geoData.type === "Feature"
-                    ? geoData.geometry
-                    : null;
+      const { lat, lng } = e.latlng;
+      const inside = booleanPointInPolygon(point([lng, lat]), polygon);
+      if (!inside) return;
 
-            if (!polygonGeometry) return;
+      setPosition([lat, lng]);
+      onSelect(lat, lng);
+    },
+  });
 
-            const pt = point([lng, lat]);
-            const inside = booleanPointInPolygon(pt, polygonGeometry);
-
-            if (inside) {
-                setPosition([lat, lng]);
-                onSelect(lat, lng);
-            } else {
-                setTempInvalid([lat, lng]);
-                setTimeout(() => setTempInvalid(null), 2000);
-            }
-        },
-    });
-
-    useEffect(() => {
-        if (!position) return;
-        const tryOpen = () => {
-            try {
-                markerRef.current?.openPopup?.();
-            } catch {}
-        };
-        tryOpen();
-        const id = window.setTimeout(tryOpen, 0);
-        return () => clearTimeout(id);
-    }, [position]);
-
-    const handleCreateReport = () => {
-        if (position && Array.isArray(position)) {
-            const [lat, lng] = position;
-            navigate("/new-report", { state: { latitude: lat, longitude: lng } });
-        }
-    };
-
-    return (
-        <>
-            {position && (
-                <Marker position={position} ref={markerRef} icon={newReportIcon}>
-                    <Popup>
-                        <div style={{ textAlign: "center" }}>
-                            <p><strong>Do you want to report an issue here?</strong></p>
-                            <p>Latitude: {Array.isArray(position) ? position[0].toFixed(4) : ""}</p>
-                            <p>Longitude: {Array.isArray(position) ? position[1].toFixed(4) : ""}</p>
-
-                            <Button
-                                color="primary"
-                                variant="contained"
-                                size="small"
-                                onClick={handleCreateReport}
-                                sx={{ marginTop: "8px", mr: "8px", px: 2 }}
-                            >
-                                Add Report
-                            </Button>
-                        </div>
-                    </Popup>
-                </Marker>
-            )}
-            {tempInvalid && (
-                <Marker position={tempInvalid}>
-                    <Popup>❌ Point outside the boundary!</Popup>
-                </Marker>
-            )}
-        </>
-    );
+  return position ? (
+    <Marker position={position} icon={newReportIcon}>
+      <Popup>
+        <Button
+          fullWidth
+          variant="contained"
+          onClick={() => {
+            const [lat, lng] = position as [number, number];
+            navigate("/new-report", {
+              state: { latitude: lat, longitude: lng },
+            });
+          }}
+        >
+          Add report
+        </Button>
+      </Popup>
+    </Marker>
+  ) : null;
 };
 
-/* ------------------------- MAIN MAP SELECTOR ------------------------- */
-const MapSelector: React.FC<MapSelectorProps> = ({ onSelect }) => {
-    const [geoData, setGeoData] = useState<any | null>(null);
-    const [reports, setReports] = useState<ReportResponseDTO[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [openDrawer, setOpenDrawer] = useState(false);
-    const [selectedReport, setSelectedReport] = useState<ReportResponseDTO | null>(null);
+/* ---------------------------- MAIN COMPONENT ----------------------- */
+const MapSelector: React.FC<{ onSelect: (lat: number, lng: number) => void }> = ({
+  onSelect,
+}) => {
+  const searchRef = useRef<HTMLDivElement | null>(null);
 
-    useEffect(() => {
-        const load = async () => {
-            try {
-                const boundaryRes = await fetch("/turin-boundary.geojson");
-                const boundaryJson = await boundaryRes.json();
-                setGeoData(boundaryJson);
+  const [geoData, setGeoData] = useState<any>(null);
+  const [reports, setReports] = useState<ReportResponseDTO[]>([]);
+  const [selectedReport, setSelectedReport] = useState<ReportResponseDTO | null>(null);
+  const [openDrawer, setOpenDrawer] = useState(false);
 
-                const reportsApi = new ReportsApi();
-                const approved = await reportsApi.getApprovedReports();
-                setReports(approved);
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [searchCenter, setSearchCenter] = useState<{ lat: number; lng: number } | null>(null);
+  const [previewCenter, setPreviewCenter] = useState<{ lat: number; lng: number } | null>(null);
+  const [selectedSuggestion, setSelectedSuggestion] = useState<any | null>(null);
+  const [radius, setRadius] = useState(500);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [windowWidth, setWindowWidth] = useState<number>(window.innerWidth);
 
-            } catch (err) {
-                console.error("Error loading map data:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
+  const [mapCenter, setMapCenter] = useState<LatLngExpression>([45.0703, 7.6869]);
+  const [mapZoom, setMapZoom] = useState(12.5);
 
-        load();
-    }, []);
+  /* ------------------------ WINDOW RESIZE -------------------------- */
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
-    if (loading) return <p>Loading map...</p>;
+  /* ------------------------ DISABLE MAP EVENTS --------------------- */
+  useEffect(() => {
+    if (!searchRef.current) return;
+    L.DomEvent.disableClickPropagation(searchRef.current);
+    L.DomEvent.disableScrollPropagation(searchRef.current);
+  }, [searchOpen]);
 
-    return (
-        <MapContainer
-            center={[45.0703, 7.6869]}
-            zoom={12.5}
-            style={{ height: "100%", width: "100%" }}
+  /* ------------------------ LOAD DATA ------------------------------ */
+  useEffect(() => {
+    (async () => {
+      const boundary = await fetch("/turin-boundary.geojson").then((r) => r.json());
+      setGeoData(boundary);
+
+      const api = new ReportsApi();
+      setReports(await api.getApprovedReports());
+    })();
+  }, []);
+
+  /* ------------------------ AUTOCOMPLETE --------------------------- */
+  useEffect(() => {
+    if (!query || query.length < 3) {
+      setSuggestions([]);
+      setPreviewCenter(null);
+      return;
+    }
+
+    const id = setTimeout(async () => {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?` +
+          `format=json&limit=5&countrycodes=it&bounded=1` +
+          `&viewbox=${TURIN_BBOX}&addressdetails=1` +
+          `&q=${encodeURIComponent(query + ", Torino")}`,
+        {
+          headers: {
+            "Accept-Language": "en",
+            "User-Agent": "Participium/1.0",
+          },
+        }
+      );
+
+      if (!res.ok) return;
+      setSuggestions(await res.json());
+    }, 400);
+
+    return () => clearTimeout(id);
+  }, [query]);
+
+  /* ------------------------ HANDLE SELECT -------------------------- */
+  const selectSuggestion = (s: any) => {
+    const lat = parseFloat(s.lat);
+    const lng = parseFloat(s.lon);
+    setSearchCenter({ lat, lng });
+    setMapCenter([lat, lng]);
+    setMapZoom(15);
+    setSuggestions([]);
+    setSelectedSuggestion(s);
+    setSearchOpen(false);
+  };
+
+  /* ------------------------ HANDLE REPORT OPEN -------------------- */
+  const handleReportOpen = (r: ReportResponseDTO) => {
+    setSelectedReport(r);
+    setOpenDrawer(true);
+    setSearchOpen(false);
+  };
+
+  /* ------------------------ CLEAR SELECTION ON EMPTY QUERY -------- */
+  useEffect(() => {
+    if (query.trim() === "") {
+      setSearchCenter(null);
+      setSuggestions([]);
+      setSelectedSuggestion(null);
+      setPreviewCenter(null);
+    }
+  }, [query]);
+
+  return (
+    <>
+      <MapContainer
+        center={mapCenter}
+        zoom={mapZoom}
+        style={{ height: "100%", width: "100%" }}
+      >
+        <TileLayer
+          attribution="&copy; OpenStreetMap & CartoDB"
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        />
+
+        {/* SEARCH BUTTON */}
+        <IconButton
+        sx={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            zIndex: 1000,
+            backgroundColor: "#003366",
+            color: "white",
+            "&:hover": {
+            backgroundColor: "#002244", // slightly darker for hover effect
+            },
+        }}
+        onClick={() => setSearchOpen((v) => !v)}
         >
-            <TileLayer
-                attribution='&copy; OpenStreetMap contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        <SearchIcon />
+        </IconButton>
+
+        {/* SEARCH PANEL */}
+        {searchOpen && (
+          <Box
+            ref={searchRef}
+            sx={{
+              position: "absolute",
+              top: 56,
+              right: 16,
+              zIndex: 2000,
+              background: "white",
+              p: 2,
+              width: 320,
+              borderRadius: 2,
+              boxShadow: 4,
+              pointerEvents: "auto",
+            }}
+          >
+            <TextField
+              size="small"
+              fullWidth
+              label="Search address"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
             />
+            {suggestions.map((s) => (
+              <Box
+                key={s.place_id}
+                sx={{ p: 1, cursor: "pointer", color: "black" }}
+                onMouseEnter={() =>
+                  setPreviewCenter({ lat: parseFloat(s.lat), lng: parseFloat(s.lon) })
+                }
+                onMouseLeave={() => setPreviewCenter(null)}
+                onClick={() => selectSuggestion(s)}
+              >
+                {s.display_name}
+              </Box>
+            ))}
+            <TextField
+              type="number"
+              size="small"
+              fullWidth
+              label="Radius (meters)"
+              value={radius}
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10);
+                if (!isNaN(val)) setRadius(val);
+              }}
+              inputProps={{
+                min: 100,
+                max: 3000,
+                step: 100,
+              }}
+              sx={{ mt: 1 }}
+            />
+          </Box>
+        )}
 
-            {geoData?.features && (
-                <GeoJSON
-                    data={geoData}
-                    style={{
-                        color: "blue",
-                        weight: 2,
-                        fillColor: "lightblue",
-                        fillOpacity: 0.2,
-                    }}
-                />
-            )}
+        {/* PREVIEW CIRCLE */}
+        {previewCenter && (
+          <Circle
+            center={[previewCenter.lat, previewCenter.lng]}
+            radius={radius}
+            pathOptions={{ color: "blue", fillOpacity: 0.05 }}
+          />
+        )}
 
-            {/* MARKER CLUSTER GROUP FOR EXISTING REPORTS */}
-            <MarkerClusterGroup
-              showCoverageOnHover={false}
-              spiderfyOnMaxZoom={true}
-              maxClusterRadius={50}
-              iconCreateFunction={(cluster: any) => {
-                const count = cluster.getChildCount();
-                return L.divIcon({
-                    html: `<div style="
-                    background-color: #2C84CB;
-                    color: white;
-                    border-radius: 50%;
-                    width: 50px;
-                    height: 50px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    border: 3px solid #fff;
-                    box-shadow: 0 0 10px rgba(0,0,0,0.6);
-                    font-weight: bold;
-                    font-size: 16px;
-                    ">${count}</div>`,
-                    className: "custom-cluster-icon",
-                    iconSize: L.point(50, 50, true),
-                });
-                }}
+        {/* SELECTED SEARCH CIRCLE */}
+        {searchCenter && (
+          <Circle
+            center={[searchCenter.lat, searchCenter.lng]}
+            radius={radius}
+            pathOptions={{ color: "black", fillOpacity: 0.1 }}
+          />
+        )}
 
-            >
-              {reports.map((r) => (
-                  <Marker
-                      key={`${r.latitude}-${r.longitude}-${r.title}`}
-                      position={[r.latitude, r.longitude]}
-                      icon={existingReportIcon}
+        {/* REPORTS */}
+        <MarkerClusterGroup>
+          {reports
+            .filter((r) => {
+              if (!searchCenter) return true;
+              return (
+                haversineDistance(
+                  searchCenter.lat,
+                  searchCenter.lng,
+                  r.latitude,
+                  r.longitude
+                ) <= radius
+              );
+            })
+            .map((r) => (
+              <Marker key={r.id} position={[r.latitude, r.longitude]}>
+                <Popup>
+                  <Typography fontWeight="bold">{r.title}</Typography>
+                  <Button
+                    size="small"
+                    fullWidth
+                    onClick={() => handleReportOpen(r)}
                   >
-                      <Popup>
-                          <Stack spacing={0.5}>
-                              <Typography variant="subtitle1" sx={{fontWeight:'bold'}}>{r.title}</Typography>
-                              <Typography variant="body2">{new Date(r.createdAt).toLocaleDateString()} - {r.category}</Typography>                            
-                              <Typography variant="body2">Reporter: {r.user?.first_name} {r.user?.last_name}</Typography>                            
-                          </Stack>
-                          <Button
-                              color="primary"
-                              variant="contained"
-                              className="partecipation-button"
-                              size="small"
-                              sx={{ marginTop: "8px", width: '100%' }}
-                              onClick={() => {
-                                  setOpenDrawer(true);
-                                  setSelectedReport(r);
-                              }}
-                          >
-                              View Details
-                          </Button>
-                      </Popup>
-                  </Marker>
-              ))}
-            </MarkerClusterGroup>
+                    View details
+                  </Button>
+                </Popup>
+              </Marker>
+            ))}
+        </MarkerClusterGroup>
 
-            <ReportDrawer open={openDrawer} onClose={() => setOpenDrawer(false)} report={selectedReport} />
+        {geoData && <GeoJSON data={geoData} />}
+        <ClickHandler geoData={geoData} onSelect={onSelect} />
 
-            {/* Click-to-add-report logic */}
-            <ClickHandler onSelect={onSelect} geoData={geoData} />
-        </MapContainer>
-    );
+        <ReportDrawer
+          open={openDrawer}
+          onClose={() => setOpenDrawer(false)}
+          report={selectedReport}
+        />
+      </MapContainer>
+
+      {/* FIXED BOTTOM-LEFT POPUP */}
+      {selectedSuggestion && windowWidth > 600 && (
+        <Box
+          sx={{
+            position: "fixed",
+            bottom: 16,
+            left: 16,
+            backgroundColor: "white",
+            padding: 2,
+            color: "black",
+            borderRadius: 2,
+            boxShadow: 4,
+            zIndex: 3000,
+            maxWidth: 320,
+          }}
+        >
+          <Typography variant="body2">{selectedSuggestion.display_name}</Typography>
+        </Box>
+      )}
+    </>
+  );
 };
 
 export default MapSelector;

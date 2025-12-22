@@ -1,22 +1,36 @@
-import {UserResponseDTO} from "./UserResponseDTO";
 import { MunicipalityOfficerResponseDTO } from "./MunicipalityOfficerResponseDTO";
-import { StatusType } from "./StatusType";
+import { UserResponseDTO } from "./UserResponseDTO";
 import { ChatResponseDTO } from "./ChatRespondeDTO";
 
-export interface ReportResponseDTO { 
-    id: number;
-    longitude: number;
-    latitude: number;
-    title: string;
-    description: string;
-    user: UserResponseDTO; 
-    category: string;
-    status: StatusType;
-    explanation?: string;
-    officer?: MunicipalityOfficerResponseDTO;
-    photos: string[]; 
-    createdAt: Date;
-    updatedAt: Date;
-    chats: ChatResponseDTO[];
-    leadOfficer?: MunicipalityOfficerResponseDTO;
-}   
+export class ReportResponseDTO {
+    id!: number;
+    
+    longitude!: number;
+
+    latitude!: number;
+
+    title!: string;
+
+    description!: string;
+
+    // se il report è anonimo, lo user è undefined
+    user?: UserResponseDTO;
+
+    category!: string;
+
+    status!: string;
+
+    explanation!: string;
+
+    officer!: MunicipalityOfficerResponseDTO;
+
+    photos!: string[];
+
+    createdAt!: Date;
+
+    chats!: ChatResponseDTO[];
+
+    leadOfficer!: MunicipalityOfficerResponseDTO;
+
+    anonymous!: boolean;
+}

@@ -142,7 +142,7 @@ describe("MunicipalityOfficerRepository - Unit Test (Mock ORM)", () => {
     const result = await municipalityOfficerRepository.findAllVisible();
 
     expect(mockOrmRepository.createQueryBuilder).toHaveBeenCalledWith("u");
-    expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("u.role", "role");
+    expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("u.roles", "roles");
     expect(mockQueryBuilder.where).toHaveBeenCalledWith(
       "LOWER(u.username) <> :admin",
       { admin: "admin" }
@@ -252,7 +252,7 @@ describe("MunicipalityOfficerRepository - Unit Test (Mock ORM)", () => {
     await municipalityOfficerRepository.findByRoleTitle("TECH_AGENT_INFRASTRUCTURE");
 
     expect(mockOrmRepository.find).toHaveBeenCalledWith({
-      where: { role: { title: "TECH_AGENT_INFRASTRUCTURE" } },
+      where: { roles: { title: "TECH_AGENT_INFRASTRUCTURE" } },
       relations: ["roles"],
     });
   });

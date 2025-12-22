@@ -164,10 +164,10 @@ describe("MessageRepository - Unit Test (Mock ORM)", () => {
           report: {
             user: true,
             officer: {
-              role: true,
+              roles: true,
             },
             leadOfficer: {
-              role: true,
+              roles: true,
             },
           },
         },
@@ -260,8 +260,8 @@ describe("MessageRepository - Unit Test (Mock ORM)", () => {
     expect(callArgs.relations.chat.report).toBeDefined();
     expect(callArgs.relations.chat.report.user).toBe(true);
     expect(callArgs.relations.chat.report.officer).toBeDefined();
-    expect(callArgs.relations.chat.report.officer.role).toBe(true);
+    expect(callArgs.relations.chat.report.officer.roles).toBe(true);
     expect(callArgs.relations.chat.report.leadOfficer).toBeDefined();
-    expect(callArgs.relations.chat.report.leadOfficer.role).toBe(true);
+    expect(callArgs.relations.chat.report.leadOfficer.roles).toBe(true);
   });
 });

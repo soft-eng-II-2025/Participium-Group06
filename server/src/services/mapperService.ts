@@ -226,7 +226,20 @@ export function mapUserDAOToDTO(userDAO: User): UserResponseDTO {
 export function mapMessageDAOToDTO(messageDAO: Message): MessageResponseDTO {
     const reportId = messageDAO?.chat?.report?.id;
     const chatId = messageDAO?.chat?.id;
-    const username = messageDAO?.chat?.report?.user?.username;
+    let username;
+    if((messageDAO.sender == SenderType.OFFICER) || (messageDAO.sender == SenderType.EXTERNAL)) {
+        const lastName  = messageDAO?.chat?.report?.officer?.last_name ?? "";
+        const firstName = messageDAO?.chat?.report?.officer?.first_name ?? "";
+        username = (lastName + " " + firstName).trim();
+    } else if (messageDAO.sender == SenderType.USER){
+        const lastName  = messageDAO?.chat?.report?.user?.last_name ?? "";
+        const firstName = messageDAO?.chat?.report?.user?.first_name ?? "";
+        username = (lastName + " " + firstName).trim();
+    } else if (messageDAO.sender == SenderType.LEAD){
+        const lastName  = messageDAO?.chat?.report?.leadOfficer?.last_name ?? "";
+        const firstName = messageDAO?.chat?.report?.leadOfficer?.first_name ?? "";
+        username = (lastName + " " + firstName).trim();
+    }
     const role_labels = messageDAO?.chat?.report?.officer?.roles?.map(role => role.label);
     const role_label = role_labels ? role_labels[0] : undefined;
     return createMessageResponseDTO(

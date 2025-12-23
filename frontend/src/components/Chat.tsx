@@ -229,18 +229,7 @@ const Chat: React.FC<ChatProps> = ({
   }
 
   function getUsername(m: MessageResponseDTO): string {
-    switch (m.sender) {
-      case "USER":
-        return m.username || "User";
-      case "OFFICER":
-        return "Officer";
-      case "LEAD":
-        return "Officer";
-      case "EXTERNAL":
-        return "External Officer";
-      default:
-        return "Unknown";
-    }
+   return m.username ?? "";
   }
 
 

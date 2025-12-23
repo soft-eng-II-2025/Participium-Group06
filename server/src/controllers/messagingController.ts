@@ -132,6 +132,6 @@ export async function getMessagesByReport(reportId: number, chatType: ChatType) 
     const chat = await chatRepository.findByReportIdAndType(reportId, chatType);
     if (!chat) throw new Error("Chat not found for the given report and type.");
     const messages = await messageRepository.findByChatId(chat.id);
-    //const messages = await messageRepository.findByReport(reportId);
+    
     return messages.map(mapMessageDAOToDTO);
 }

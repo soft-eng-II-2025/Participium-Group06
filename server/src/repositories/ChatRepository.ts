@@ -24,7 +24,7 @@ export class ChatRepository {
             .leftJoinAndSelect("chat.report", "report")
             .leftJoinAndSelect("report.user", "user")
             .leftJoinAndSelect("report.officer", "officer")
-            .leftJoinAndSelect("officer.role", "officerRole")
+            .leftJoinAndSelect("officer.roles", "officerRoles")
             .leftJoinAndSelect("report.leadOfficer", "leadOfficer")
             .leftJoinAndSelect("chat.messages", "messages")
             .where("chat.id = :id", { id })

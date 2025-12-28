@@ -27,12 +27,12 @@ export function useChatIdentity() {
       displayName = o.username;
     } else {
       senderType = "OFFICER";
-      displayName = o.role? o.role : o.username;
+      displayName = o.roles? o.roles[0] : o.username;
     }
   } else if (isLead && user) {
     senderType = "LEAD";
     const o = user as MunicipalityOfficerResponseDTO;
-    displayName = o.role? o.role : o.username;
+    displayName = o.roles? o.roles[0] : o.username;
   }
 
   return {

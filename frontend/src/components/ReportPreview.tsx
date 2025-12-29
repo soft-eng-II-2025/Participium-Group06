@@ -21,6 +21,7 @@ type Props = {
     showUpdateStatus?: boolean;
     showChat?: boolean;
     isFlat?: boolean;
+    currentRole?: 'LEAD' | 'AGENT';
     // callback used to notify parent of actions. action is 'approve' or 'reject'.
     // payload can contain optional data like { reason } or { newStatus }
     onAction?: (action: 'approve' | 'reject', payload?: { reason?: string; newStatus?: string; assignee?: string }) => void;
@@ -31,7 +32,7 @@ type Props = {
 
 const statusesForUpdate = [StatusType.Assigned, StatusType.InProgress, StatusType.Resolved, StatusType.Suspended];
 
-export default function ReportPreview({ report, showApprovalActions = false, showTeamCard = false, showUpdateStatus = false, isFlat = false, onAction, showChat = false, openChat }: Props) {
+export default function ReportPreview({ report, currentRole, showApprovalActions = false, showTeamCard = false, showUpdateStatus = false, isFlat = false, onAction, showChat = false, openChat }: Props) {
     const [isRejected, setIsRejected] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [statusButton, setStatusButton] = useState<StatusType | null>(null);
@@ -133,7 +134,7 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                     {showChat && (
                         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                             {/* Tech Lead sees both chats when officer is external */}
-                            {roles?.some(role => role.startsWith('TECH_LEAD')) && report.officer?.external && (
+                            {currentRole === 'LEAD' && report.officer?.external && (
                                 <>
                                     <Button
                                         variant="outlined"
@@ -167,7 +168,7 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                             )}
 
                             {/* Internal agent chats with reporter */}
-                            {roles?.some(role => role.startsWith('TECH_AGENT')) && !isExternal && (
+                            {currentRole === 'AGENT' && !isExternal && (
                                 <Button
                                     variant="outlined"
                                     size="small"

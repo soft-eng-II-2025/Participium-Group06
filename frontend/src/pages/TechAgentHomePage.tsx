@@ -89,7 +89,7 @@ const TechAgentHomePage: React.FC = () => {
                 <Box sx={{ mb: 1 }}>
                   <Button variant="outlined" className="partecipation-button" startIcon={<ArrowBackIcon />} onClick={() => setShowPreview(false)}>Back to list</Button>
                 </Box>
-                <ReportPreview report={selectedReport} showUpdateStatus={true} onAction={assignStatusToReport} showChat={true} openChat={toggleChatOpen} />
+                <ReportPreview report={selectedReport} currentRole="AGENT" showUpdateStatus={true} onAction={assignStatusToReport} showChat={true} openChat={toggleChatOpen} />
               </Grid>
             ) : (
               <Grid item xs={12}>
@@ -102,7 +102,7 @@ const TechAgentHomePage: React.FC = () => {
                 <ReportsList reports={reports ?? []} selectedIndex={selectedIndex} onSelect={handleSelect} statuses={statuses} />
               </Grid>
               <Grid item xs={12} md={8}>
-                <ReportPreview report={selectedReport} showUpdateStatus={true} onAction={assignStatusToReport} showChat={true} openChat={toggleChatOpen} />
+                <ReportPreview report={selectedReport} currentRole="AGENT" showUpdateStatus={true} onAction={assignStatusToReport} showChat={true} openChat={toggleChatOpen} />
               </Grid>
             </Grid>
           )
@@ -110,7 +110,7 @@ const TechAgentHomePage: React.FC = () => {
           <Grid container spacing={2}>
 
             <Grid item xs={12} md={6}>
-              <ReportPreview report={selectedReport} showUpdateStatus={true} onAction={assignStatusToReport} showChat={true} openChat={toggleChatOpen} />
+              <ReportPreview report={selectedReport} currentRole="AGENT" showUpdateStatus={true} onAction={assignStatusToReport} showChat={true} openChat={toggleChatOpen} />
             </Grid>
             <Grid item xs={12} md={6}>
               {selectedReport ? (

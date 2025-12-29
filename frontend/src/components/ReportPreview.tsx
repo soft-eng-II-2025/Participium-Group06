@@ -279,7 +279,7 @@ export default function ReportPreview({ report, currentRole, showApprovalActions
                                     border: selectedIndex === i ? '2px solid' : '2px solid transparent',
                                     borderColor: selectedIndex === i ? 'primary.main' : 'transparent'
                                 }}
-                                onClick={() => { setSelectedIndex(i); openImage(getPhotoUrl(p)); }}
+                                onClick={() => { setSelectedIndex(i);}}
                             />
                         ))}
                     </Stack>

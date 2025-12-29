@@ -8,6 +8,10 @@ import {
 import { getAllCategories } from "../controllers/userController";
 import { addReport } from "../controllers/reportController";
 import { getUserIdByTelegramUsername } from "../controllers/userController";
+import fs from "fs";
+import path from "path";
+
+
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -28,14 +32,7 @@ export type MyContext =
     SessionFlavor<SessionData> &
     ConversationFlavor<any>;
 
-// 2. Creiamo un'interfaccia base che unisce Context e Session
-// Questo rompe la catena di riferimenti circolari
-//interface BaseContext extends Context, SessionFlavor<SessionData> {}
 
-// 3. Definiamo MyContext estendendo BaseContext e aggiungendo le conversazioni
-//export type MyContext = BaseContext & ConversationFlavor<BaseContext>;
-
-// 4. La conversazione userà il MyContext completo
 export type MyConversation = Conversation<MyContext>;
 
 // bot init
@@ -76,7 +73,7 @@ bot.use(async (ctx, next) => {
         return;
     }
 
-    // Cache robusta
+    // Cache
     ctx.session.user = {
         id: userId,
         telegramId: ctx.from.id,
@@ -89,6 +86,39 @@ bot.use(async (ctx, next) => {
 });
 
 bot.use(conversations());
+
+
+async function downloadTelegramFile(fileId: string, folder = "uploads") {
+    // ottengo file_path da Telegram
+    const getFileRes = await fetch(`https://api.telegram.org/bot${token}/getFile?file_id=${fileId}`);
+    const getFileJson = await getFileRes.json();
+    if (!getFileJson.ok) {
+        throw new Error("Telegram getFile failed: " + JSON.stringify(getFileJson));
+    }
+
+    const filePath: string = getFileJson.result.file_path;
+    if (!filePath) {
+        throw new Error("No file_path returned from Telegram.");
+    }
+
+    // Scarica il file dal server Telegram
+    const fileUrl = `https://api.telegram.org/file/bot${token}/${filePath}`;
+    const fileResponse = await fetch(fileUrl);
+    if (!fileResponse.ok) {
+        throw new Error("Failed to download file from Telegram.");
+    }
+    const buffer = Buffer.from(await fileResponse.arrayBuffer());
+
+    // Salva su disco
+    fs.mkdirSync(folder, { recursive: true });
+    const fileName = path.basename(filePath); // es. "photo/file_123.jpg"
+    const savePath = path.join(folder, fileName);
+    fs.writeFileSync(savePath, buffer);
+
+    // Ritorna il percorso relativo per l’upload nel DB
+    return `/uploads/${fileName}`;
+}
+
 
 // /start
 bot.command("start", async (ctx: MyContext) => {
@@ -113,6 +143,7 @@ bot.command("start", async (ctx: MyContext) => {
     });
 });
 
+
 // ======================
 // CREATE REPORT WIZARD
 // ======================
@@ -121,6 +152,7 @@ async function createReportWizard(
     ctx: MyContext
 ) {
 
+    // gestisco la sessione
     if (!ctx.session) {
         ctx.session = {};
     }
@@ -151,6 +183,7 @@ async function createReportWizard(
     console.log("conversation sessione userId: " + userId);
 
     // ---------- STEP 1: LOCATION ----------
+    // TODO: cambiare l'implementazione di stp 1 -> ora manda la posizione attuale
     await ctx.reply(
         "📍 <b>Iniziamo!</b>\nInviami la posizione del problema:",
         {
@@ -189,7 +222,6 @@ async function createReportWizard(
 
     await ctx.reply("📁 Scegli una categoria:", { reply_markup: categoryKeyboard });
 
-    // waitForCallbackQuery deve essere l'unico punto di attesa
     const categoryQuery = await conversation.waitForCallbackQuery(/^cat:/);
     await categoryQuery.answerCallbackQuery(); // Rispondi subito per evitare lag
 
@@ -206,9 +238,9 @@ async function createReportWizard(
     const description = await conversation.form.text();
 
     // ---------- STEP 5: PHOTOS (MAX 3) ----------
-    const photos: string[] = [];
+    const photoIds: string[] = []; // Salvo solo i file_id
+    const photos: string[] = [];   // Qui salveremo i percorsi locali dopo -> ciò che passo al backend
 
-    // Messaggio fisso: non cambierà mai durante il replay
     await ctx.reply(
         "📸 Invia da 1 a 3 foto (anche come album dalla galleria).\n\n" +
         "⚠️ IMPORTANTE: Una volta inviate, scrivi <b>FINE</b> per confermare.",
@@ -225,10 +257,9 @@ async function createReportWizard(
     while (true) {
         const photoCtx = await conversation.waitFor(["message:photo", "message:text"]);
         const msg = photoCtx.message;
-
         // Gestione comando FINE
         if (msg?.text?.toUpperCase() === "FINE") {
-            if (photos.length === 0) {
+            if (photoIds.length === 0) {
                 await ctx.reply("❌ Devi inviare almeno una foto.");
                 continue;
             }
@@ -238,15 +269,31 @@ async function createReportWizard(
         // Gestione Foto
         if (msg?.photo) {
             // Salviamo la foto solo se non abbiamo superato il limite
-            if (photos.length < 3) {
+            if (photoIds.length < 3) {
                 const fileId = msg.photo.pop()?.file_id;
-                if (fileId) photos.push(fileId);
+                if (fileId) photoIds.push(fileId);
             }
             // NOTA: Se l'utente ne manda 4 o 10, il bot continua a "mangiarle"
             // restando in questo loop finché l'utente non preme FINE.
             // Questo evita che i messaggi extra finiscano nello step successivo.
         }
     }
+
+    // DOWNLOAD
+    await ctx.reply("⏳ Elaborazione foto in corso...");
+
+    // Usiamo un unico external per processare tutto l'array
+    const localPaths = await conversation.external(async () => {
+        const paths: string[] = [];
+        for (const fId of photoIds) {
+            const path = await downloadTelegramFile(fId);
+            paths.push(path);
+        }
+        return paths;
+    });
+
+    // copio i percorsi nell'array finale
+    photos.push(...localPaths);
 
     // Conferma finale e rimozione tastiera
     await ctx.reply(`✅ Hai caricato ${photos.length} foto.`, {
@@ -307,11 +354,7 @@ bot.use(createConversation(createReportWizard, "createReportWizard"));
 // ======================
 // COMMANDS & CALLBACKS
 // ======================
-/*bot.command("new_report_start", async (ctx) => {
-    await ctx.conversation.enter("createReportWizard");
-});
 
- */
 
 bot.callbackQuery("new_report_start", async (ctx) => {
     await ctx.answerCallbackQuery();

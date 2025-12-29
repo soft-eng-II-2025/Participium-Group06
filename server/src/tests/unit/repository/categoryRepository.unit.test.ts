@@ -26,7 +26,7 @@ describe("CategoryRepository - Unit Test (Mock ORM)", () => {
     id: 1,
     title: "TECH_AGENT_INFRASTRUCTURE",
     label: "Tech Agent, Infrastructure",
-    municipalityOfficer: [],
+    municipalityOfficers: [],
     categories: [],
   } as Role;
 
@@ -34,7 +34,7 @@ describe("CategoryRepository - Unit Test (Mock ORM)", () => {
     id: 2,
     title: "TECH_LEAD_INFRASTRUCTURE",
     label: "Tech Lead, Infrastructure",
-    municipalityOfficer: [],
+    municipalityOfficers: [],
     categories: [],
   } as Role;
 

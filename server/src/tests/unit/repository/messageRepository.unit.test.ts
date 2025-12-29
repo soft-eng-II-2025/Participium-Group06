@@ -43,7 +43,7 @@ describe("MessageRepository - Unit Test (Mock ORM)", () => {
     last_name: "Test",
     external: false,
     companyName: null,
-    role: { id: 1, title: "TECH_AGENT", label: "Tech Agent" } as any,
+    roles: [{ id: 1, title: "TECH_AGENT", label: "Tech Agent" } as any],
     reports: [],
     leadReports: [],
   } as MunicipalityOfficer;
@@ -57,7 +57,7 @@ describe("MessageRepository - Unit Test (Mock ORM)", () => {
     last_name: "Officer",
     external: false,
     companyName: null,
-    role: { id: 2, title: "TECH_LEAD", label: "Tech Lead" } as any,
+    roles: [{ id: 2, title: "TECH_LEAD", label: "Tech Lead" } as any],
     reports: [],
     leadReports: [],
   } as MunicipalityOfficer;
@@ -77,7 +77,6 @@ describe("MessageRepository - Unit Test (Mock ORM)", () => {
     category: { id: 1, name: "Water" } as any,
     photos: [],
     chats: [],
-    anonymous: false,
   } as Report;
 
   const mockChat: Chat = {
@@ -165,10 +164,10 @@ describe("MessageRepository - Unit Test (Mock ORM)", () => {
           report: {
             user: true,
             officer: {
-              role: true,
+              roles: true,
             },
             leadOfficer: {
-              role: true,
+              roles: true,
             },
           },
         },
@@ -261,8 +260,8 @@ describe("MessageRepository - Unit Test (Mock ORM)", () => {
     expect(callArgs.relations.chat.report).toBeDefined();
     expect(callArgs.relations.chat.report.user).toBe(true);
     expect(callArgs.relations.chat.report.officer).toBeDefined();
-    expect(callArgs.relations.chat.report.officer.role).toBe(true);
+    expect(callArgs.relations.chat.report.officer.roles).toBe(true);
     expect(callArgs.relations.chat.report.leadOfficer).toBeDefined();
-    expect(callArgs.relations.chat.report.leadOfficer.role).toBe(true);
+    expect(callArgs.relations.chat.report.leadOfficer.roles).toBe(true);
   });
 });

@@ -3,7 +3,7 @@ export class AssignRoleRequestDTO {
 
     @IsNotEmpty() username!: string;
 
-    @IsNotEmpty() roleTitle!: string;
+    @IsNotEmpty() rolesTitle!: string[];
 
     @IsBoolean()
     external!: boolean;

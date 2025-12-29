@@ -61,7 +61,7 @@ describe("Mapper & DTO helper functions", () => {
   });
 
   test("createMunicipalityOfficerDTO returns correct object", () => {
-    const dto = createMunicipalityOfficerDTO(1, "user", "a@b.com", "F", "L", true, "Role", "Company");
+    const dto = createMunicipalityOfficerDTO(1, "user", "a@b.com", "F", "L", true, ["Role"], "Company");
     expect(dto.id).toBe(1);
     expect(dto.username).toBe("user");
     expect(dto.companyName).toBe("Company");
@@ -75,8 +75,8 @@ describe("Mapper & DTO helper functions", () => {
     user.last_name = "L";
     user.reports = [];
     user.flag_email = true;
-    const dto = createReportDTO(1, 12, 34, "Title", "Desc", user, false);
-    expect(dto.user?.username).toBe("u1");
+    const dto = createReportDTO(1, 12, 34, "Title", "Desc", user);
+    expect(dto.user.username).toBe("u1");
     expect(dto.title).toBe("Title");
   });
 
@@ -123,10 +123,10 @@ describe("Mapper & DTO helper functions", () => {
     officer.first_name = "F";
     officer.last_name = "L";
     officer.external = true;
-    officer.role = { title: "Role" } as any;
+    officer.roles = [{ title: "Role" }] as any;
     officer.companyName = "Company";
     const dto = mapMunicipalityOfficerDAOToDTO(officer);
-    expect(dto.role).toBe("Role");
+    expect(dto.roles[0]).toBe("Role");
     expect(dto.companyName).toBe("Company");
   });
 
@@ -156,7 +156,7 @@ describe("Mapper & DTO helper functions", () => {
     report.leadOfficer = undefined;
 
     const dto = mapReportDAOToDTO(report);
-    expect(dto.user?.username).toBe("u");
+    expect(dto.user.username).toBe("u");
     expect(dto.category).toBe("Cat1");
     expect(dto.photos).toEqual(["p1"]);
   });
@@ -181,7 +181,7 @@ describe("Mapper & DTO helper functions", () => {
   });
 
   test("mapMessageDAOToDTO maps correctly", () => {
-    const chat = { report: { id: 1, user: { username: "u" }, officer: { role: { label: "R" } } } } as any;
+    const chat = { report: { id: 1, user: { username: "u" }, officer: { roles: [{ label: "R" }] } } } as any;
     const msg = { chat, content: "Hello", created_at: new Date(), sender: SenderType.USER } as Message;
     const dto = mapMessageDAOToDTO(msg);
     expect(dto.content).toBe("Hello");
@@ -207,7 +207,7 @@ describe("Mapper & DTO helper functions", () => {
   // Request -> DAO mappers
   // ------------------------
   test("mapCreateReportRequestToDAO maps correctly", () => {
-    const dto: CreateReportRequestDTO = { longitude: 10, latitude: 20, title: "T", description: "D", userId: 1, categoryId: 2, photos: ["p"], anonymous: false };
+    const dto: CreateReportRequestDTO = { longitude: 10, latitude: 20, title: "T", description: "D", userId: 1, categoryId: 2, photos: ["p"] };
     const dao = mapCreateReportRequestToDAO(dto);
     expect(dao.longitude).toBe(10);
     expect(dao.latitude).toBe(20);

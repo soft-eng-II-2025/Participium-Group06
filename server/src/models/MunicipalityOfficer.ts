@@ -1,4 +1,4 @@
-import {Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany} from 'typeorm';
+import {Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable, OneToMany} from 'typeorm';
 import { Role } from './Role';
 import { Report } from './Report';
 
@@ -28,9 +28,14 @@ export class MunicipalityOfficer {
   @Column({ type: 'varchar', nullable: true })
   companyName!: string | null;
 
-  @ManyToOne(() => Role, (role) => role.municipalityOfficer, { nullable: true })
-  @JoinColumn({ name: 'role' })
-  role?: Role;
+  @ManyToMany(() => Role, (role) => role.municipalityOfficers)
+  @JoinTable({
+  name: 'municipality_officer_roles',
+  joinColumn: { name: 'municipality_officer_id', referencedColumnName: 'id'
+  },
+  inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
+  })
+  roles!: Role[];
 
   @OneToMany(() => Report, (report) => report.officer)
   reports!: Report[];

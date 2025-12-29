@@ -40,7 +40,7 @@ describe("RoleRepository - Unit Test (Mock ORM)", () => {
     id: 1,
     title: "TECH_AGENT_INFRASTRUCTURE",
     label: "Tech Agent, Infrastructure",
-    municipalityOfficer: [],
+    municipalityOfficers: [],
     categories: [mockCategory1],
   } as Role;
 
@@ -48,7 +48,7 @@ describe("RoleRepository - Unit Test (Mock ORM)", () => {
     id: 2,
     title: "ADMIN",
     label: "Administrator",
-    municipalityOfficer: [],
+    municipalityOfficers: [],
     categories: [],
   } as Role;
 
@@ -56,7 +56,7 @@ describe("RoleRepository - Unit Test (Mock ORM)", () => {
     id: 3,
     title: "SUPER ADMIN",
     label: "Super Administrator",
-    municipalityOfficer: [],
+    municipalityOfficers: [],
     categories: [],
   } as Role;
 
@@ -64,7 +64,7 @@ describe("RoleRepository - Unit Test (Mock ORM)", () => {
     id: 4,
     title: "TECH_LEAD_INFRASTRUCTURE",
     label: "Tech Lead, Infrastructure",
-    municipalityOfficer: [],
+    municipalityOfficers: [],
     categories: [mockCategory1, mockCategory2],
   } as Role;
 

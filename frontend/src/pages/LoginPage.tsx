@@ -14,6 +14,7 @@ import "./LoginPage.css";
 import { useAuth } from "../contexts/AuthContext";
 import { MunicipalityOfficerResponseDTO } from "../DTOs/MunicipalityOfficerResponseDTO";
 import { UserResponseDTO } from "../DTOs/UserResponseDTO";
+import  {getFirstNavPath} from "../layout/Header";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -39,7 +40,11 @@ const LoginPage: React.FC = () => {
     setLoading(true);
     try {
         const user = await login({ username, password }) as UserResponseDTO | MunicipalityOfficerResponseDTO | null;
-        navigate("/");
+        if (user) {
+            const roles = 'roles' in user && Array.isArray(user.roles) ? user.roles : ['USER'];
+            const target = getFirstNavPath(roles);
+            navigate(target, { replace: true });
+        }
     } catch (err) {
       console.error(err);
       setError("An error occured during login. Try again.");

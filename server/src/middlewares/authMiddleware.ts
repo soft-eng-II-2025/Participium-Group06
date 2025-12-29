@@ -19,15 +19,15 @@ export const requireAuth: RequestHandler = (req: Request, res: Response, next: N
 // this extracts the role title from the user object, handling undefined and null cases
 // when field is missing, assume "USER"
 // when field is null, return undefined and it means no role assigned
-const extractRoleTitle = (user: any): string | undefined => {
+const extractRoleTitle = (user: any): string[] | undefined => {
   if (!user) return undefined;
-  if (!("role" in user)) {
-    return "USER";
+  if (!("roles" in user)) {
+    return ["USER"];
   }
-  if (user.role === null) {
+  if (user.roles === null) {
     return undefined;
   }
-  return user.role;
+  return user.roles;
 };
 
 
@@ -47,14 +47,14 @@ const requireRole = (
     }
 
     const user = (req as any).user;
-    const userRoleTitle: string | undefined = extractRoleTitle(user);
+    const userRoleTitle:  string[] | undefined = extractRoleTitle(user);
 
     let allowed = false;
-    if (user && typeof userRoleTitle === 'string') {
+    if (user && Array.isArray(userRoleTitle)) {
       if (match === RoleMatchMode.EXACT) {
-        allowed = userRoleTitle === role;
+        allowed = userRoleTitle.includes(role);
       } else if (match === RoleMatchMode.PREFIX) {
-        allowed = userRoleTitle === role || userRoleTitle.startsWith(`${role}_`);
+        allowed = userRoleTitle.some(r => r === role || r.startsWith(`${role}_`));
       }
     }
     if (!allowed) {

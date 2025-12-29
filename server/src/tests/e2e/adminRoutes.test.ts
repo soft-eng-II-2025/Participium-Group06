@@ -80,7 +80,7 @@ describe("Admin Routes E2E", () => {
       .put("/admin/accounts/assign")
       .send({
         username: "john",
-        roleTitle: "ORGANIZATION_OFFICER",
+        rolesTitle: ["ORGANIZATION_OFFICER"],
         external: false
       });
 
@@ -89,7 +89,7 @@ describe("Admin Routes E2E", () => {
 
     // Role field in response may be either a string title or an object.
     // Accept either case:
-    const roleField = res.body.role;
+    const roleField = res.body.roles[0];
     const roleIncludesExpected =
       roleField === "ORGANIZATION_OFFICER" ||
       (typeof roleField === "object" && (roleField.title === "ORGANIZATION_OFFICER" || JSON.stringify(roleField).includes("ORGANIZATION_OFFICER"))) ||

@@ -160,7 +160,6 @@ describe("Report Controller (Pure Integration Tests)", () => {
     describe("add report", () => {
         it("dovrebbe aggiungere un report", async () => {
             const reportData: CreateReportRequestDTO = {
-                anonymous: false,
                 longitude: 0,
                 latitude: 0,
                 title: "prova",

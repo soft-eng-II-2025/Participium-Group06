@@ -1,7 +1,7 @@
 // src/services/socketService.test.ts
 import { SocketService } from '../../../services/socketService';
-import { Server, Socket } from 'socket.io';
-import { DefaultEventsMap } from 'socket.io/dist/typed-events'; // Utile per tipizzare Socket
+import { Server, Socket, DefaultEventsMap } from 'socket.io';
+//import { DefaultEventsMap } from 'socket.io/dist/typed-events'; // Utile per tipizzare Socket
 
 // Mock delle dipendenze
 import { mapMessageDAOToDTO, mapNotificationDAOToDTO } from '../../../services/mapperService';

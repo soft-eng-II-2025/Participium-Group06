@@ -96,21 +96,6 @@ const Chat: React.FC<ChatProps> = ({
     );
   }, [rawMessages, socketReceivedMessages]);
 
-  // Other side username (for header)
-  const otherSideUsername = React.useMemo(() => {
-    if (!allMessages.length) return undefined;
-
-    if (isUser) {
-      return allMessages.find((m) => m.sender !== "USER")?.username;
-    } else if (isOfficer) {
-      return allMessages.find((m) => m.sender === "USER")?.username;
-    } else if (isLead) {
-      return allMessages.find((m) => m.sender === "EXTERNAL")?.username;
-    } else if (senderType === "EXTERNAL") {
-      return allMessages.find((m) => m.sender === "LEAD")?.username;
-    }
-  }, [allMessages, isUser, isOfficer, isLead, senderType]);
-
   // Auto-scroll
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -216,11 +201,11 @@ const Chat: React.FC<ChatProps> = ({
       if (chatMode === ChatMode.LEAD_EXTERNAL){
         return 'Chat with External Officer';
       }
-      return `Chat with Reporter  ${otherSideUsername ? ` (${otherSideUsername})` : ""}`;
+      return 'Chat with Reporter';
     }
 
     if (isOfficer && senderType !== "EXTERNAL") {
-      return `Chat with Reporter ${otherSideUsername ? ` (${otherSideUsername})` : ""}`;
+      return 'Chat with Reporter';
     }
     if (isUser) {
       return 'Chat with Officer';

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { Box, Button, TextField, Grid, Typography, Paper, Select, MenuItem, IconButton, FormHelperText, CircularProgress, Snackbar, Alert, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Box, Button, TextField, Grid, Typography, Paper, Select, MenuItem, IconButton, FormHelperText, CircularProgress, Snackbar, Alert, Dialog, DialogTitle, DialogContent, DialogActions, Switch } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useLocation, useNavigate } from "react-router-dom";
@@ -15,6 +15,7 @@ type FormState = {
   title: string;
   description: string;
   categoryId: number | "";
+  anonymous?: boolean;
 };
 
 export default function NewReportPage() {
@@ -35,6 +36,7 @@ export default function NewReportPage() {
     title: "",
     description: "",
     categoryId: "",
+    anonymous: false,
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -151,6 +153,7 @@ export default function NewReportPage() {
         explanation: "", 
         officer: undefined, // Empty officer object to be filled by backend
         photos: uploadedPhotoUrls,
+        anonymous: form.anonymous || false,
       };
 
       await addReportMutation.mutateAsync(reportData);
@@ -270,6 +273,18 @@ export default function NewReportPage() {
               {(error === "Category is required." && form.categoryId === "") && (
                 <FormHelperText error>Category is required.</FormHelperText>
               )}
+
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 2 }}>
+                <Typography variant="body1" fontWeight={300}>Post anonymously</Typography>
+                <Switch
+                  size="medium"
+                  checked={form.anonymous}
+                  onChange={(e) =>
+                    setForm((s) => ({ ...(s as any), anonymous: e.target.checked } as FormState))
+                  }
+                  disabled={isSubmitting || isLoadingCategories}
+                />
+              </Box>
             </Grid>
             {/* Photo upload */}
             <Grid item xs={12}>

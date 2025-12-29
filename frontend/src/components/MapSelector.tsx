@@ -18,6 +18,7 @@ import {
   Box,
   TextField,
   IconButton,
+  Stack,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import MarkerClusterGroup from "react-leaflet-markercluster";
@@ -32,8 +33,6 @@ import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
-
-import "./MapSelector.css";
 
 export const TURIN_BBOX = "7.550,45.000,7.800,45.150";
 
@@ -350,15 +349,25 @@ const MapSelector: React.FC<{ onSelect: (lat: number, lng: number) => void }> = 
             .map((r) => (
               <Marker key={r.id} position={[r.latitude, r.longitude]}>
                 <Popup>
-                  <Typography fontWeight="bold">{r.title}</Typography>
-                  <Button
-                    size="small"
-                    fullWidth
-                    onClick={() => handleReportOpen(r)}
-                  >
-                    View details
-                  </Button>
-                </Popup>
+                          <Stack spacing={0.5}>
+                              <Typography variant="subtitle1" sx={{fontWeight:'bold'}}>{r.title}</Typography>
+                              <Typography variant="body2">{new Date(r.createdAt).toLocaleDateString()} - {r.category}</Typography>                            
+                              <Typography variant="body2">Reporter: {r.anonymous ? "Anonymous" : `${r.user?.first_name} ${r.user?.last_name}`}</Typography>                            
+                          </Stack>
+                          <Button
+                              color="primary"
+                              variant="contained"
+                              className="partecipation-button"
+                              size="small"
+                              sx={{ marginTop: "8px", width: '100%' }}
+                              onClick={() => {
+                                  setOpenDrawer(true);
+                                  setSelectedReport(r);
+                              }}
+                          >
+                              View Details
+                          </Button>
+                      </Popup>
               </Marker>
             ))}
         </MarkerClusterGroup>

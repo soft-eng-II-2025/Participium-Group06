@@ -38,8 +38,7 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
     const [rejectComment, setRejectComment] = useState('');
     const [officeMembers, setOfficeMembers] = useState(null as MunicipalityOfficerResponseDTO[] | null);
     const [externalMembers, setExternalMembers] = useState(null as MunicipalityOfficerResponseDTO[] | null);
-    const { role, isExternal } = useAuth();
-    const [chatOpen, setChatOpen] = useState(false);
+    const { roles, isExternal } = useAuth();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -71,7 +70,6 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
     const { data: techLeadAgents, isLoading: agentsLoading, isError: agentsError } = useGetAgentsByTechLead(showTeamCard);
 
     useEffect(() => {
-        setChatOpen(false);
         if (showTeamCard && report) {
             setOfficeMembers(techLeadAgents?.filter(a => a.external === false) ?? []);
             setExternalMembers(techLeadAgents?.filter(a => a.external === true) ?? []);
@@ -88,7 +86,6 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
         setRejectComment('');
         setSelectedIndex(0);
         setStatusButton(null);
-        setChatOpen(false);
     }, [report?.id]);
 
     function getPhotoUrl(p: string) {
@@ -136,7 +133,7 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                     {showChat && (
                         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                             {/* Tech Lead sees both chats when officer is external */}
-                            {role?.startsWith('TECH_LEAD') && report.officer?.external && (
+                            {roles?.some(role => role.startsWith('TECH_LEAD')) && report.officer?.external && (
                                 <>
                                     <Button
                                         variant="outlined"
@@ -170,7 +167,7 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                             )}
 
                             {/* Internal agent chats with reporter */}
-                            {role?.startsWith('TECH_AGENT') && !isExternal && (
+                            {roles?.some(role => role.startsWith('TECH_AGENT')) && !isExternal && (
                                 <Button
                                     variant="outlined"
                                     size="small"
@@ -182,7 +179,7 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                             )}
 
                             {/* Internal agent chats with reporter */}
-                            {role?.startsWith('USER') && (
+                            {roles?.some(role => role.startsWith('USER')) && (
                                 <Button
                                     variant="outlined"
                                     size="small"

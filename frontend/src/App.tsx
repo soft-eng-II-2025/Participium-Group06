@@ -1,6 +1,6 @@
 // import "./App.css";
 import 'leaflet/dist/leaflet.css';
-import { GlobalStyles, ThemeProvider, Box, CircularProgress} from "@mui/material";
+import { GlobalStyles, ThemeProvider} from "@mui/material";
 import StreetMap from "../src/pages/Map";
 import Layout from './layout/Layout';
 import theme from "./theme/index";
@@ -8,7 +8,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from './contexts/AuthContext';
 import AdminHomePage from "./pages/AdminHomePage";
 import AdminRegisterPage from "./pages/AdminRegisterPage";
@@ -17,39 +17,16 @@ import OrganizationOfficerHomePage from './pages/OrganizationOfficerHomePage';
 import RequireRole from './routes/RequireRole';
 import GuestRoute from './routes/GuestRoute';
 import NewReportPage from './pages/NewReportPage';
-import { useAuth } from './contexts/AuthContext';
 import TechLeadHomePage from './pages/TechLeadHomePage';
 import {UserAccountPage} from "./pages/UserAccountPage";
 import UserReportsPage from './pages/UserReportsPage';
 import EmailConfirmationPage from './pages/EmailConfirmationPage';
-import { UserResponseDTO } from './DTOs/UserResponseDTO';
 import ProtectedRoute, { RequireUnverifiedUser } from './routes/ProtectedRoute';
 
 
 const queryClient = new QueryClient();
 
 function App() {
-    const HomeSelector: React.FC = () => {
-        const { isAuthenticated, role, loading, user } = useAuth();
-        if (loading) return (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
-                <CircularProgress />
-            </Box>
-        );
-        // if the user is authenticated but hasn't confirmed their email, send them to confirmation
-        if (isAuthenticated && (user as UserResponseDTO).verified === false) {
-            return <Navigate to="/confirm-email" replace />;
-        }
-
-
-        if (!isAuthenticated) return <HomePage />;
-        if (role === 'ADMIN') return <ProtectedRoute><AdminHomePage /></ProtectedRoute>;
-        if (role === 'USER') return <ProtectedRoute><StreetMap /></ProtectedRoute>;
-        if (role === 'ORGANIZATION_OFFICER') return <ProtectedRoute><OrganizationOfficerHomePage /></ProtectedRoute>;
-        if (role?.startsWith('TECH_LEAD')) return <ProtectedRoute><TechLeadHomePage /></ProtectedRoute>;
-        if (role?.startsWith('TECH_AGENT')) return <ProtectedRoute><TechAgentHomePage /></ProtectedRoute>;
-        else return <HomePage />;
-    };
     return (
         <QueryClientProvider client={queryClient}>
             <ThemeProvider theme={theme}>
@@ -59,7 +36,7 @@ function App() {
                     <BrowserRouter>
                         <Layout>
                             <Routes>
-                                <Route path="/" element={<HomeSelector />} />
+                                <Route path="/" element={<HomePage />} />
                                 <Route path="/login" element={
                                     <GuestRoute>
                                         <LoginPage />
@@ -101,6 +78,11 @@ function App() {
                                     <RequireUnverifiedUser>
                                         <EmailConfirmationPage />
                                     </RequireUnverifiedUser>} />
+                                <Route path="/reports/map" element={<ProtectedRoute><StreetMap /></ProtectedRoute>} />
+                                <Route path="/reports/assign" element={<ProtectedRoute><TechLeadHomePage /></ProtectedRoute>} />
+                                <Route path="/reports/tasks" element={<ProtectedRoute><TechAgentHomePage /></ProtectedRoute>} />
+                                <Route path="/admin/dashboard" element={<ProtectedRoute><AdminHomePage /></ProtectedRoute>} />
+                                <Route path="/officer/dashboard" element={<ProtectedRoute><OrganizationOfficerHomePage /></ProtectedRoute>} />
                             </Routes>
                         </Layout>
                     </BrowserRouter>

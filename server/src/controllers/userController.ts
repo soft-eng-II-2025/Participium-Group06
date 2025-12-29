@@ -119,3 +119,9 @@ export async function updateUserProfile(
     throw new Error("updateUserProfile not implemented");
 }
 
+export async function getUserIdByTelegramUsername(telegram_username: string): Promise<number> {
+    const user = await userRepository.findByTelegramUsername(telegram_username);
+    if (!user) throw appErr("USER_NOT_FOUND", 404);
+    return user.id;
+}
+

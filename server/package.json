@@ -22,6 +22,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@grammyjs/conversations": "^2.1.1",
     "@types/uuid": "^10.0.0",
     "argon2": "^0.44.0",
     "bcryptjs": "^3.0.3",
@@ -31,6 +32,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
+    "grammy": "^1.38.4",
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.11",

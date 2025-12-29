@@ -77,6 +77,7 @@ describe("ChatRepository - Unit Test (Mock ORM)", () => {
     category: { id: 1, name: "Water" } as any,
     photos: [],
     chats: [],
+    anonymous: false,
   } as Report;
 
   const mockMessage: Message = {

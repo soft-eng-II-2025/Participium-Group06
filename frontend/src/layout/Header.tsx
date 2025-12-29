@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
@@ -6,19 +6,49 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import logo from "../assets/logo.png";
-import {useNavigate} from "react-router-dom";
-import {useAuth} from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import HomeIcon from "@mui/icons-material/Home";
-import AssignmentIcon from "@mui/icons-material/Assignment"; // <-- NEW ICON
+import AssignmentIcon from "@mui/icons-material/Assignment";
 import Avatar from "@mui/material/Avatar";
 import Stack from "@mui/material/Stack";
 import MenuIcon from "@mui/icons-material/Menu";
 import NotificationsMenu from "../components/NotificationsMenu";
-import {Drawer, useMediaQuery, useTheme} from "@mui/material";
+import { Drawer, useMediaQuery, useTheme } from "@mui/material";
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
+
+export function getFirstNavPath(rawRoles?: string[]): string {
+    const tabs = buildRoleTabs(rawRoles);
+    const navDefsFiltered = NAV_DEFS.filter(def => tabs.includes(def.role));
+    if (navDefsFiltered.length > 0) {
+        return navDefsFiltered[0].to;
+    } else {
+        return '/';
+    }
+};
+function buildRoleTabs(roles?: string[]) {
+    let tabs: string[] = [];
+    const r = roles ?? [];
+    if (r.includes("ADMIN")) tabs.push('ADMIN');
+    if (r.includes("USER")) tabs.push('USER');
+    if (r.some((s: string) => s.startsWith("TECH_LEAD"))) tabs.push('LEAD');
+    if (r.some((s: string) => s.startsWith("TECH_AGENT"))) tabs.push('AGENT');
+    if (r.includes("ORGANIZATION_OFFICER")) tabs.push('ORG_OFFICER');
+    return tabs;
+};
+
+const NAV_DEFS = [
+    { role: 'USER', icon: <HomeIcon sx={{ mr: 1 }} />, label: "Reports", to: "/reports/map" },
+    { role: 'USER', icon: <AssignmentIcon sx={{ mr: 1 }} />, label: "My Reports", to: "/my-reports" },
+    { role: 'ADMIN', icon: <HomeIcon sx={{ mr: 1 }} />, label: "Home", to: "/admin/dashboard" },
+    { role: 'LEAD', icon: <AssignmentIndIcon sx={{ mr: 1 }} />, label: "Assign Reports", to: "/reports/assign" },
+    { role: 'AGENT', icon: <AssignmentIcon sx={{ mr: 1 }} />, label: "Assigned to me", to: "/reports/tasks" },
+    { role: 'ORG_OFFICER', icon: <HomeIcon sx={{ mr: 1 }} />, label: "Home", to: "/officer/dashboard" },
+];
 
 export default function Header() {
     const navigate = useNavigate();
-    const {isAuthenticated, user, logout, role, isExternal, companyName} = useAuth();
+    const { isAuthenticated, user, logout, roles, isExternal, companyName } = useAuth();
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -49,23 +79,13 @@ export default function Header() {
     })();
 
     // NAV ITEMS (Desktop)
-    const navItems = [
-        {icon: <HomeIcon sx={{mr: 1}}/>, label: "Home", to: "/"},
-
-        // Only for regular users
-        ...(role === "USER"
-            ? [
-                {
-                    icon: <AssignmentIcon sx={{mr: 1}}/>,
-                    label: "My Reports",
-                    to: "/my-reports",
-                },
-            ]
-            : []),
-    ];
+    const navItems = (): any[] => {
+        const tabs = buildRoleTabs(roles ?? []);
+        return NAV_DEFS.filter(def => tabs.includes(def.role));
+    };
 
     const handleNavigate = () => {
-        if (role === "USER") {
+        if (roles?.includes("USER")) {
             navigate("/account");
         }
     };
@@ -80,7 +100,7 @@ export default function Header() {
                 backgroundColor: isExternal ? theme.palette.secondary.dark : undefined,
             }}
             >
-                <Toolbar sx={{justifyContent: "flex-start"}}>
+                <Toolbar sx={{ justifyContent: "flex-start" }}>
 
                     <IconButton size="small" edge="start" color="inherit" sx={{mr: 2}}
                                 onClick={() => navigate("/")}>
@@ -93,21 +113,38 @@ export default function Header() {
                             color: "inherit",
                             fontWeight: 800,
                             mr: 4,
-                            fontSize: {xs: "1.0rem", sm: "1.25rem"},
+                            fontSize: { xs: "1.0rem", sm: "1.25rem" },
                         }}
                     >
                         PARTICIPIUM
                     </Typography>
 
-                    {/* DESKTOP NAV */}
                     {!isMobile && (
-                        <Box sx={{display: "flex", gap: 1, alignItems: "center"}}>
-                            {navItems.map((item) => (
+                        <Box
+                            sx={{
+                                display: "flex",
+                                gap: 1,
+                                alignItems: "center",
+                            }}
+                        >
+                            {navItems().map((item) => (
                                 <Button
+                                    variant="text"
                                     key={item.to}
                                     color="inherit"
-                                    onClick={() => navigate(item.to)}
-                                    sx={{textTransform: "none", color: "inherit", mr: 1}}
+                                    sx={{
+                                        borderRadius: 99,
+                                        py: 0.5,
+                                        px: 1.5,
+                                        fontWeight: 600,
+                                        mt: 0,
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                    }}
+                                    onClick={() => {
+                                        setDrawerOpen(false);
+                                        navigate(item.to);
+                                    }}
                                 >
                                     {item.icon}
                                     {item.label}
@@ -145,7 +182,7 @@ export default function Header() {
                     {/* DESKTOP – LOGGED IN */}
                     {!isMobile && isAuthenticated && (
                         <Stack direction="row" spacing={2} alignItems="center">
-                            {role == "USER" && <NotificationsMenu/>}
+                            {roles?.includes("USER") && <NotificationsMenu />}
                             <Avatar
                                 src={`http://localhost:3000/api/users/uploads/${user?.photo}` || undefined}
                                 sx={{width: 36, height: 36, bgcolor: 'secondary.main', fontSize: 16, fontWeight: 600}}
@@ -180,7 +217,7 @@ export default function Header() {
                     {/* MOBILE MENU BUTTON */}
                     {isMobile && (
                         <>
-                            {role == "USER" && <NotificationsMenu/>}
+                            {roles?.includes("USER") && <NotificationsMenu />}
                             <IconButton color="inherit" onClick={() => setDrawerOpen(true)}>
                                 <MenuIcon/>
                             </IconButton>
@@ -255,9 +292,10 @@ export default function Header() {
                                 </Stack>
                             </Stack>
 
-                            {/* MOBILE: MY REPORTS */}
-                            {role === "USER" && (
+                            {/* MOBILE: Navigation items (reuse desktop nav items) */}
+                            {navItems().map((item) => (
                                 <Button
+                                    key={item.to}
                                     fullWidth
                                     variant="text"
                                     sx={{
@@ -266,16 +304,18 @@ export default function Header() {
                                         fontWeight: 600,
                                         mt: 1,
                                         justifyContent: "flex-start",
+                                        display: 'flex',
+                                        alignItems: 'center'
                                     }}
                                     onClick={() => {
                                         setDrawerOpen(false);
-                                        navigate("/my-reports");
+                                        navigate(item.to);
                                     }}
                                 >
-                                    <AssignmentIcon sx={{mr: 1}}/>
-                                    My Reports
+                                    {item.icon}
+                                    {item.label}
                                 </Button>
-                            )}
+                            ))}
 
                             {/* LOGOUT */}
                             <Button

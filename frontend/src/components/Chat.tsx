@@ -1,5 +1,5 @@
 // frontend/src/components/Chat.tsx
-import React, { FormEvent, useEffect, useRef, useState } from "react";
+import React, { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Typography,
@@ -31,6 +31,7 @@ interface ChatProps {
   reportId: number;
   chatId?: number;
   chatMode?: ChatMode;
+  currentRole?: 'USER' | 'AGENT' | 'LEAD';
   socketBaseUrl?: string;
   closeChat?: () => void;
 }
@@ -39,10 +40,11 @@ const Chat: React.FC<ChatProps> = ({
   reportId,
   chatId,
   chatMode,
+  currentRole,
   socketBaseUrl = "http://localhost:3000",
   closeChat,
 }) => {
-  const { senderType, isUser, isOfficer, isLead } = useChatIdentity();
+  const { senderType, isUser, isOfficer, isLead } = useChatIdentity(chatMode, currentRole);
   const { user, loading: authLoading } = useAuth();
 
   // Se lead/external → usiamo hook LeadExternal, altrimenti OfficerUser
@@ -57,10 +59,11 @@ const Chat: React.FC<ChatProps> = ({
   const leadExternalQuery = useMessagesByReportLeadExternal(reportId, isLeadExternalChat);
 
 
-  // Select the active query's data (note: choose leadExternal when isLeadExternalChat === true)
-  const rawMessages = isLeadExternalChat
-    ? leadExternalQuery.data || []
-    : officerUserQuery.data || [];
+  const rawMessages = useMemo(() => {
+    return isLeadExternalChat
+      ? leadExternalQuery.data ?? []
+      : officerUserQuery.data ?? [];
+  }, [isLeadExternalChat, leadExternalQuery.data, officerUserQuery.data]);
 
 
   const messagesLoading = isLeadExternalChat

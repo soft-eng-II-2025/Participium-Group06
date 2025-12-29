@@ -15,7 +15,11 @@ if (!token) {
 }
 
 interface SessionData {
-    userId?: number;
+    user?: {
+        id: number;
+        telegramId: number;
+        username: string;
+    };
 }
 
 
@@ -38,16 +42,56 @@ export type MyConversation = Conversation<MyContext>;
 export const bot = new Bot<MyContext>(token);
 
 
+
 bot.use(
     session<SessionData, MyContext>({
         initial: () => ({}),
     })
 );
 
+// middleware di login
+bot.use(async (ctx, next) => {
+    // Se non c’è session o update non ha from → skip
+    if (!ctx.from) return next();
+
+    // Se già loggato → skip
+    if (ctx.session.user) {
+        return next();
+    }
+
+    // Username obbligatorio
+    if (!ctx.from.username) {
+        await ctx.reply("❌ Devi avere uno username Telegram.");
+        return;
+    }
+
+    // Lookup DB
+    const userId = await getUserIdByTelegramUsername(ctx.from.username);
+
+    if (!userId) {
+        await ctx.reply(
+            "❌ Non risulti registrato sulla piattaforma.\n" +
+            "👉 Registrati prima di inviare una segnalazione."
+        );
+        return;
+    }
+
+    // Cache robusta
+    ctx.session.user = {
+        id: userId,
+        telegramId: ctx.from.id,
+        username: ctx.from.username,
+    };
+
+    console.log("LOGIN OK:", ctx.session.user);
+
+    return next();
+});
+
 bot.use(conversations());
 
 // /start
-bot.command("start", async (ctx) => {
+bot.command("start", async (ctx: MyContext) => {
     const welcomeText =
         `<b>Hi ${ctx.from?.first_name}! Welcome to PARTICIPIUM</b> 👥🏔️📣\n\n` +
         `The platform that connects you with your community to report and resolve local issues.\n\n` +
@@ -57,16 +101,6 @@ bot.command("start", async (ctx) => {
         `• 📊 <b>Stato Report</b>\n\n` +
         `Clicca il tasto qui sotto per iniziare 👇`;
 
-    console.log("telegram: " + ctx.from?.username);
-    if (ctx.from?.username == undefined) {
-        console.log("telegram username undefined");
-        return await ctx.reply("❌ Errore: Non riesco a trovare il tuo account. Crea il tuo account prima di inserire una segnalazione");
-    }
-    const userId = await  getUserIdByTelegramUsername(ctx.from?.username);
-    console.log("user id in telegram bot: " + userId);
-    ctx.session.userId = userId;
-
-    console.log("User ID salvato in sessione: " + ctx.session.userId);
 
     const keyboard = new InlineKeyboard()
         .text("➕ NUOVA SEGNALAZIONE", "new_report_start")
@@ -79,8 +113,6 @@ bot.command("start", async (ctx) => {
     });
 });
 
-
-
 // ======================
 // CREATE REPORT WIZARD
 // ======================
@@ -89,26 +121,34 @@ async function createReportWizard(
     ctx: MyContext
 ) {
 
-    // Aggiungi un log di debug per vedere se la sessione esiste all'ingresso
-    console.log("DEBUG: Sessione all'inizio del wizard:", ctx.session);
+    if (!ctx.session) {
+        ctx.session = {};
+    }
 
-    // Controllo di sicurezza all'inizio del wizard
-    if (!ctx.session.userId) {
-        // Se non c'è, riproviamo a cercarlo al volo o chiediamo di fare /start
+    if (!ctx.session.user) {
         const userId = await conversation.external(() =>
-            getUserIdByTelegramUsername(ctx.from?.username!)
+            getUserIdByTelegramUsername(ctx.from!.username!)
         );
+
         if (!userId) {
-            return await ctx.reply("❌ Errore: Non riesco a trovare il tuo account. Crea il tuo account prima di inserire una segnalazione");
+            await ctx.reply(
+                "❌ Non risulti registrato sulla piattaforma.\n" +
+                "👉 Registrati prima di inviare una segnalazione."
+            );
+            return;
         }
-        ctx.session.userId = userId;
 
+        ctx.session.user = {
+            id: userId,
+            telegramId: ctx.from!.id,
+            username: ctx.from!.username!,
+        };
     }
 
-    if (ctx.session.userId == undefined) {
-        console.log("ctx.session.userId == undefined")
-        return;
-    }
+    const userId = ctx.session.user.id;
+
+
+    console.log("conversation sessione userId: " + userId);
 
     // ---------- STEP 1: LOCATION ----------
     await ctx.reply(
@@ -142,31 +182,20 @@ async function createReportWizard(
     // ---------- STEP 3: CATEGORY ----------
 
     const allCategories = await conversation.external(() => getAllCategories());
-
     const categoryKeyboard = new InlineKeyboard();
-
     allCategories.forEach((cat) => {
-        // Usiamo un prefisso "cat:" per identificare i callback delle categorie
         categoryKeyboard.text(cat.name, `cat:${cat.id}`).row();
     });
 
-    await ctx.reply("📁 Scegli una <b>categoria</b>:", {
-        parse_mode: "HTML",
-        reply_markup: categoryKeyboard,
-    });
+    await ctx.reply("📁 Scegli una categoria:", { reply_markup: categoryKeyboard });
 
+    // waitForCallbackQuery deve essere l'unico punto di attesa
     const categoryQuery = await conversation.waitForCallbackQuery(/^cat:/);
+    await categoryQuery.answerCallbackQuery(); // Rispondi subito per evitare lag
 
-
-    // Estraiamo l'ID vero e proprio (togliamo il prefisso "cat:")
     const selectedCategoryId = categoryQuery.callbackQuery.data.split(":")[1];
     const selectedCategoryName = allCategories.find(c => c.id.toString() === selectedCategoryId)?.name;
-
     await ctx.reply(`Hai selezionato: <b>${selectedCategoryName}</b>`, { parse_mode: "HTML" });
-
-
-
-
 
     // ---------- STEP 4: DESCRIPTION ----------
     await ctx.reply(
@@ -178,17 +207,52 @@ async function createReportWizard(
 
     // ---------- STEP 5: PHOTOS (MAX 3) ----------
     const photos: string[] = [];
-    await ctx.reply("📸 Invia fino a <b>3 foto</b>. Quando hai finito, scrivi 'FINE'.");
 
-    while (photos.length < 3) {
+    // Messaggio fisso: non cambierà mai durante il replay
+    await ctx.reply(
+        "📸 Invia da 1 a 3 foto (anche come album dalla galleria).\n\n" +
+        "⚠️ IMPORTANTE: Una volta inviate, scrivi <b>FINE</b> per confermare.",
+        {
+            parse_mode: "HTML",
+            reply_markup: {
+                keyboard: [[{ text: "FINE" }]],
+                resize_keyboard: true,
+                one_time_keyboard: false
+            }
+        }
+    );
+
+    while (true) {
         const photoCtx = await conversation.waitFor(["message:photo", "message:text"]);
-        if (photoCtx.message?.text?.toUpperCase() === "FINE") break;
-        if (photoCtx.message?.photo) {
-            const fileId = photoCtx.message.photo.pop()?.file_id;
-            if (fileId) photos.push(fileId);
-            await ctx.reply(`✅ Foto ${photos.length}/3 ricevuta. Inviane un'altra o scrivi 'FINE'.`);
+        const msg = photoCtx.message;
+
+        // Gestione comando FINE
+        if (msg?.text?.toUpperCase() === "FINE") {
+            if (photos.length === 0) {
+                await ctx.reply("❌ Devi inviare almeno una foto.");
+                continue;
+            }
+            break; // Esci dal loop solo col tasto FINE
+        }
+
+        // Gestione Foto
+        if (msg?.photo) {
+            // Salviamo la foto solo se non abbiamo superato il limite
+            if (photos.length < 3) {
+                const fileId = msg.photo.pop()?.file_id;
+                if (fileId) photos.push(fileId);
+            }
+            // NOTA: Se l'utente ne manda 4 o 10, il bot continua a "mangiarle"
+            // restando in questo loop finché l'utente non preme FINE.
+            // Questo evita che i messaggi extra finiscano nello step successivo.
         }
     }
+
+    // Conferma finale e rimozione tastiera
+    await ctx.reply(`✅ Hai caricato ${photos.length} foto.`, {
+        reply_markup: { remove_keyboard: true }
+    });
+
     // ---------- STEP 6: ANONYMITY ----------
     const anonKeyboard = new InlineKeyboard()
         .text("Sì, Anonimo 🔒", "anon_true")
@@ -203,11 +267,8 @@ async function createReportWizard(
         }
     );
 
-    const anonQuery = await conversation.waitForCallbackQuery([
-        "anon_true",
-        "anon_false",
-    ]);
-
+    // Aspettiamo il click e rispondiamo subito
+    const anonQuery = await conversation.waitForCallbackQuery(["anon_true", "anon_false"]);
     await anonQuery.answerCallbackQuery();
 
     const isAnonymous = anonQuery.callbackQuery.data === "anon_true";
@@ -217,8 +278,7 @@ async function createReportWizard(
         parse_mode: "HTML",
     });
 
-    // 👉 QUI chiamerai il tuo backend con conversation.external()
-
+    // chiamo il backend
     await conversation.external(() =>
         addReport({
             anonymous: isAnonymous,
@@ -228,21 +288,11 @@ async function createReportWizard(
             longitude: longitude,
             photos: photos,
             title: title,
-            userId: ctx.session.userId
+            userId: userId
 
         })
     );
 
-/*
- title,
-        description,
-        latitude,
-        longitude,
-            categoryId: selectedCategoryId,
-        photos,
-        isAnonymous,
-        telegramUserId: ctx.from!.id,
- */
     await ctx.reply(
         `✅ <b>Grazie!</b>\nLa segnalazione "<b>${title}</b>" è stata inviata con successo.`,
         { parse_mode: "HTML" }
@@ -257,9 +307,11 @@ bot.use(createConversation(createReportWizard, "createReportWizard"));
 // ======================
 // COMMANDS & CALLBACKS
 // ======================
-bot.command("new_report_start", async (ctx) => {
+/*bot.command("new_report_start", async (ctx) => {
     await ctx.conversation.enter("createReportWizard");
 });
+
+ */
 
 bot.callbackQuery("new_report_start", async (ctx) => {
     await ctx.answerCallbackQuery();
@@ -272,4 +324,12 @@ bot.callbackQuery("new_report_start", async (ctx) => {
 bot.catch((err: BotError<MyContext>) => {
     const ctx = err.ctx;
     console.error("Bot error:", err.error, ctx.update);
+});
+
+bot.command("reset", async (ctx) => {
+    // Svuota la sessione
+    ctx.session = { user: ctx.session.user }; // Manteniamo l'utente loggato ma resettiamo il resto
+    // Forza l'uscita da ogni conversazione attiva
+    await ctx.conversation.exit();
+    await ctx.reply("🔄 Sessione resettata e conversazioni chiuse. Ora puoi riprovare.");
 });

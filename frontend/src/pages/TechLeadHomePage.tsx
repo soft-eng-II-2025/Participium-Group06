@@ -111,6 +111,7 @@ const TechLeadHomePage: React.FC = () => {
                                     reportId={selectedReport.id}
                                     chatId={selectedReport.chats?.find((chat) => chat.type === chatMode)?.id}
                                     chatMode={chatMode!}
+                                    currentRole="LEAD"
                                     closeChat={() => toggleChatOpen()}
                                 />
                             ) : null}

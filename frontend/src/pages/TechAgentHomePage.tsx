@@ -118,6 +118,7 @@ const TechAgentHomePage: React.FC = () => {
                   reportId={selectedReport.id}
                   chatId={selectedReport.chats?.find(c => c.type === chatMode)?.id}
                   chatMode={chatMode!}
+                  currentRole="AGENT"
                   closeChat={() => toggleChatOpen()}
                 />
               ) : null}

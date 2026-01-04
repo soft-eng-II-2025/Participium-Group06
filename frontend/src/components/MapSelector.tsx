@@ -29,12 +29,12 @@ import { ReportResponseDTO } from "../DTOs/ReportResponseDTO";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import './MapSelector.css';
+
 
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
-
+import './MapSelector.css';
 export const TURIN_BBOX = "7.550,45.000,7.800,45.150";
 
 /* ----------------------------- ICON FIX ---------------------------- */

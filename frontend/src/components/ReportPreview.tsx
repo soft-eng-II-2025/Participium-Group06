@@ -220,7 +220,7 @@ export default function ReportPreview({ report, currentRole, showApprovalActions
                 <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
                     <Typography variant="body2" color="text.secondary">Reporter:</Typography>
                     <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
-                        {report.user?.first_name || report.user?.username} {report.user?.last_name ?? ''}
+                        {report.anonymous ? "Anonymous" : `${report.user?.first_name || report.user?.username} ${report.user?.last_name ?? ''}`}
                     </Typography>
 
                 </Stack>

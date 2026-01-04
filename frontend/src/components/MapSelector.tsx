@@ -33,6 +33,8 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
+import "./MapSelector.css";
+
 export const TURIN_BBOX = "7.550,45.000,7.800,45.150";
 
 /* ----------------------------- ICON FIX ---------------------------- */
@@ -235,7 +237,7 @@ const MapSelector: React.FC<{ onSelect: (lat: number, lng: number) => void }> = 
       >
         <TileLayer
           attribution="&copy; OpenStreetMap & CartoDB"
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
         {/* SEARCH BUTTON */}

@@ -156,23 +156,34 @@ async function createReportWizard(
 
     const userId = ctx.session.user.id;
 
-    // Turin Boundary Coordinates [lon, lat]
-    const TORINO_BOUNDARY = [
-        [7.6599, 45.1585], [7.6800, 45.1550], [7.7011, 45.1504], [7.7150, 45.1450], // Nord (Venaria/Borgaro)
-        [7.7348, 45.1325], [7.7500, 45.1200], [7.7650, 45.1000], [7.7680, 45.0850], // Nord-Est (Settimo)
-        [7.7600, 45.0750], [7.7400, 45.0650], [7.7300, 45.0550], [7.7282, 45.0681], // Est (San Mauro/Collina)
-        [7.7100, 45.0500], [7.7015, 45.0450], [7.6950, 45.0350], [7.6850, 45.0250], // Sud-Est (Pecetto/Moncalieri)
-        [7.6749, 45.0118], [7.6600, 45.0050], [7.6416, 44.9972], [7.6250, 45.0000], // Sud (Moncalieri/Nichelino)
-        [7.6152, 45.0145], [7.6000, 45.0200], [7.5878, 45.0298], [7.5850, 45.0450], // Sud-Ovest (Beinasco)
-        [7.5826, 45.0611], [7.5750, 45.0650], [7.5600, 45.0660], [7.5511, 45.0674], // Ovest (Grugliasco/Rivoli)
-        [7.5550, 45.0750], [7.5600, 45.0850], [7.5682, 45.0933], [7.5750, 45.1000], // Ovest (Collegno)
-        [7.5900, 45.1100], [7.6046, 45.1157], [7.6150, 45.1300], [7.6256, 45.1402], // Nord-Ovest (Pianezza)
-        [7.6400, 45.1500], [7.6599, 45.1585] // Chiusura su Venaria
-    ];
+    const geoJsonPath = path.join(__dirname, "turin-boundary.geojson");
+    let torinoPolygons: any[] = [];
+
+    try {
+        if (fs.existsSync(geoJsonPath)) {
+            const rawData = fs.readFileSync(geoJsonPath, "utf8");
+            const geoJson = JSON.parse(rawData);
+            // Struttura corretta per il tuo MultiPolygon
+            torinoPolygons = geoJson.features[0].geometry.coordinates;
+            console.log("✅ GeoJSON caricato correttamente dalla cartella del bot.");
+        } else {
+            console.error("❌ Errore: Il file turin-boundary.geojson non esiste in:", geoJsonPath);
+        }
+    } catch (err) {
+        console.error("❌ Errore durante il parsing del GeoJSON:", err);
+    }
 
     function isPointInTorino(lat: number, lon: number): boolean {
-        return inside([lon, lat], TORINO_BOUNDARY);
+        if (torinoPolygons.length === 0) return true; 
+
+        return torinoPolygons.some(polygonRing => {
+            // MultiPolygon ha un livello di array in più: [Poligono][Anello][Punto]
+            // Di solito usiamo il primo anello (indice 0) che è il perimetro esterno
+            const ring = Array.isArray(polygonRing[0][0]) ? polygonRing[0] : polygonRing;
+            return inside([lon, lat], ring);
+        });
     }
+    
 
     // ---------- STEP 1: LOCATION ----------
     let latitude: number = 0;

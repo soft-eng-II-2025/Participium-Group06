@@ -3,13 +3,13 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function ProtectedRoute({ children }: { readonly children: React.ReactElement }) {
-  const { isAuthenticated, loading, user, role } = useAuth();
+  const { isAuthenticated, loading, user, roles } = useAuth();
   const location = useLocation();
 
   if (loading) return null;
 
   const isUnverifiedUser = !!(
-    user && (role === "USER" || !("role" in (user as any))) && (
+    user && (roles?.includes("USER") || !("roles" in (user as any))) && (
       ((user as any).verified === false)
     )
   );
@@ -22,13 +22,13 @@ export default function ProtectedRoute({ children }: { readonly children: React.
 }
 
 export function RequireUnverifiedUser({ children }: { readonly children: React.ReactElement }) {
-  const { isAuthenticated, loading, user, role } = useAuth();
+  const { isAuthenticated, loading, user, roles } = useAuth();
   const location = useLocation();
 
   if (loading) return null;
 
   const isUnverifiedUser = !!(
-    user && role === "USER" && (
+    user && roles?.includes("USER") && (
       (user?.verified === false)
     )
   );

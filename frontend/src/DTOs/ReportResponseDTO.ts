@@ -1,9 +1,9 @@
-import {UserResponseDTO} from "./UserResponseDTO";
 import { MunicipalityOfficerResponseDTO } from "./MunicipalityOfficerResponseDTO";
-import { StatusType } from "./StatusType";
+import { UserResponseDTO } from "./UserResponseDTO";
 import { ChatResponseDTO } from "./ChatRespondeDTO";
+import { StatusType } from "./StatusType";
 
-export interface ReportResponseDTO { 
+export interface ReportResponseDTO {
     id: number;
     longitude: number;
     latitude: number;
@@ -19,4 +19,5 @@ export interface ReportResponseDTO {
     updatedAt: Date;
     chats: ChatResponseDTO[];
     leadOfficer?: MunicipalityOfficerResponseDTO;
+    anonymous: boolean;
 }   

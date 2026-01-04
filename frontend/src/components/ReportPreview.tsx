@@ -21,6 +21,7 @@ type Props = {
     showUpdateStatus?: boolean;
     showChat?: boolean;
     isFlat?: boolean;
+    currentRole?: 'LEAD' | 'AGENT';
     // callback used to notify parent of actions. action is 'approve' or 'reject'.
     // payload can contain optional data like { reason } or { newStatus }
     onAction?: (action: 'approve' | 'reject', payload?: { reason?: string; newStatus?: string; assignee?: string }) => void;
@@ -31,15 +32,14 @@ type Props = {
 
 const statusesForUpdate = [StatusType.Assigned, StatusType.InProgress, StatusType.Resolved, StatusType.Suspended];
 
-export default function ReportPreview({ report, showApprovalActions = false, showTeamCard = false, showUpdateStatus = false, isFlat = false, onAction, showChat = false, openChat }: Props) {
+export default function ReportPreview({ report, currentRole, showApprovalActions = false, showTeamCard = false, showUpdateStatus = false, isFlat = false, onAction, showChat = false, openChat }: Props) {
     const [isRejected, setIsRejected] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [statusButton, setStatusButton] = useState<StatusType | null>(null);
     const [rejectComment, setRejectComment] = useState('');
     const [officeMembers, setOfficeMembers] = useState(null as MunicipalityOfficerResponseDTO[] | null);
     const [externalMembers, setExternalMembers] = useState(null as MunicipalityOfficerResponseDTO[] | null);
-    const { role, isExternal } = useAuth();
-    const [chatOpen, setChatOpen] = useState(false);
+    const { roles, isExternal } = useAuth();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -71,7 +71,6 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
     const { data: techLeadAgents, isLoading: agentsLoading, isError: agentsError } = useGetAgentsByTechLead(showTeamCard);
 
     useEffect(() => {
-        setChatOpen(false);
         if (showTeamCard && report) {
             setOfficeMembers(techLeadAgents?.filter(a => a.external === false) ?? []);
             setExternalMembers(techLeadAgents?.filter(a => a.external === true) ?? []);
@@ -88,7 +87,6 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
         setRejectComment('');
         setSelectedIndex(0);
         setStatusButton(null);
-        setChatOpen(false);
     }, [report?.id]);
 
     function getPhotoUrl(p: string) {
@@ -136,7 +134,7 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                     {showChat && (
                         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                             {/* Tech Lead sees both chats when officer is external */}
-                            {role?.startsWith('TECH_LEAD') && report.officer?.external && (
+                            {currentRole === 'LEAD' && report.officer?.external && (
                                 <>
                                     <Button
                                         variant="outlined"
@@ -170,7 +168,7 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                             )}
 
                             {/* Internal agent chats with reporter */}
-                            {role?.startsWith('TECH_AGENT') && !isExternal && (
+                            {currentRole === 'AGENT' && !isExternal && (
                                 <Button
                                     variant="outlined"
                                     size="small"
@@ -182,7 +180,7 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                             )}
 
                             {/* Internal agent chats with reporter */}
-                            {role?.startsWith('USER') && (
+                            {roles?.some(role => role.startsWith('USER')) && (
                                 <Button
                                     variant="outlined"
                                     size="small"
@@ -222,7 +220,7 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                 <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
                     <Typography variant="body2" color="text.secondary">Reporter:</Typography>
                     <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
-                        {report.user?.first_name || report.user?.username} {report.user?.last_name ?? ''}
+                        {report.user ? `${report.user?.first_name} ${report.user?.last_name}` : "Anonymous"}
                     </Typography>
 
                 </Stack>
@@ -281,7 +279,7 @@ export default function ReportPreview({ report, showApprovalActions = false, sho
                                     border: selectedIndex === i ? '2px solid' : '2px solid transparent',
                                     borderColor: selectedIndex === i ? 'primary.main' : 'transparent'
                                 }}
-                                onClick={() => { setSelectedIndex(i); openImage(getPhotoUrl(p)); }}
+                                onClick={() => { setSelectedIndex(i);}}
                             />
                         ))}
                     </Stack>

@@ -13,6 +13,9 @@ export class UserRepository {
     async findByUsername(username: string): Promise<User | null> {
         return this.ormRepository.findOneBy({ username });
     }
+    async findByTelegramUsername(telegram_username: string): Promise<User | null> {
+        return this.ormRepository.findOneBy( {telegram_id: telegram_username })
+    }
     async findByid(id: number): Promise<User | null> {
         return this.ormRepository.findOneBy({ id });
     }

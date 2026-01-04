@@ -1,5 +1,3 @@
-import {RoleResponseDTO} from "./RoleResponseDTO";
-
 export interface MunicipalityOfficerResponseDTO {
     id: number;
     username: string;
@@ -7,6 +5,6 @@ export interface MunicipalityOfficerResponseDTO {
     first_name: string;
     last_name: string;
     external: boolean;
-    role: string | null;
+    roles: string[] | null;
     companyName: string | null;
 }

@@ -127,7 +127,7 @@ beforeAll(async () => {
     password: await hashPassword("password123"),
     first_name: "Agent",
     last_name: "One",
-    role: techAgentRole,
+    roles: [techAgentRole],
     external: false,
   });
 
@@ -137,7 +137,7 @@ beforeAll(async () => {
     password: await hashPassword("password123"),
     first_name: "Agent",
     last_name: "Two",
-    role: techAgentRole,
+    roles: [techAgentRole],
     external: false,
   });
   await officerRepo.save([techAgent1, techAgent2]);

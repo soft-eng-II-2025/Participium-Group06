@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AuthApi } from '../api/authApi';
 import type { LoginDTO } from '../DTOs/LoginDTO';
@@ -10,7 +10,7 @@ type AuthContextType = {
   user: UserResponseDTO | null;
   loading: boolean;            // true while initial session fetch is pending
   isAuthenticated: boolean;
-  role: string | null;
+  roles: string[] | null;
   isExternal: boolean;
   companyName: string | null;
   login: (creds: LoginDTO) => Promise<UserResponseDTO | MunicipalityOfficerResponseDTO | null>;
@@ -70,37 +70,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
 
   // plain functions for components to call (these don't call hooks)
-  const login = async (creds: LoginDTO) : Promise<UserResponseDTO | MunicipalityOfficerResponseDTO | null> => {
+  const login = useCallback(async (creds: LoginDTO) : Promise<UserResponseDTO | MunicipalityOfficerResponseDTO | null> => {
     const res = await loginMutation.mutateAsync(creds);
     return (res as any)?.data ?? res ?? null;
-  };
+  }, [loginMutation]);
 
-  const register = async (payload: CreateUserRequestDTO) => {
+  const register = useCallback(async (payload: CreateUserRequestDTO) => {
     const res = await registerMutation.mutateAsync(payload);
     return (res as any)?.data ?? res ?? null;
-  };
+  }, [registerMutation]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await logoutMutation.mutateAsync();
     // session is already cleared in onSuccess; optionally also clear other caches
     const socket = getSocket();
     socket?.disconnect();
-  };
+  }, [logoutMutation]);
 
-  const setUser = (u: UserResponseDTO | MunicipalityOfficerResponseDTO | null) => {
+  const setUser = useCallback((u: UserResponseDTO | MunicipalityOfficerResponseDTO | null) => {
     qc.setQueryData(['session'], u);
-  };
+  }, [qc]);
   useEffect(() => {
     if (!user) return;
 
-    const role = resolveRole(user);
+    const roles = resolveRole(user);
 
-    if (role === "USER") {
+    if (roles?.includes("USER")) {
       initSocketClient({ UserUsername: user.username });
       return;
     }
 
-    if (role?.startsWith("TECH") || role === "ORGANIZATION_OFFICER") {
+    if (roles?.some(role => role.startsWith("TECH")) || roles?.includes("ORGANIZATION_OFFICER")) {
       initSocketClient({ OfficerUsername: user.username });
       return;
     }
@@ -110,24 +110,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user: user ?? null,
     loading: isLoading,
     isAuthenticated: !!user,
-    role: resolveRole(user),
+    roles: resolveRole(user),
     login,
     register,
     logout,
     setUser,
     isExternal: user ? (user as MunicipalityOfficerResponseDTO).external === true : false,
     companyName: user ? (user as MunicipalityOfficerResponseDTO).companyName : null,
-  }), [user, isLoading]); // keep stable identity
+  }), [user, isLoading, login, register, logout, setUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-const resolveRole = (user: any): string | null => {
+const resolveRole = (user: any): string[] | null => {
   if (!user) return null;
 
-  if (!("role" in user)) return "USER"; // regular user has no role property
-  if (user.role === null) return null; // officer with no assigned role
+  if (!("roles" in user)) return ["USER"]; // regular user has no role property
+  if (user.roles === null) return null; // officer with no assigned role
 
-  return user.role; 
+
+
+  return user.roles ?? null; 
 };
 
 export function useAuth(): AuthContextType {

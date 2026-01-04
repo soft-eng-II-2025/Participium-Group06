@@ -7,7 +7,6 @@ import Button from "@mui/material/Button";
 import AddIcon from '@mui/icons-material/Add';
 import {useGetAllMunicipalityUsers} from "../hook/adminApi.hook";
 import AssignRoleDialog from "../components/AssignRoleDialog";
-import {AssignRoleRequestDTO} from "../DTOs/AssignRoleRequestDTO";
 
 const AdminHomePage = () => {
     const navigate = useNavigate();
@@ -25,7 +24,6 @@ const AdminHomePage = () => {
     const handleEditRole = (username: string) => {
         const u = (users || []).find((x: MunicipalityOfficerResponseDTO) => x.username === username) || null;
         if (!u) return;
-        if (u.role) return; 
         setSelectedUser(u);
         setOpen(true);
     };
@@ -77,11 +75,11 @@ const AdminHomePage = () => {
                 </Button>
             </Box>
 
-            <Grid container spacing={isMobile ? 2 : 6}>
+            <Grid container spacing={isMobile ? 2 : 6} alignItems="stretch">
                 {(users || [])
                     .sort((a, b) => a.username.localeCompare(b.username))
                     .map((user) => (
-                        <Grid item xs={12} sm={6} md={3} key={user.username}>
+                        <Grid item xs={12} sm={6} md={3} key={user.username} sx={{ display: 'flex' }}>
                             <UserCard user={user} onEditRole={handleEditRole} />
                         </Grid>
                     ))}
@@ -89,7 +87,7 @@ const AdminHomePage = () => {
 
             <AssignRoleDialog
                 open={open}
-                user={{username: selectedUser?.username ?? '', roleTitle: null } as AssignRoleRequestDTO}
+                user={selectedUser}
                 onClose={() => { setOpen(false); setSelectedUser(null); }}
             />
         </Container>

@@ -51,7 +51,7 @@ const storage = multer.diskStorage({
         cb(null, UPLOAD_DIR);
     },
     filename: function (req, file, cb) {
-        const uniqueName = Date.now() + "-" + file.originalname.replace(/\s+/g, "_");
+        const uniqueName = Date.now() + "-" + file.originalname.replaceAll(/\s+/g, "_");
         cb(null, uniqueName);
     }
 });
@@ -73,6 +73,7 @@ async function adaptCreateReportBody(body: any): Promise<CreateReportRequestDTO>
         categoryId: Number(categoryId),
         officer: body.officer,
         photos: Array.isArray(body.photos) ? body.photos.map(String) : [],
+        anonymous: body.anonymous
     };
 }
 
@@ -90,7 +91,7 @@ router.post('/reports', requireUser, async (req: Request, res: Response) => {
     email: 'temp@x.com',
     first_name: 'Temp',
     last_name: 'User',
-    role: 'TempRole'
+    roles: ['TempRole']
     } as MunicipalityOfficerResponseDTO;
 
     req.body = adapted;

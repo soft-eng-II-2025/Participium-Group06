@@ -23,7 +23,7 @@ import { Chat } from "../models/Chat";
 import { ChatResponseDTO } from "../models/DTOs/ChatRespondeDTO";
 
 /* Helper */
-function removeNullAttributes<T extends Record<string, any>>(dto: T): Partial<T> {
+export function removeNullAttributes<T extends Record<string, any>>(dto: T): Partial<T> {
     return Object.fromEntries(
         Object.entries(dto).filter(
             ([, value]) =>
@@ -47,10 +47,10 @@ export function createMunicipalityOfficerDTO(
     first_name?: string,
     last_name?: string,
     external?: boolean,
-    role?: string | null,
+    roles?: string[],
     companyName?: string | null
 ): MunicipalityOfficerResponseDTO {
-    return removeNullAttributes({ id, username, email, first_name, last_name, external, role, companyName }) as MunicipalityOfficerResponseDTO;
+    return removeNullAttributes({ id, username, email, first_name, last_name, external, roles, companyName }) as MunicipalityOfficerResponseDTO;
 }
 
 export function createReportDTO(
@@ -59,7 +59,8 @@ export function createReportDTO(
     latitude: number,
     title: string,
     description: string,
-    user: User, 
+    user: User,
+    anonymous: boolean,
     category?: CategoryResponseDTO,
     status?: string,
     explanation?: string,
@@ -83,7 +84,8 @@ export function createReportDTO(
         photos,
         createdAt,
         chats,
-        leadOfficer
+        leadOfficer,
+        anonymous
     }) as unknown as ReportResponseDTO;
 }
 
@@ -173,7 +175,7 @@ export function mapMunicipalityOfficerDAOToDTO(officerDAO: MunicipalityOfficer):
         officerDAO.first_name,
         officerDAO.last_name,
         officerDAO.external,
-        officerDAO.role?.title || null,
+        officerDAO.roles?.map(role => role.title) || [],
         officerDAO.companyName
     );
 }
@@ -186,6 +188,7 @@ export function mapReportDAOToDTO(reportDAO: Report): ReportResponseDTO {
         reportDAO.title,
         reportDAO.description,
         reportDAO.user,
+        reportDAO.anonymous,
         reportDAO.category ? mapCategoryDAOToDTO(reportDAO.category) : undefined,
         reportDAO.status,
         reportDAO.explanation,
@@ -201,7 +204,7 @@ export function mapReportDAOToDTO(reportDAO: Report): ReportResponseDTO {
 export function mapRoleDAOToDTO(roleDAO: Role): RoleResponseDTO {
     return createRoleDTO(
         roleDAO.title,
-        roleDAO.municipalityOfficer?.map((o: MunicipalityOfficer) => mapMunicipalityOfficerDAOToDTO(o))
+        roleDAO.municipalityOfficers?.map((o: MunicipalityOfficer) => mapMunicipalityOfficerDAOToDTO(o))
     );
 }
 
@@ -223,8 +226,22 @@ export function mapUserDAOToDTO(userDAO: User): UserResponseDTO {
 export function mapMessageDAOToDTO(messageDAO: Message): MessageResponseDTO {
     const reportId = messageDAO?.chat?.report?.id;
     const chatId = messageDAO?.chat?.id;
-    const username = messageDAO?.chat?.report?.user?.username;
-    const role_label = messageDAO?.chat?.report?.officer?.role?.label;
+    let username;
+    if((messageDAO.sender == SenderType.OFFICER) || (messageDAO.sender == SenderType.EXTERNAL)) {
+        const lastName  = messageDAO?.chat?.report?.officer?.last_name ?? "";
+        const firstName = messageDAO?.chat?.report?.officer?.first_name ?? "";
+        username = (lastName + " " + firstName).trim();
+    } else if (messageDAO.sender == SenderType.USER){
+        const lastName  = messageDAO?.chat?.report?.user?.last_name ?? "";
+        const firstName = messageDAO?.chat?.report?.user?.first_name ?? "";
+        username = (lastName + " " + firstName).trim();
+    } else if (messageDAO.sender == SenderType.LEAD){
+        const lastName  = messageDAO?.chat?.report?.leadOfficer?.last_name ?? "";
+        const firstName = messageDAO?.chat?.report?.leadOfficer?.first_name ?? "";
+        username = (lastName + " " + firstName).trim();
+    }
+    const role_labels = messageDAO?.chat?.report?.officer?.roles?.map(role => role.label);
+    const role_label = role_labels ? role_labels[0] : undefined;
     return createMessageResponseDTO(
         reportId as any,
         chatId as any,
@@ -273,6 +290,8 @@ export function mapCreateReportRequestToDAO(dto: CreateReportRequestDTO): Report
     dao.explanation = "";
     dao.category = new Category();
     dao.category.id = dto.categoryId;
+
+    dao.anonymous = dto.anonymous;
 
     return dao;
 }

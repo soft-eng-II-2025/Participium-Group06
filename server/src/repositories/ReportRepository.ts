@@ -72,7 +72,7 @@ export class ReportRepository {
     newReport.description = report.description;
     newReport.status = report.status ?? StatusType.PendingApproval; // ensure non-null
     newReport.explanation = report.explanation ?? "";
-
+    newReport.anonymous = report.anonymous;
     if (report.user && report.user.id) {
         newReport.user = await this.userRepository.findOneBy({ id: report.user.id }) as User;
         if (!newReport.user) throw new Error("User not found for report creation.");

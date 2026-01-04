@@ -41,10 +41,10 @@ export class MessageRepository {
                     report: {
                         user: true,
                         officer: {
-                            role: true
+                            roles: true
                         },
                         leadOfficer: {
-                            role: true
+                            roles: true
                         }
                     }
                 }

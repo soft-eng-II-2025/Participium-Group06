@@ -20,7 +20,7 @@ router.get("/", requireAuth, async (req: Request, res: Response, next: NextFunct
 router.delete("/:id", requireAuth, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const notifId = +req.params.id;
-        if (isNaN(notifId)) return res.status(400).json({ error: "Invalid notification ID" });
+        if (Number.isNaN(notifId)) return res.status(400).json({ error: "Invalid notification ID" });
 
         const user = req.user as UserResponseDTO;
         const result = await notificationController.deleteNotificationForUser(notifId, user.username);
@@ -35,7 +35,7 @@ router.delete("/:id", requireAuth, async (req: Request, res: Response, next: Nex
 router.patch('/:id/read', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const notifId = +req.params.id;
-        if (isNaN(notifId)) return res.status(400).json({ error: 'Invalid notification ID' });
+        if (Number.isNaN(notifId)) return res.status(400).json({ error: 'Invalid notification ID' });
 
         const user = req.user as UserResponseDTO;
         const dto = await notificationController.markAsReadForUser(notifId, user.username);

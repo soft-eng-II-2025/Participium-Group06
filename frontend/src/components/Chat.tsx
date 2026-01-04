@@ -1,5 +1,5 @@
 // frontend/src/components/Chat.tsx
-import React, { FormEvent, useEffect, useRef, useState } from "react";
+import React, { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Typography,
@@ -31,6 +31,7 @@ interface ChatProps {
   reportId: number;
   chatId?: number;
   chatMode?: ChatMode;
+  currentRole?: 'USER' | 'AGENT' | 'LEAD';
   socketBaseUrl?: string;
   closeChat?: () => void;
 }
@@ -39,10 +40,11 @@ const Chat: React.FC<ChatProps> = ({
   reportId,
   chatId,
   chatMode,
+  currentRole,
   socketBaseUrl = "http://localhost:3000",
   closeChat,
 }) => {
-  const { senderType, isUser, isOfficer, isLead } = useChatIdentity();
+  const { senderType, isUser, isOfficer, isLead } = useChatIdentity(chatMode, currentRole);
   const { user, loading: authLoading } = useAuth();
 
   // Se lead/external → usiamo hook LeadExternal, altrimenti OfficerUser
@@ -57,10 +59,11 @@ const Chat: React.FC<ChatProps> = ({
   const leadExternalQuery = useMessagesByReportLeadExternal(reportId, isLeadExternalChat);
 
 
-  // Select the active query's data (note: choose leadExternal when isLeadExternalChat === true)
-  const rawMessages = isLeadExternalChat
-    ? leadExternalQuery.data || []
-    : officerUserQuery.data || [];
+  const rawMessages = useMemo(() => {
+    return isLeadExternalChat
+      ? leadExternalQuery.data ?? []
+      : officerUserQuery.data ?? [];
+  }, [isLeadExternalChat, leadExternalQuery.data, officerUserQuery.data]);
 
 
   const messagesLoading = isLeadExternalChat
@@ -92,21 +95,6 @@ const Chat: React.FC<ChatProps> = ({
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
   }, [rawMessages, socketReceivedMessages]);
-
-  // Other side username (for header)
-  const otherSideUsername = React.useMemo(() => {
-    if (!allMessages.length) return undefined;
-
-    if (isUser) {
-      return allMessages.find((m) => m.sender !== "USER")?.username;
-    } else if (isOfficer) {
-      return allMessages.find((m) => m.sender === "USER")?.username;
-    } else if (isLead) {
-      return allMessages.find((m) => m.sender === "EXTERNAL")?.username;
-    } else if (senderType === "EXTERNAL") {
-      return allMessages.find((m) => m.sender === "LEAD")?.username;
-    }
-  }, [allMessages, isUser, isOfficer, isLead, senderType]);
 
   // Auto-scroll
   useEffect(() => {
@@ -213,11 +201,11 @@ const Chat: React.FC<ChatProps> = ({
       if (chatMode === ChatMode.LEAD_EXTERNAL){
         return 'Chat with External Officer';
       }
-      return `Chat with Reporter  ${otherSideUsername ? ` (${otherSideUsername})` : ""}`;
+      return 'Chat with Reporter';
     }
 
     if (isOfficer && senderType !== "EXTERNAL") {
-      return `Chat with Reporter ${otherSideUsername ? ` (${otherSideUsername})` : ""}`;
+      return 'Chat with Reporter';
     }
     if (isUser) {
       return 'Chat with Officer';
@@ -229,18 +217,7 @@ const Chat: React.FC<ChatProps> = ({
   }
 
   function getUsername(m: MessageResponseDTO): string {
-    switch (m.sender) {
-      case "USER":
-        return m.username || "User";
-      case "OFFICER":
-        return "Officer";
-      case "LEAD":
-        return "Officer";
-      case "EXTERNAL":
-        return "External Officer";
-      default:
-        return "Unknown";
-    }
+   return m.username ?? "";
   }
 
 

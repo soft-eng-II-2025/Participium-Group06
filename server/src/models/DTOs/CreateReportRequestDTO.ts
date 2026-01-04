@@ -1,4 +1,16 @@
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from "class-validator";
+import {
+    ArrayMaxSize,
+    ArrayMinSize,
+    IsArray,
+    IsBoolean,
+    IsNotEmpty,
+    IsNumber,
+    IsOptional,
+    IsString,
+    Max,
+    Min,
+    ValidateNested
+} from "class-validator";
 import { StatusType } from "../StatusType";
 import { MunicipalityOfficerResponseDTO } from "./MunicipalityOfficerResponseDTO";
 import { Type } from "class-transformer";
@@ -37,5 +49,8 @@ export class CreateReportRequestDTO {
     @ArrayMaxSize(3)
     @IsString({ each: true })
     photos!: string[];
+
+    @IsBoolean()
+    anonymous!: boolean;
 
 }

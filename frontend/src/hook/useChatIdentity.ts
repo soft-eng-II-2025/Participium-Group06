@@ -1,46 +1,37 @@
-// frontend/src/hook/useChatIdentity.ts
-import { useAuth } from "../contexts/AuthContext";
-import { UserResponseDTO } from "../DTOs/UserResponseDTO";
-import { MunicipalityOfficerResponseDTO } from "../DTOs/MunicipalityOfficerResponseDTO";
+import { useMemo } from "react";
+import { ChatMode } from "../enums/ChatMode";
 
-export function useChatIdentity() {
-  const { user, role } = useAuth();
+export type SenderType = "LEAD" | "EXTERNAL" | "OFFICER" | "USER";
+export interface ChatIdentity {
+  senderType?: SenderType;
+  isUser: boolean;
+  isOfficer: boolean;
+  isLead: boolean;
+}
 
-  const isUser = role === "USER";
-  const isOfficer = role === "TECH_AGENT_INFRASTRUCTURE" || role === "TECH_AGENT_MOBILITY" || role === "TECH_AGENT_GREEN_AREAS" || 
-                    role === "TECH_AGENT_WASTE_MANAGEMENT" || role === "TECH_AGENT_ENERGY_LIGHTING" || role === "TECH_AGENT_PUBLIC_BUILDINGS";
-  const isAdmin = role === "ADMIN";
-  const isLead = role === "TECH_LEAD_INFRASTRUCTURE" || role === "TECH_LEAD_MOBILITY" || role === "TECH_LEAD_GREEN_AREAS" || 
-                    role === "TECH_LEAD_WASTE_MANAGEMENT" || role === "TECH_LEAD_ENERGY_LIGHTING" || role === "TECH_LEAD_PUBLIC_BUILDINGS";
 
-  let senderType: "USER" | "OFFICER" | "EXTERNAL" | "LEAD" | null = null;
-  let displayName: string | undefined;
+export function useChatIdentity(chatMode?: ChatMode, currentUser?: 'USER' | 'AGENT' | 'LEAD') : ChatIdentity { 
 
-  if (isUser && user) {
-    const u = user as UserResponseDTO;
-    senderType = "USER";
-    displayName = u.username;
-  } else if (isOfficer && user) {
-    const o = user as MunicipalityOfficerResponseDTO;
-    if(o.external) {
-      senderType = "EXTERNAL";
-      displayName = o.username;
-    } else {
-      senderType = "OFFICER";
-      displayName = o.role? o.role : o.username;
+  const identity = useMemo<ChatIdentity>(() => {
+    if (chatMode === "LEAD_EXTERNAL") {
+      return {
+        senderType: currentUser === 'LEAD' ? "LEAD" : "EXTERNAL",
+        isUser: false,
+        isOfficer: currentUser === 'AGENT',
+        isLead: currentUser === 'LEAD',
+      };
+    } else if (chatMode === "OFFICER_USER") {
+      if (currentUser === 'AGENT' ) {
+        return { senderType: "OFFICER", isUser: false, isOfficer: true, isLead: false };
+      } else if (currentUser === 'LEAD') {
+        return { senderType: "LEAD", isUser: false, isOfficer: false, isLead: true };
+      }else if (currentUser === 'USER') {
+        return { senderType: "USER", isUser: true, isOfficer: false, isLead: false };
+      }
     }
-  } else if (isLead && user) {
-    senderType = "LEAD";
-    const o = user as MunicipalityOfficerResponseDTO;
-    displayName = o.role? o.role : o.username;
-  }
 
-  return {
-    senderType,
-    displayName,
-    isUser,
-    isOfficer,
-    isAdmin,
-    isLead
-  };
+    return { senderType: undefined, isUser: false, isOfficer: false, isLead: false };
+  }, [chatMode, currentUser]);
+
+  return identity;
 }

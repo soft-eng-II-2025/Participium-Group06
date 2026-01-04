@@ -1,35 +1,35 @@
-FROM node:20-bullseye-slim
+# Passiamo a Bookworm (Debian 12) che ha GLIBC aggiornata
+FROM node:20-bookworm-slim
 
 WORKDIR /app
 
-# Copia package.json e package-lock.json e installa le dipendenze
-COPY package*.json ./
-# Install build tools required for native modules (argon2, sqlite3, etc.)
+# Installiamo le dipendenze di build necessarie per compilare argon2
 RUN apt-get update && \
     apt-get install -y --no-install-recommends python3 build-essential make g++ && \
-    rm -rf /var/lib/apt/lists/* && \
-    npm ci && \
-    # remove build tools to keep image smaller (they may be needed at build time only)
-    apt-get purge -y --auto-remove python3 build-essential make g++ || true
+    rm -rf /var/lib/apt/lists/*
 
-# Copia tutto il codice
+COPY package*.json ./
+
+# npm ci installerà le dipendenze e compilerà i moduli nativi (come argon2) 
+# direttamente per l'ambiente Linux del container
+RUN npm ci
+
 COPY . .
 
-# Crea cartelle necessarie
+# Crea cartelle e compila
 RUN mkdir -p /app/dist /app/uploads \
-    && chmod -R 755 /app/uploads
+    && chmod -R 755 /app/uploads \
+    && npm run build
 
-# Compila TypeScript come root (perché node non ha ancora dist)
-RUN npm run build
+# Copia gli assets se necessario
+RUN cp -r /app/src/assets /app/dist/assets || true
 
-# Copy ASSETS from src/ into dist/
-RUN cp -r /app/src/assets /app/dist/assets
+RUN cp src/telegram-bot/turin-boundary.geojson dist/telegram-bot/turin-boundary.geojson || true
 
-# Cambia proprietario per runtime
+# Pulizia: rimuoviamo i tool di build per rendere l'immagine leggera
+RUN apt-get purge -y --auto-remove python3 build-essential make g++
+
 RUN chown -R node:node /app/dist /app/uploads
-
-# Usa l’utente node per eseguire
 USER node
 
-# Default command
 CMD ["node", "dist/index.js"]

@@ -220,7 +220,7 @@ export default function ReportPreview({ report, currentRole, showApprovalActions
                 <Stack direction="row" spacing={2} sx={{ mb: 1 }}>
                     <Typography variant="body2" color="text.secondary">Reporter:</Typography>
                     <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
-                        {report.anonymous ? "Anonymous" : `${report.user?.first_name || report.user?.username} ${report.user?.last_name ?? ''}`}
+                        {report.user ? `${report.user?.first_name} ${report.user?.last_name}` : "Anonymous"}
                     </Typography>
 
                 </Stack>
@@ -279,7 +279,7 @@ export default function ReportPreview({ report, currentRole, showApprovalActions
                                     border: selectedIndex === i ? '2px solid' : '2px solid transparent',
                                     borderColor: selectedIndex === i ? 'primary.main' : 'transparent'
                                 }}
-                                onClick={() => { setSelectedIndex(i); openImage(getPhotoUrl(p)); }}
+                                onClick={() => { setSelectedIndex(i);}}
                             />
                         ))}
                     </Stack>

@@ -14,4 +14,5 @@ export interface CreateReportDTO { // Questa è la tua interfaccia esistente, pe
     explanation?: string;
     officer?: MunicipalityOfficerResponseDTO;
     photos: string[]; // Questi saranno URL/ID delle foto caricate
+    anonymous: boolean;
 }   

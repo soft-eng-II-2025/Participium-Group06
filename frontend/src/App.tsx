@@ -8,8 +8,8 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from './contexts/AuthContext';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AdminHomePage from "./pages/AdminHomePage";
 import AdminRegisterPage from "./pages/AdminRegisterPage";
 import TechAgentHomePage from './pages/TechAgentHomePage';
@@ -22,9 +22,20 @@ import {UserAccountPage} from "./pages/UserAccountPage";
 import UserReportsPage from './pages/UserReportsPage';
 import EmailConfirmationPage from './pages/EmailConfirmationPage';
 import ProtectedRoute, { RequireUnverifiedUser } from './routes/ProtectedRoute';
+import { getFirstNavPath } from './layout/Header';
 
 
 const queryClient = new QueryClient();
+
+const HomeRedirect: React.FC = () => {
+  const { isAuthenticated, roles, loading } = useAuth();
+  if (loading) return null;
+  if (!isAuthenticated) {
+    return <HomePage />;
+  }
+  const target = getFirstNavPath(roles || []);
+  return <Navigate to={target} replace />;
+};
 
 function App() {
     return (
@@ -36,7 +47,7 @@ function App() {
                     <BrowserRouter>
                         <Layout>
                             <Routes>
-                                <Route path="/" element={<HomePage />} />
+                                <Route path="/" element={<HomeRedirect />} />
                                 <Route path="/login" element={
                                     <GuestRoute>
                                         <LoginPage />

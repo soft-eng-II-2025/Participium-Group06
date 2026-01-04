@@ -252,7 +252,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       VALUES
         (1,'mariorossi','mariorossi@gmail.com',
          '$argon2id$v=19$m=4096,t=3,p=1$ZDhqdjZ2ZGNrNncwMDAwMA$hryoiCqybaoJH7lBn8Me3NOYwCtbZNkvbFURyX4Upj8',
-         'Mario','Rossi',NULL,NULL,true, true),
+         'Mario','Rossi',NULL,'liviogalanti',true, true),
         (2,'luigibianchi','luigibianchi2@gmail.com',
          '$argon2id$v=19$m=4096,t=3,p=1$dHp0bno3dWZ5czkwMDAwMA$XuFcn2bP7v/PNr6Mg/23muTkC+lTpio39VjQCnVlWI0',
          'Luigi','Bianchi',NULL,NULL,true, true),

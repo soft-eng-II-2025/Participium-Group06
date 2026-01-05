@@ -20,30 +20,26 @@ describe('CategoryRepository (integration)', () => {
 
   // beforeEach viene eseguito prima di OGNI singolo test
   beforeEach(async () => {
+    if (!TestDataSource.isInitialized) {
+      await TestDataSource.initialize();
+    }
+
     // Pulisci tutte le entità in ordine inverso di dipendenza per evitare violazioni FK
-    // Disabilita temporaneamente i controlli di FOREIGN KEY per SQLite
-    await TestDataSource.query('PRAGMA foreign_keys = OFF;');
-
-    const repositoryReportPhoto = TestDataSource.getRepository(ReportPhoto);
-    const repositoryReport = TestDataSource.getRepository(Report);
-    const repositoryUser = TestDataSource.getRepository(User);
-    const repositoryCategory = TestDataSource.getRepository(Category);
-    const repositoryMunicipalityOfficer = TestDataSource.getRepository(MunicipalityOfficer);
-    const repositoryRole = TestDataSource.getRepository(Role);
-
-    await repositoryReportPhoto.clear();
-    await repositoryReport.clear();
-    await repositoryUser.clear();
-    await repositoryCategory.clear();
-    await repositoryMunicipalityOfficer.clear();
-    await repositoryRole.clear();
-
-    // Riabilita i controlli di FOREIGN KEY
-    await TestDataSource.query('PRAGMA foreign_keys = ON;');
+    const entities = TestDataSource.entityMetadatas;
+    for (const entity of entities) {
+      const repository = TestDataSource.getRepository(entity.name);
+      await repository.query(`DELETE FROM "${entity.tableName}" CASCADE`);
+    }
 
     // Istanzia CategoryRepository passandogli il TestDataSource
     categoryRepository = new CategoryRepository(TestDataSource);
     categoryOrmRepository = TestDataSource.getRepository(Category); // Ottieni repository per verifiche
+  });
+
+  afterAll(async () => {
+    if (TestDataSource.isInitialized) {
+      await TestDataSource.destroy();
+    }
   });
 
   // --- Test per i metodi di CategoryRepository ---

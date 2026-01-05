@@ -11,7 +11,7 @@ const officeMembers: MunicipalityOfficerResponseDTO[] = [
     external: false,
     id: 0,
     email: '',
-    role: null,
+    roles: null,
     companyName: null,
   },
   {
@@ -21,7 +21,7 @@ const officeMembers: MunicipalityOfficerResponseDTO[] = [
     external: false,
     id: 0,
     email: '',
-    role: null,
+    roles: null,
     companyName: null,
   },
 ];
@@ -34,7 +34,7 @@ const externalMembers: MunicipalityOfficerResponseDTO[] = [
     external: true,
     id: 0,
     email: '',
-    role: null,
+    roles: null,
     companyName: null,
   },
 ];

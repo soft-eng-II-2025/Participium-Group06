@@ -7,6 +7,9 @@ describe('UserRepository (integration)', () => {
   let userRepository: UserRepository;
 
   beforeEach(async () => {
+    if (!TestDataSource.isInitialized) {
+      await TestDataSource.initialize();
+    }
     // Pulisce tutte le entità prima di ogni test per garantire isolamento
     const entities = TestDataSource.entityMetadatas;
     for (const entity of entities) {

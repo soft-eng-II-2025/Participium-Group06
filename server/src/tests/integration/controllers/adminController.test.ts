@@ -63,8 +63,8 @@ describe("adminController (Integration Tests)", () => {
         externalOfficer = await createTestExternalMunicipalityOfficer(TestDataSource);
         reporter = await createTestUser1(TestDataSource)
         category = await retrieveCategories(TestDataSource, "Water Supply – Drinking Water")
-        testReport = await createBasicReport(TestDataSource, reporter, category, techLead, officer, StatusType.Assigned)
-        testReportForExternalOfficer = await createBasicReport(TestDataSource, reporter, category, techLead, externalOfficer, StatusType.Assigned)
+        testReport = await createBasicReport(TestDataSource, reporter, category, techLead, officer, StatusType.Assigned, false)
+        testReportForExternalOfficer = await createBasicReport(TestDataSource, reporter, category, techLead, externalOfficer, StatusType.Assigned, false)
 
         // Rendo il report SENZA officer e lead prima dell'assegnazione
         testReport.officer = null as any;

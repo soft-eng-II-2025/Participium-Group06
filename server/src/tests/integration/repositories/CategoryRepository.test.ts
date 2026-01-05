@@ -28,7 +28,7 @@ describe('CategoryRepository (integration)', () => {
     const entities = TestDataSource.entityMetadatas;
     for (const entity of entities) {
       const repository = TestDataSource.getRepository(entity.name);
-      await repository.query(`DELETE FROM "${entity.tableName}" CASCADE`);
+      await repository.query(`TRUNCATE TABLE "${entity.tableName}" RESTART IDENTITY CASCADE`);
     }
 
     // Istanzia CategoryRepository passandogli il TestDataSource

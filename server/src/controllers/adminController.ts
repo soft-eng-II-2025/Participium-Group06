@@ -87,17 +87,7 @@ export async function updateMunicipalityOfficer(officerData: AssignRoleRequestDT
     const roles = await Promise.all(rolesTitle.map(title => roleRepository.findByTitle(title)));
     if (roles.includes(null)) throw appErr("ROLE_NOT_FOUND", 404);
 
-    const targetRoles = roles.filter((role: Role | null): role is Role => role !== null);
-    
-    // Check if the roles being assigned are exactly the ones already held
-    const currentRoleIds = (existingOfficer.roles || []).map((r: Role) => r.id).sort();
-    const newRoleIds = targetRoles.map((r: Role) => r.id).sort();
-    
-    if (JSON.stringify(currentRoleIds) === JSON.stringify(newRoleIds)) {
-        throw appErr("ROLE_ALREADY_ASSIGNED", 400);
-    }
-
-    existingOfficer.roles = targetRoles;
+    existingOfficer.roles = roles.filter((role): role is Role => role !== null);
 
     if (officerData.external && !officerData.companyName) throw appErr("COMPANY_REQUIRED", 400);
     existingOfficer.external = officerData.external;

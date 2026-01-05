@@ -187,6 +187,7 @@ describe("User Routes E2E", () => {
       user: { username: "testuser" },
       categoryId: testCategory.id,
       photos: ["photo1.jpg", "photo2.jpg"],
+      anonymous: false,
     };
 
     const res = await request(app)
@@ -209,7 +210,8 @@ describe("User Routes E2E", () => {
       description: "Light stuck on red",
       user: { username: "testuser" },
       categoryId: testCategory.id,
-      photos: [],
+      photos: ["photo1.jpg"],
+      anonymous: false,
     };
 
     const res = await request(app)

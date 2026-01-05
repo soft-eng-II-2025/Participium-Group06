@@ -1,7 +1,7 @@
 // src/repositories/RoleRepository.ts
 import { Role } from "../models/Role";
 import { Category } from "../models/Category";
-import { Repository, DataSource } from "typeorm";
+import { Repository, DataSource, In } from "typeorm";
 
 export class RoleRepository {
     protected ormRepository: Repository<Role>;
@@ -93,7 +93,7 @@ export class RoleRepository {
         const role = await this.findById(roleId);
         if (!role) throw new Error("Role not found");
 
-        const categories = await this.categoryRepository.findBy({ id: categoryIds as any });
+        const categories = await this.categoryRepository.findBy({ id: In(categoryIds) });
         role.categories = categories;
 
         await this.ormRepository.save(role);

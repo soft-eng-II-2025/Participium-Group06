@@ -1,4 +1,5 @@
 // src/tests/unit/repository/categoryRepository.unit.test.ts
+import { In } from "typeorm";
 import { CategoryRepository } from "../../../repositories/CategoryRepository";
 import { Category } from "../../../models/Category";
 import { Role } from "../../../models/Role";
@@ -221,7 +222,7 @@ describe("CategoryRepository - Unit Test (Mock ORM)", () => {
 
     await categoryRepository.replaceCategoryRoles(1, [2]);
 
-    expect(mockRoleRepository.findBy).toHaveBeenCalledWith({ id: [2] });
+    expect(mockRoleRepository.findBy).toHaveBeenCalledWith({ id: In([2]) });
     expect(categoryWithRoles.roles).toEqual([mockRole2]);
     expect(mockOrmRepository.save).toHaveBeenCalled();
   });

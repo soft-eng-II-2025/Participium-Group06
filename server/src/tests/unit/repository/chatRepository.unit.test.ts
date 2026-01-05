@@ -137,7 +137,7 @@ describe("ChatRepository - Unit Test (Mock ORM)", () => {
     expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("chat.report", "report");
     expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("report.user", "user");
     expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("report.officer", "officer");
-    expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("officer.role", "officerRole");
+    expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("officer.roles", "officerRoles");
     expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("report.leadOfficer", "leadOfficer");
     expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("chat.messages", "messages");
     expect(mockQueryBuilder.where).toHaveBeenCalledWith("chat.id = :id", { id: 20 });

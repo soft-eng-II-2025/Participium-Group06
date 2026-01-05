@@ -7,16 +7,15 @@ import { DataSource } from 'typeorm'; // Importa DataSource per i tipi
 describe('RoleRepository (integration)', () => {
   let roleRepository: RoleRepository;
 
-  // beforeEach viene eseguito prima di OGNI singolo test
   beforeEach(async () => {
+    if (!TestDataSource.isInitialized) {
+      await TestDataSource.initialize();
+    }
     // Pulisci tutte le entità prima di ogni test per garantire isolamento.
-    // Questo è cruciale in test di integrazione con DB in memoria.
     const entities = TestDataSource.entityMetadatas;
     for (const entity of entities) {
       const repository = TestDataSource.getRepository(entity.name);
-      // Utilizza query diretta per DELETE FROM per maggiore sicurezza con SQLite in memoria
-      // o assicurati che le tue entità abbiano un metodo clear() implementato.
-      await repository.query(`DELETE FROM "${entity.tableName}"`);
+      await repository.query(`DELETE FROM "${entity.tableName}" CASCADE`);
     }
 
     // Istanzia RoleRepository passandogli il TestDataSource
@@ -28,6 +27,7 @@ describe('RoleRepository (integration)', () => {
   it('dovrebbe aggiungere e trovare un ruolo per titolo', async () => {
     const role = new Role();
     role.title = 'Admin';
+    role.label = 'Administrator';
 
     const savedRole = await roleRepository.add(role);
 
@@ -48,10 +48,12 @@ describe('RoleRepository (integration)', () => {
   it('dovrebbe trovare tutti i ruoli', async () => {
     const role1 = new Role();
     role1.title = 'User';
+    role1.label = 'Standard User';
     await roleRepository.add(role1);
 
     const role2 = new Role();
     role2.title = 'Moderator';
+    role2.label = 'Moderator User';
     await roleRepository.add(role2);
 
     const roles = await roleRepository.findAll();
@@ -64,6 +66,7 @@ describe('RoleRepository (integration)', () => {
   it('dovrebbe rimuovere un ruolo', async () => {
     const role = new Role();
     role.title = 'DaRimuovere';
+    role.label = 'To Be Removed';
 
     const savedRole = await roleRepository.add(role);
     expect(await roleRepository.findByTitle('DaRimuovere')).toBeDefined(); // Verifica che sia stato aggiunto
@@ -77,10 +80,12 @@ describe('RoleRepository (integration)', () => {
   it('dovrebbe lanciare un errore se si tenta di aggiungere un ruolo con titolo duplicato', async () => {
     const role1 = new Role();
     role1.title = 'RuoloDuplicato';
+    role1.label = 'Label 1';
     await roleRepository.add(role1);
 
     const role2 = new Role();
     role2.title = 'RuoloDuplicato'; // Titolo duplicato
+    role2.label = 'Label 2';
 
     // TypeORM lancerà un errore per violazione di UNIQUE constraint
     // Se la tua entità Role non ha { unique: true } sul campo 'title', questo test fallirà o non lancerà errore.

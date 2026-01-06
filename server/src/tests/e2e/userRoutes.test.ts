@@ -212,7 +212,8 @@ describe("User Routes E2E", () => {
       description: "Light stuck on red",
       user: { username: "testuser" },
       categoryId: testCategory.id,
-      photos: [],
+      photos: ["photo1.jpg"],
+      anonymous: false,
     };
 
     const res = await request(app)

@@ -125,7 +125,7 @@ describe("MessageRepository - Unit Test (Mock ORM)", () => {
     await messageRepository.findAll();
 
     expect(mockOrmRepository.find).toHaveBeenCalledWith({
-      relations: ["user", "municipality_officer"],
+      relations: ["chat"],
       order: { created_at: "ASC" },
     });
   });

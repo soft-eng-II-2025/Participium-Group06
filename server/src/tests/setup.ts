@@ -17,11 +17,10 @@ afterAll(async () => {
 beforeEach(async () => {
   if (!TestDataSource.isInitialized) throw new Error("DataSource not initialized");
 
-  // Prima le tabelle "figlie"
-  await TestDataSource.getRepository("ReportPhoto").clear();
-  await TestDataSource.getRepository("Report").clear();
-
-  // Poi tabelle principali
-  await TestDataSource.getRepository("User").clear();
-  await TestDataSource.getRepository("MunicipalityOfficer").clear();
+  // Pulisce tutte le tabelle in ordine di dipendenza o usando CASCADE per gestire le foreign keys
+  const entities = TestDataSource.entityMetadatas;
+  for (const entity of entities) {
+    const repository = TestDataSource.getRepository(entity.name);
+    await repository.query(`TRUNCATE TABLE "${entity.tableName}" RESTART IDENTITY CASCADE`);
+  }
 });

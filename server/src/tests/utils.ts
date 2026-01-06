@@ -307,6 +307,7 @@ export async function createTestReport(ds: DataSource): Promise<Report> {
         photos: [],
         chats: [],
         leadOfficer: lead,
+        anonymous: false,
     });
     await reportRepo.save(report);
     return report;
@@ -330,7 +331,8 @@ export async function createBasicReport(
     category: Category,
     lead: MunicipalityOfficer,
     external: MunicipalityOfficer,
-    status: StatusType
+    status: StatusType,
+    anonym: boolean
 ): Promise<Report> {
 
     const reportRepo = ds.getRepository(Report);
@@ -348,6 +350,7 @@ export async function createBasicReport(
         photos: [],
         chats: [],
         leadOfficer: lead,
+        anonymous: anonym,
         anonymous: false,
     });
     await reportRepo.save(report);
@@ -548,6 +551,6 @@ export function mockReportResponseDTO(
     dto.createdAt = new Date();
     dto.user = user;
     dto.chats = chats;
-
+    dto.anonymous = false;
     return dto;
 }

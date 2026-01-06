@@ -4,16 +4,19 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useGetMyNotifications, useDeleteNotification, useMarkAsReadNotification } from '../hook/notificationApi.hook';
-import { subscribeToNewNotifications, unsubscribeFromNewNotifications } from '../services/socketClient';
+import { getSocket } from '../services/socketClient';
 import { NotificationDTO } from '../DTOs/NotificationDTO';
 import { useQueryClient } from '@tanstack/react-query';
 import ConfirmDialog from './ConfirmDialog';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function NotificationsMenu() {
     const [openDrawer, setOpenDrawer] = React.useState(false);
 
     const { data: notifications = [], isLoading } = useGetMyNotifications();
     const deleteNotification = useDeleteNotification();
+    const { user } = useAuth();
+
     const markAsRead = useMarkAsReadNotification();
     const queryClient = useQueryClient();
     const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
@@ -21,6 +24,8 @@ export default function NotificationsMenu() {
 
     // subscribe to live notifications via socket and update react-query cache
     useEffect(() => {
+        if (!user) return; // subscribe only after user (and therefore initSocketClient) exists
+
         const handler = (n: NotificationDTO) => {
             queryClient.setQueryData<NotificationDTO[] | undefined>(['notifications'], (old) => {
                 if (!old) return [n];
@@ -29,10 +34,44 @@ export default function NotificationsMenu() {
             });
         };
 
-        subscribeToNewNotifications(handler);
-        return () => unsubscribeFromNewNotifications(handler);
-    }, []);
+        let reconnectListener: (() => void) | null = null;
+        let intervalId: number | null = null;
 
+        const attachIfReady = () => {
+            const s = getSocket();
+            if (!s) return false;
+            // register handler
+            s.on('newNotification', handler);
+            // ensure handler is re-attached after reconnects
+            reconnectListener = () => {
+                s.on('newNotification', handler);
+            };
+            s.on('connect', reconnectListener);
+            return true;
+        };
+
+        // try immediate attach; if socket not available yet, poll until it is
+        if (!attachIfReady()) {
+            intervalId = window.setInterval(() => {
+                if (attachIfReady() && intervalId != null) {
+                    clearInterval(intervalId);
+                    intervalId = null;
+                }
+            }, 500);
+        }
+
+        return () => {
+            // cleanup polling
+            if (intervalId != null) {
+                clearInterval(intervalId);
+            }
+            const s = getSocket();
+            if (s) {
+                s.off('newNotification', handler);
+                if (reconnectListener) s.off('connect', reconnectListener);
+            }
+        };
+    }, [user, queryClient]);
 
 
     return (

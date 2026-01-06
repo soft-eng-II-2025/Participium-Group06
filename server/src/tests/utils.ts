@@ -351,6 +351,7 @@ export async function createBasicReport(
         chats: [],
         leadOfficer: lead,
         anonymous: anonym,
+        anonymous: false,
     });
     await reportRepo.save(report);
     return report;

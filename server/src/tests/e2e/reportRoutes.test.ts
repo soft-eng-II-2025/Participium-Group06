@@ -162,6 +162,7 @@ beforeAll(async () => {
     officer: testOfficer,
     createdAt: new Date(),
     chats: [],
+    anonymous: false,
   });
   const savedReport = await reportRepo.save(testReport);
   testReportId = savedReport.id;

@@ -164,6 +164,7 @@ beforeAll(async () => {
     officer: techAgent1,
     createdAt: new Date(),
     chats: [],
+    anonymous : false,
   });
 
   testReport2 = reportRepo.create({
@@ -178,6 +179,7 @@ beforeAll(async () => {
     officer: techAgent1,
     createdAt: new Date(),
     chats: [],
+    anonymous : false,
   });
 
   testReport3 = reportRepo.create({
@@ -192,6 +194,7 @@ beforeAll(async () => {
     officer: techAgent1,
     createdAt: new Date(),
     chats: [],
+    anonymous : false,
   });
   await reportRepo.save([testReport1, testReport2, testReport3]);
 });

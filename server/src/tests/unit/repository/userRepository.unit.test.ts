@@ -131,4 +131,9 @@ describe("UserRepository - Unit Test (Mock ORM)", () => {
         expect(result.flag_email).toBe(newFlagEmail);
         expect(mockOrmRepository.save).toHaveBeenCalledTimes(1);
     });
+
+    it("call findByTelegramUsername", async () => {
+        await userRepository.findByTelegramUsername("old_tg");
+        expect(mockOrmRepository.findOneBy).toHaveBeenCalledWith({ telegram_id: "old_tg" });
+    });
 });

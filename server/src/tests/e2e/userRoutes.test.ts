@@ -152,6 +152,7 @@ beforeAll(async () => {
     officer: testOfficer,
     createdAt: new Date(),
     chats: [],
+    anonymous : false,
   });
 
   testReport2 = reportRepo.create({
@@ -166,6 +167,7 @@ beforeAll(async () => {
     officer: undefined,
     createdAt: new Date(),
     chats: [],
+    anonymous : false,
   });
   await reportRepo.save([testReport1, testReport2]);
 });
@@ -187,6 +189,7 @@ describe("User Routes E2E", () => {
       user: { username: "testuser" },
       categoryId: testCategory.id,
       photos: ["photo1.jpg", "photo2.jpg"],
+      anonymous: false,
     };
 
     const res = await request(app)

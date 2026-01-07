@@ -108,8 +108,8 @@ const HomePage = () => {
                     onClick={() => setShowMap(false)}
                     sx={{
                       position: 'absolute',
-                      right: 12,
-                      top: 12,
+                      right: 13,
+                      top: 64,
                       zIndex: 1201,
                       backgroundColor: 'primary.main', // Standard MUI Blue
                       color: 'white',                  // White Icon

@@ -35,7 +35,7 @@ const HomePage = () => {
               Work together to make your neighborhood a better place!
             </Typography>
 
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 1 }}>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 1, flexWrap: 'wrap' }}>
               <Button
                 color="primary"
                 variant="contained"
@@ -43,6 +43,7 @@ const HomePage = () => {
                 size="large"
                 startIcon={<MapIcon />}
                 onClick={() => setShowMap(true)}
+                sx={{ minWidth: 160 }}
               >
                 Explore Map
               </Button>
@@ -53,6 +54,7 @@ const HomePage = () => {
                   size="large"
                   className="partecipation-button"
                   onClick={() => navigate('/register')}
+                  sx={{ minWidth: 160, mt: { xs: 1, md: 0 } }}
                 >
                   JOIN US NOW
                 </Button>

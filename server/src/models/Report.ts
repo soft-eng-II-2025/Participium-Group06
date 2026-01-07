@@ -36,6 +36,9 @@ export class Report {
   @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   createdAt!: Date;
 
+  @Column({ default: false })
+  anonymous!: boolean;
+
   @ManyToOne(() => MunicipalityOfficer, (officer) => officer.reports)
   @JoinColumn({ name: 'officerId' })
   officer?: MunicipalityOfficer;

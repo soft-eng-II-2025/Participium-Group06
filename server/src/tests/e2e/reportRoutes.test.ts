@@ -125,7 +125,7 @@ beforeAll(async () => {
     password: await hashPassword("password123"),
     first_name: "Officer",
     last_name: "One",
-    role: officerRole,
+    roles: [officerRole],
     external: false,
   });
 
@@ -135,7 +135,7 @@ beforeAll(async () => {
     password: await hashPassword("password123"),
     first_name: "Tech",
     last_name: "Lead",
-    role: techLeadRole,
+    roles: [techLeadRole],
     external: false,
   });
   await officerRepo.save([testOfficer, testTechLead]);
@@ -162,6 +162,7 @@ beforeAll(async () => {
     officer: testOfficer,
     createdAt: new Date(),
     chats: [],
+    anonymous: false,
   });
   const savedReport = await reportRepo.save(testReport);
   testReportId = savedReport.id;

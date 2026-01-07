@@ -1,5 +1,4 @@
-// frontend/src/components/Chat.tsx
-import React, { FormEvent, useEffect, useRef, useState } from "react";
+import React, { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Typography,
@@ -31,6 +30,7 @@ interface ChatProps {
   reportId: number;
   chatId?: number;
   chatMode?: ChatMode;
+  currentRole?: 'USER' | 'AGENT' | 'LEAD';
   socketBaseUrl?: string;
   closeChat?: () => void;
 }
@@ -39,34 +39,27 @@ const Chat: React.FC<ChatProps> = ({
   reportId,
   chatId,
   chatMode,
+  currentRole,
   socketBaseUrl = "http://localhost:3000",
   closeChat,
 }) => {
-  const { senderType, isUser, isOfficer, isLead } = useChatIdentity();
+  const { senderType, isUser, isOfficer, isLead } = useChatIdentity(chatMode, currentRole);
   const { user, loading: authLoading } = useAuth();
 
-  // Se lead/external → usiamo hook LeadExternal, altrimenti OfficerUser
-  // Hooks sempre chiamati, ma con enabled che li rende "inerti"
-  // Determina quale usare (lead/external vs officer/user)
   const isLeadExternalChat = chatMode === ChatMode.LEAD_EXTERNAL;
 
-
-  // Call both hooks but enable only the one we need. This keeps hook order stable
-  // while preventing unnecessary network calls.
   const officerUserQuery = useMessagesByReportOfficerUser(reportId, !isLeadExternalChat);
   const leadExternalQuery = useMessagesByReportLeadExternal(reportId, isLeadExternalChat);
 
-
-  // Select the active query's data (note: choose leadExternal when isLeadExternalChat === true)
-  const rawMessages = isLeadExternalChat
-    ? leadExternalQuery.data || []
-    : officerUserQuery.data || [];
-
+  const rawMessages = useMemo(() => {
+    return isLeadExternalChat
+      ? leadExternalQuery.data ?? []
+      : officerUserQuery.data ?? [];
+  }, [isLeadExternalChat, leadExternalQuery.data, officerUserQuery.data]);
 
   const messagesLoading = isLeadExternalChat
     ? leadExternalQuery.isLoading
     : officerUserQuery.isLoading;
-
 
   const { mutateAsync: sendMessage, isPending: sending } = useSendMessage();
 
@@ -75,7 +68,6 @@ const Chat: React.FC<ChatProps> = ({
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
 
-  // Merge API + socket messages, removing duplicates
   const allMessages = React.useMemo(() => {
     const uniqueSocketMessages = socketReceivedMessages.filter(
       (sm) =>
@@ -84,7 +76,7 @@ const Chat: React.FC<ChatProps> = ({
             rm.content === sm.content &&
             rm.sender === sm.sender &&
             new Date(rm.created_at).getTime() ===
-              new Date(sm.created_at).getTime()
+            new Date(sm.created_at).getTime()
         )
     );
     return [...rawMessages, ...uniqueSocketMessages].sort(
@@ -93,27 +85,10 @@ const Chat: React.FC<ChatProps> = ({
     );
   }, [rawMessages, socketReceivedMessages]);
 
-  // Other side username (for header)
-  const otherSideUsername = React.useMemo(() => {
-    if (!allMessages.length) return undefined;
-
-    if (isUser) {
-      return allMessages.find((m) => m.sender !== "USER")?.username;
-    } else if (isOfficer) {
-      return allMessages.find((m) => m.sender === "USER")?.username;
-    } else if (isLead) {
-      return allMessages.find((m) => m.sender === "EXTERNAL")?.username;
-    } else if (senderType === "EXTERNAL") {
-      return allMessages.find((m) => m.sender === "LEAD")?.username;
-    }
-  }, [allMessages, isUser, isOfficer, isLead, senderType]);
-
-  // Auto-scroll
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [allMessages]);
 
-  // Socket setup
   useEffect(() => {
     if (!senderType || !user) return;
 
@@ -121,7 +96,6 @@ const Chat: React.FC<ChatProps> = ({
       baseUrl: socketBaseUrl,
       UserUsername: isUser ? user.username : undefined,
       OfficerUsername: isOfficer ? user.username : undefined,
-      // aggiungiamo eventuale Lead / External se necessario
     });
 
     const handleNewMessage = (m: MessageResponseDTO) => {
@@ -135,7 +109,7 @@ const Chat: React.FC<ChatProps> = ({
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!input.trim() || !senderType || isUser) return; // Users cannot send
+    if (!input.trim() || !senderType || isUser) return;
 
     setError(null);
 
@@ -144,7 +118,6 @@ const Chat: React.FC<ChatProps> = ({
       content: input.trim(),
       sender: senderType,
     };
-
 
     try {
       await sendMessage(dto);
@@ -166,7 +139,6 @@ const Chat: React.FC<ChatProps> = ({
 
   const isOwn = (m: MessageResponseDTO) => m.sender === senderType;
 
-  // AUTH loading screen
   if (authLoading) {
     return (
       <Paper
@@ -207,17 +179,16 @@ const Chat: React.FC<ChatProps> = ({
     );
   }
 
-  // Header subtitle
   function getSubtitle(): string {
     if (isLead) {
-      if (chatMode === ChatMode.LEAD_EXTERNAL){
+      if (chatMode === ChatMode.LEAD_EXTERNAL) {
         return 'Chat with External Officer';
       }
-      return `Chat with Reporter  ${otherSideUsername ? ` (${otherSideUsername})` : ""}`;
+      return 'Chat with Reporter';
     }
 
     if (isOfficer && senderType !== "EXTERNAL") {
-      return `Chat with Reporter ${otherSideUsername ? ` (${otherSideUsername})` : ""}`;
+      return 'Chat with Reporter';
     }
     if (isUser) {
       return 'Chat with Officer';
@@ -229,20 +200,8 @@ const Chat: React.FC<ChatProps> = ({
   }
 
   function getUsername(m: MessageResponseDTO): string {
-    switch (m.sender) {
-      case "USER":
-        return m.username || "User";
-      case "OFFICER":
-        return "Officer";
-      case "LEAD":
-        return "Officer";
-      case "EXTERNAL":
-        return "External Officer";
-      default:
-        return "Unknown";
-    }
+    return m.username ?? "";
   }
-
 
   return (
     <Paper
@@ -254,30 +213,28 @@ const Chat: React.FC<ChatProps> = ({
         borderRadius: 4,
       }}
     >
-      {/* Header */}
       <Box
         sx={{
-          px: 2,
-          py: 1,
+          px: 3,
+          py: 2,
           borderBottom: "1px solid",
           borderColor: "divider",
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          minHeight: '70px'
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {/** back arrow to close the chat and clear mode in parent */}
-          {/** show only if parent passed a closeChat callback */}
           {typeof closeChat === 'function' && (
-            <IconButton size="small" onClick={() => closeChat?.()} sx={{ mr: 1 }} color="primary">
-              <ArrowBackIcon />
+            <IconButton onClick={() => closeChat?.()} sx={{ mr: 1 }} color="primary">
+              <ArrowBackIcon fontSize="medium" />
             </IconButton>
           )}
           {getSubtitle() && (
             <Typography
-              variant="subtitle1"
-              sx={{ color: 'primary.main', fontWeight: 700, fontSize: { xs: '0.95rem', sm: '1rem' } }}
+              variant="h6"
+              sx={{ color: 'primary.main', fontWeight: 800 }}
             >
               {getSubtitle()}
             </Typography>
@@ -285,14 +242,12 @@ const Chat: React.FC<ChatProps> = ({
         </Box>
       </Box>
 
-      {/* Messages */}
       <Box
         sx={{
           flex: 1,
           px: 2,
           py: 1,
           overflowY: "auto",
-          // bgcolor: "grey.50",
         }}
       >
         {messagesLoading && (
@@ -326,31 +281,35 @@ const Chat: React.FC<ChatProps> = ({
             >
               <Box
                 sx={{
-                  maxWidth: "75%",
-                  px: 1.5,
-                  py: 1,
-                  borderRadius: 2,
+                  maxWidth: "80%",
+                  px: 2.5,
+                  py: 1.5,
+                  borderRadius: 3,
                   bgcolor: own ? "primary.main" : "grey.300",
                   color: own ? "primary.contrastText" : "text.primary",
+                  boxShadow: 1
                 }}
               >
                 <Box
                   sx={{
                     display: "flex",
                     justifyContent: "space-between",
-                    mb: 0.5,
-                    fontSize: "0.7rem",
-                    opacity: 0.8,
+                    mb: 1,
+                    fontSize: "0.85rem",
+                    opacity: 0.9,
                   }}
                 >
-                  <Typography variant="caption" color="text.main" sx={{mr: 1}}>
+                  <Typography variant="subtitle2" sx={{ mr: 2, fontWeight: 'bold' }}>
                     {own ? "You" : getUsername(m)}
                   </Typography>
-                  <Typography variant="caption" color="text.main">
+                  <Typography variant="caption">
                     {formatTime(m.created_at)}
                   </Typography>
                 </Box>
-                <Typography variant="body2">{m.content}</Typography>
+
+                <Typography variant="body1" sx={{ lineHeight: 1.5 }}>
+                  {m.content}
+                </Typography>
               </Box>
             </Box>
           );
@@ -359,35 +318,37 @@ const Chat: React.FC<ChatProps> = ({
         <div ref={endRef} />
       </Box>
 
-      {/* Input (officers, lead, external only) */}
       {!isUser && (
         <Box
           component="form"
           onSubmit={handleSubmit}
           sx={{
-            px: 1,
-            py: 1,
+            px: 2,
+            py: 2,
             borderTop: "1px solid",
             borderColor: "divider",
             display: "flex",
             alignItems: "center",
-            gap: 1,
+            gap: 2,
           }}
         >
           <TextField
-            size="small"
             fullWidth
             placeholder="Type a message..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={sending}
+            InputProps={{
+              sx: { fontSize: '1.1rem', borderRadius: 3 }
+            }}
           />
           <IconButton
             color="primary"
             type="submit"
             disabled={sending || !input.trim()}
+            sx={{ p: 1.5 }}
           >
-            {sending ? <CircularProgress size={20} /> : <SendIcon />}
+            {sending ? <CircularProgress size={28} /> : <SendIcon sx={{ fontSize: 30 }} />}
           </IconButton>
         </Box>
       )}

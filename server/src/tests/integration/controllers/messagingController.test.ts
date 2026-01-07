@@ -66,7 +66,7 @@ describe("Messaging Controller Integration Tests", () => {
         category = await retrieveCategories(TestDataSource, "Water Supply – Drinking Water")
 
         // Crea un report esistente da aggiornare
-        testReport = await createBasicReport(TestDataSource, reporter, category, techLead, internalOfficer, StatusType.Assigned);
+        testReport = await createBasicReport(TestDataSource, reporter, category, techLead, internalOfficer, StatusType.Assigned, false);
         chatUserOfficer = await createTestChatOfficerUser(TestDataSource, testReport);
         chatLeadExternal = await createTestChatLeadExternal(TestDataSource, testReport);
     });

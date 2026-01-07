@@ -69,7 +69,7 @@ describe("Report Controller (Pure Integration Tests)", () => {
         category = await retrieveCategories(TestDataSource, "Water Supply – Drinking Water")
 
         // Crea un report esistente da aggiornare
-        testReport = await createBasicReport(TestDataSource, reporter, category, techLead, internalOfficer, StatusType.Assigned);
+        testReport = await createBasicReport(TestDataSource, reporter, category, techLead, internalOfficer, StatusType.Assigned, false);
 
         // Pulisci le assegnazioni iniziali nel DB per il report di test
         testReport.officer = null as any;
@@ -160,6 +160,7 @@ describe("Report Controller (Pure Integration Tests)", () => {
     describe("add report", () => {
         it("dovrebbe aggiungere un report", async () => {
             const reportData: CreateReportRequestDTO = {
+                anonymous: false,
                 longitude: 0,
                 latitude: 0,
                 title: "prova",

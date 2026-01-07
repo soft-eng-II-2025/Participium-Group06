@@ -20,12 +20,18 @@ import http from "http";
 import { DataSource } from "typeorm";
 import path from "path";
 import { VerificationService } from "./services/verificationService";
-
+import {webhookCallback} from "grammy";
+import { bot } from "./telegram-bot/bot";
 
 
 const PORT = Number(process.env.PORT ?? 3000);
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const SECRET_PATH = `/bot/${BOT_TOKEN}`;
 
 export const app = express(); // Esposta per i test
+
+// Gestione Webhook
+// app.use(SECRET_PATH, webhookCallback(bot, "express"));
 
 // ------------------- Express Middlewares -------------------
 app.use(cors({ origin: true, credentials: true }));
@@ -98,6 +104,10 @@ async function main() {
     // Only use server.listen for both Express + Socket.IO
     server.listen(PORT, () => {
         console.log(`Server started on http://localhost:${PORT}`);
+
+        console.log("[TELEGRAM] Running in development mode (Long Polling)");
+        // Start the bot.
+        bot.start();
     });
 }
 

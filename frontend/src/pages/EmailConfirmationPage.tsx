@@ -86,7 +86,6 @@ export default function EmailConfirmationPage() {
     };
 
     const handleSubmit = async () => {
-        console.log('Submitting code:', code);
         setError(null);
         if (!validateCode(code)) {
             setError('Enter the numeric confirmation code you received by email.');

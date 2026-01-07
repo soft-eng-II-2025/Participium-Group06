@@ -131,7 +131,7 @@ beforeAll(async () => {
     password: await hashPassword("passwordTL"),
     first_name: "Tech",
     last_name: "Lead",
-    role: techLeadRole,
+    roles: [techLeadRole],
     external: false,
   });
   await officerRepo.save(techLead);
@@ -143,7 +143,7 @@ beforeAll(async () => {
     password: await hashPassword("password123"),
     first_name: "Agent",
     last_name: "One",
-    role: techAgentRole,
+    roles: [techAgentRole],
     external: false,
   });
   techAgent2 = officerRepo.create({
@@ -152,7 +152,7 @@ beforeAll(async () => {
     password: await hashPassword("password123"),
     first_name: "Agent",
     last_name: "Two",
-    role: techAgentRole,
+    roles: [techAgentRole],
     external: false,
   });
   await officerRepo.save([techAgent1, techAgent2]);
@@ -179,6 +179,7 @@ beforeAll(async () => {
     officer: techAgent1,
     createdAt: new Date(),
     chats: [],
+    anonymous : false,
   });
 
   testReport2 = reportRepo.create({
@@ -193,6 +194,7 @@ beforeAll(async () => {
     officer: techAgent1,
     createdAt: new Date(),
     chats: [],
+    anonymous : false,
   });
   await reportRepo.save([testReport1, testReport2]);
 });

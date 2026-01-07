@@ -20,7 +20,7 @@ describe("MunicipalityOfficerRepository - Unit Test (Mock ORM)", () => {
     id: 1,
     title: "TECH_AGENT_INFRASTRUCTURE",
     label: "Tech Agent, Infrastructure",
-    municipalityOfficer: [],
+    municipalityOfficers: [],
     categories: [],
   } as Role;
 
@@ -28,7 +28,7 @@ describe("MunicipalityOfficerRepository - Unit Test (Mock ORM)", () => {
     id: 2,
     title: "ADMIN",
     label: "Administrator",
-    municipalityOfficer: [],
+    municipalityOfficers: [],
     categories: [],
   } as Role;
 
@@ -41,7 +41,7 @@ describe("MunicipalityOfficerRepository - Unit Test (Mock ORM)", () => {
     last_name: "Test",
     external: false,
     companyName: null,
-    role: mockRole,
+    roles: [mockRole],
     reports: [],
     leadReports: [],
   } as MunicipalityOfficer;
@@ -55,7 +55,7 @@ describe("MunicipalityOfficerRepository - Unit Test (Mock ORM)", () => {
     last_name: "User",
     external: false,
     companyName: null,
-    role: mockAdminRole,
+    roles: [mockAdminRole],
     reports: [],
     leadReports: [],
   } as MunicipalityOfficer;
@@ -69,7 +69,7 @@ describe("MunicipalityOfficerRepository - Unit Test (Mock ORM)", () => {
     last_name: "Officer",
     external: true,
     companyName: "Tech Company Inc",
-    role: mockRole,
+    roles: [mockRole],
     reports: [],
     leadReports: [],
   } as MunicipalityOfficer;
@@ -97,7 +97,7 @@ describe("MunicipalityOfficerRepository - Unit Test (Mock ORM)", () => {
     await municipalityOfficerRepository.findAll();
 
     expect(mockOrmRepository.find).toHaveBeenCalledWith({
-      relations: ["role"],
+      relations: ["roles"],
     });
   });
 
@@ -117,7 +117,7 @@ describe("MunicipalityOfficerRepository - Unit Test (Mock ORM)", () => {
 
     expect(mockOrmRepository.findOne).toHaveBeenCalledWith({
       where: { username: "testofficer" },
-      relations: ["role"],
+      relations: ["roles"],
     });
   });
 
@@ -142,7 +142,7 @@ describe("MunicipalityOfficerRepository - Unit Test (Mock ORM)", () => {
     const result = await municipalityOfficerRepository.findAllVisible();
 
     expect(mockOrmRepository.createQueryBuilder).toHaveBeenCalledWith("u");
-    expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("u.role", "role");
+    expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("u.roles", "roles");
     expect(mockQueryBuilder.where).toHaveBeenCalledWith(
       "LOWER(u.username) <> :admin",
       { admin: "admin" }
@@ -176,7 +176,7 @@ describe("MunicipalityOfficerRepository - Unit Test (Mock ORM)", () => {
 
     expect(mockOrmRepository.findOne).toHaveBeenCalledWith({
       where: { username: "testofficer" },
-      relations: ["role"],
+      relations: ["roles"],
     });
   });
 
@@ -227,7 +227,7 @@ describe("MunicipalityOfficerRepository - Unit Test (Mock ORM)", () => {
 
     expect(mockOrmRepository.findOne).toHaveBeenCalledWith({
       where: { id: 100 },
-      relations: ["role"],
+      relations: ["roles"],
     });
   });
 
@@ -252,8 +252,8 @@ describe("MunicipalityOfficerRepository - Unit Test (Mock ORM)", () => {
     await municipalityOfficerRepository.findByRoleTitle("TECH_AGENT_INFRASTRUCTURE");
 
     expect(mockOrmRepository.find).toHaveBeenCalledWith({
-      where: { role: { title: "TECH_AGENT_INFRASTRUCTURE" } },
-      relations: ["role"],
+      where: { roles: { title: "TECH_AGENT_INFRASTRUCTURE" } },
+      relations: ["roles"],
     });
   });
 
@@ -263,7 +263,7 @@ describe("MunicipalityOfficerRepository - Unit Test (Mock ORM)", () => {
     const result = await municipalityOfficerRepository.findByRoleTitle("TECH_AGENT_INFRASTRUCTURE");
 
     expect(result).toHaveLength(2);
-    expect(result[0].role?.title).toBe("TECH_AGENT_INFRASTRUCTURE");
+    expect(result[0].roles?.[0].title).toBe("TECH_AGENT_INFRASTRUCTURE");
   });
 
   it("should return empty array when no officers found for role title", async () => {
@@ -321,12 +321,12 @@ describe("MunicipalityOfficerRepository - Unit Test (Mock ORM)", () => {
   });
 
   it("should handle officers with null role", async () => {
-    const officerNoRole: MunicipalityOfficer = { ...mockOfficer, role: undefined };
+    const officerNoRole: MunicipalityOfficer = { ...mockOfficer, roles: [] };
     mockOrmRepository.findOne.mockResolvedValueOnce(officerNoRole);
 
     const result = await municipalityOfficerRepository.findById(100);
 
-    expect(result?.role).toBeUndefined();
+    expect(result?.roles).toEqual([]);
   });
 
   it("should distinguish between findByusername and findByUsername", async () => {

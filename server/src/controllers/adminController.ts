@@ -18,6 +18,8 @@ import { CategoryRepository } from "../repositories/CategoryRepository";
 import { ReportRepository } from "../repositories/ReportRepository";
 import { CreateOfficerRequestDTO } from "../models/DTOs/CreateOfficerRequestDTO";
 import { mapCreateOfficerRequestDTOToDAO } from "../services/mapperService";
+import { off } from "process";
+import { Role } from "../models/Role";
 
 /*const municipalityOfficerRepository = new MunicipalityOfficerRepository(AppDataSource);
 const roleRepository = new RoleRepository(AppDataSource);*/
@@ -77,16 +79,15 @@ export async function updateMunicipalityOfficer(officerData: AssignRoleRequestDT
 
     const existingOfficer = await municipalityOfficerRepository.findByUsername(username);
     if (!existingOfficer) throw appErr("OFFICER_NOT_FOUND", 404);
-    if (existingOfficer.role != null) throw appErr("ROLE_ALREADY_ASSIGNED", 409);
 
-    if (!officerData.roleTitle) throw appErr("ROLE_TITLE_REQUIRED", 400);
-    const roleTitle = officerData.roleTitle;
-    if (isAdminRole(roleTitle)) throw appErr("ROLE_NOT_ASSIGNABLE", 403);
+    if (!officerData.rolesTitle) throw appErr("ROLE_TITLE_REQUIRED", 400);
+    const rolesTitle = officerData.rolesTitle;
+    if (rolesTitle.some(isAdminRole)) throw appErr("ROLE_NOT_ASSIGNABLE", 403);
 
-    const role = await roleRepository.findByTitle(roleTitle);
-    if (!role) throw appErr("ROLE_NOT_FOUND", 404);
+    const roles = await Promise.all(rolesTitle.map(title => roleRepository.findByTitle(title)));
+    if (roles.includes(null)) throw appErr("ROLE_NOT_FOUND", 404);
 
-    existingOfficer.role = role;
+    existingOfficer.roles = roles.filter((role): role is Role => role !== null);
 
     if (officerData.external && !officerData.companyName) throw appErr("COMPANY_REQUIRED", 400);
     existingOfficer.external = officerData.external;
@@ -147,17 +148,32 @@ export async function assignTechAgent(reportId:number, officerUsername:string, t
     return updateReportOfficer(reportId, officer, techLead);
 }
 
+
+// A Modifier (boucle sur les rôles Lead uniquement)
 export async function getAgentsByTechLeadUsername(techLeadUsername :string):Promise<MunicipalityOfficerResponseDTO[]> {
-    const officerTitle = (await municipalityOfficerRepository.findByUsername(techLeadUsername))?.role?.title;
-    if (!officerTitle) {
+    let tech_agents_tot : MunicipalityOfficerResponseDTO[] = [];
+    const officerRoles = (await municipalityOfficerRepository.findByUsername(techLeadUsername))?.roles;
+    if (officerRoles === undefined) {
         throw appErr("OFFICER_NOT_FOUND", 404);
     }
-    if (officerTitle.slice(0,9) != "TECH_LEAD") {
-        throw appErr("INVALID_TECH_LEAD_LABEL", 400);
+    let istechLead = false;
+    for (var role of officerRoles) {
+        const officerTitle = role?.title;
+        if (!officerTitle) {
+            throw appErr("OFFICER_NOT_FOUND", 404);
+        }
+        if (!(officerTitle.slice(0,9) != "TECH_LEAD")) {
+            istechLead = true;
+            const tech_agent_title= "TECH_AGENT"+officerTitle.slice(9,officerTitle.length);
+            const tech_agents = await municipalityOfficerRepository.findByRoleTitle(tech_agent_title);
+            tech_agents_tot = tech_agents_tot.concat(tech_agents.map(mapMunicipalityOfficerDAOToResponse));}}
+    if (!istechLead) {
+        throw appErr("INVALID_TECH_LEAD_LABEL", 404);
     }
-    const tech_agent_title= "TECH_AGENT"+officerTitle.slice(9,officerTitle.length);
-    const tech_agents = await municipalityOfficerRepository.findByRoleTitle(tech_agent_title);
-    return tech_agents.map(mapMunicipalityOfficerDAOToResponse);
+    if (tech_agents_tot.length === 0) {
+        throw appErr("NO_TECH_AGENT_AVAILABLE", 404);
+    }
+    return tech_agents_tot;
 }
 
 export async function getTechReports(officerUsername :string):Promise<ReportResponseDTO[]> {
@@ -176,11 +192,17 @@ export async function getTechLeadReports(username :string):Promise<ReportRespons
         throw appErr("OFFICER_NOT_FOUND", 404);
     }
     let reports: ReportResponseDTO[] = [];
-    const categories = await categoryRepository.findByRoleId(officer.role!.id);
+    const roles = officer.roles;
+    if (!roles || roles.length === 0) {
+        throw appErr("OFFICER_ROLE_NOT_FOUND", 404);
+    }
+    for (const role of roles) {
+    const categories = await categoryRepository.findByRoleId(role.id);
     for (const category of categories) {
         const status = [StatusType.Assigned,StatusType.InProgress,StatusType.Resolved,StatusType.Rejected,StatusType.Suspended];
         const categoryReports = await getReportsByCategoryIdAndStatus(category.id, status);
         reports = reports.concat(categoryReports);
+    }
     }
     return reports;
 }

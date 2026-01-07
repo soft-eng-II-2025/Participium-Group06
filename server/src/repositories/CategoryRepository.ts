@@ -1,6 +1,6 @@
 import { Category } from "../models/Category";
 import { Role } from "../models/Role";
-import { Repository, DataSource } from "typeorm";
+import { Repository, DataSource, In } from "typeorm";
 
 export class CategoryRepository {
     protected ormRepository: Repository<Category>;
@@ -101,7 +101,7 @@ export class CategoryRepository {
         const category = await this.findById(categoryId);
         if (!category) throw new Error("Category not found");
 
-        const roles = await this.roleRepository.findBy({ id: roleIds as any });
+        const roles = await this.roleRepository.findBy({ id: In(roleIds) });
         category.roles = roles;
 
         await this.ormRepository.save(category);

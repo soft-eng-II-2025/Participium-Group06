@@ -104,7 +104,7 @@ describe("adminController - Unit Test (mock)", () => {
             (mapMunicipalityOfficerDAOToResponse as jest.Mock).mockReturnValue({
                 username: "new.officer",
                 email: "new@example.com",
-                role: null,
+                roles: null,
             });
 
             const result = await addMunicipalityOfficer({
@@ -120,7 +120,7 @@ describe("adminController - Unit Test (mock)", () => {
             expect(result).toEqual({
                 username: "new.officer",
                 email: "new@example.com",
-                role: null,
+                roles: null,
             });
         });
 
@@ -188,7 +188,7 @@ describe("adminController - Unit Test (mock)", () => {
     // ------------------------------------------------------------------
     describe("updateMunicipalityOfficer", () => {
         it("aggiorna il ruolo di un ufficiale con successo", async () => {
-            const existingOfficer = { username: "assignme.officer", role: null };
+            const existingOfficer = { username: "assignme.officer", roles: null };
             const role = { id: 10, title: "Supervisor" };
 
             officerRepoMock.findByUsername.mockResolvedValue(existingOfficer);
@@ -243,7 +243,7 @@ describe("adminController - Unit Test (mock)", () => {
         it("lancia ROLE_TITLE_REQUIRED se roleTitle è mancante", async () => {
             officerRepoMock.findByUsername.mockResolvedValue({
                 username: "assignme.officer",
-                role: null,
+                roles: null,
             });
 
             await expect(
@@ -257,7 +257,7 @@ describe("adminController - Unit Test (mock)", () => {
         it("lancia ROLE_NOT_FOUND se il ruolo non esiste", async () => {
             officerRepoMock.findByUsername.mockResolvedValue({
                 username: "assignme.officer",
-                role: null,
+                roles: null,
             });
             roleRepoMock.findByTitle.mockResolvedValue(null);
 
@@ -272,7 +272,7 @@ describe("adminController - Unit Test (mock)", () => {
         it("lancia ROLE_NOT_ASSIGNABLE se si prova ad assegnare Admin", async () => {
             officerRepoMock.findByUsername.mockResolvedValue({
                 username: "assignme.officer",
-                role: null,
+                roles: null,
             });
 
             await expect(

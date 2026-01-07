@@ -28,24 +28,16 @@ describe('ReportRepository (integration)', () => {
 
   // beforeEach viene eseguito prima di OGNI singolo test
   beforeEach(async () => {
-    if (TestDataSource.isInitialized) {
-      await TestDataSource.destroy();
+    if (!TestDataSource.isInitialized) {
+      await TestDataSource.initialize();
     }
-    await TestDataSource.initialize();
 
-    const repositoryReportPhoto = TestDataSource.getRepository(ReportPhoto);
-    const repositoryReport = TestDataSource.getRepository(Report);
-    const repositoryUser = TestDataSource.getRepository(User);
-    const repositoryCategory = TestDataSource.getRepository(Category);
-    const repositoryMunicipalityOfficer = TestDataSource.getRepository(MunicipalityOfficer);
-    const repositoryRole = TestDataSource.getRepository(Role);
-
-    await repositoryReportPhoto.clear();
-    await repositoryReport.clear();
-    await repositoryUser.clear();
-    await repositoryCategory.clear();
-    await repositoryMunicipalityOfficer.clear();
-    await repositoryRole.clear();
+    // Pulisce tutte le tabelle usando CASCADE per gestire le foreign keys
+    const entities = TestDataSource.entityMetadatas;
+    for (const entity of entities) {
+      const repository = TestDataSource.getRepository(entity.name);
+      await repository.query(`TRUNCATE TABLE "${entity.tableName}" RESTART IDENTITY CASCADE`);
+    }
 
     // Istanzia ReportRepository
     reportRepository = new ReportRepository(TestDataSource);

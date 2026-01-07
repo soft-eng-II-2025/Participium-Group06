@@ -41,11 +41,13 @@ describe('MunicipalityOfficerRepository (integration)', () => {
 
     // Prepara i ruoli per i test
     adminRole = new Role();
-    adminRole.title = 'admin'; // Assumiamo che ci sia un ruolo 'admin'
+    adminRole.title = 'admin';
+    adminRole.label = 'Administrator';
     await roleRepository.save(adminRole);
 
     officerRole = new Role();
     officerRole.title = 'officer';
+    officerRole.label = 'Officer';
     await roleRepository.save(officerRole);
 
     // Prepara un ufficiale "admin" e uno "normale" per findAllVisible
@@ -55,7 +57,8 @@ describe('MunicipalityOfficerRepository (integration)', () => {
     adminOfficer.password = 'hashedadminpass';
     adminOfficer.first_name = 'Super';
     adminOfficer.last_name = 'Admin';
-    adminOfficer.role = adminRole;
+    adminOfficer.external = false;
+    adminOfficer.roles = [adminRole];
     await municipalityOfficerRepository.add(adminOfficer);
 
     regularOfficer = new MunicipalityOfficer();
@@ -64,7 +67,8 @@ describe('MunicipalityOfficerRepository (integration)', () => {
     regularOfficer.password = 'hashedjohnpass';
     regularOfficer.first_name = 'John';
     regularOfficer.last_name = 'Doe';
-    regularOfficer.role = officerRole;
+    regularOfficer.external = false;
+    regularOfficer.roles = [officerRole];
     await municipalityOfficerRepository.add(regularOfficer);
 
   });
@@ -78,20 +82,22 @@ describe('MunicipalityOfficerRepository (integration)', () => {
     newOfficer.password = 'hashedpass';
     newOfficer.first_name = 'New';
     newOfficer.last_name = 'Officer';
-    newOfficer.role = officerRole; // Assegna un ruolo esistente
+    newOfficer.external = false;
+    newOfficer.roles = [officerRole]; // Assegna un ruolo esistente
 
     const savedOfficer = await municipalityOfficerRepository.add(newOfficer);
 
     expect(savedOfficer).toBeDefined();
     expect(savedOfficer.id).toBeDefined();
     expect(savedOfficer.username).toBe('new.officer');
-    expect(savedOfficer.role?.id).toBe(officerRole.id);
+    expect(savedOfficer.roles).toBeDefined();
+    expect(savedOfficer.roles[0].id).toBe(officerRole.id);
 
     const foundOfficer = await municipalityOfficerRepository.findByUsername('new.officer');
     expect(foundOfficer).not.toBeNull();
     expect(foundOfficer?.email).toBe('new.officer@example.com');
-    expect(foundOfficer?.role).toBeDefined(); // Verifica che il ruolo sia caricato
-    expect(foundOfficer?.role?.title).toBe('officer');
+    expect(foundOfficer?.roles).toBeDefined(); // Verifica che il ruolo sia caricato
+    expect(foundOfficer?.roles[0].title).toBe('officer');
   });
 
   it('dovrebbe trovare tutti gli ufficiali (con ruoli)', async () => {
@@ -103,12 +109,12 @@ describe('MunicipalityOfficerRepository (integration)', () => {
     expect(officers.some(o => o.username === 'john.doe')).toBe(true);
 
     const adminFound = officers.find(o => o.username === 'admin');
-    expect(adminFound?.role).toBeDefined();
-    expect(adminFound?.role?.title).toBe('admin');
+    expect(adminFound?.roles).toBeDefined();
+    expect(adminFound?.roles[0].title).toBe('admin');
 
     const johnFound = officers.find(o => o.username === 'john.doe');
-    expect(johnFound?.role).toBeDefined();
-    expect(johnFound?.role?.title).toBe('officer');
+    expect(johnFound?.roles).toBeDefined();
+    expect(johnFound?.roles[0].title).toBe('officer');
   });
 
   it('dovrebbe trovare gli ufficiali visibili (escluso admin)', async () => {
@@ -116,8 +122,8 @@ describe('MunicipalityOfficerRepository (integration)', () => {
     expect(visibleOfficers).toBeDefined();
     expect(visibleOfficers.length).toBe(1); // Dovrebbe escludere 'admin'
     expect(visibleOfficers[0].username).toBe('john.doe');
-    expect(visibleOfficers[0].role).toBeDefined(); // Verifica che il ruolo sia caricato dal QueryBuilder
-    expect(visibleOfficers[0].role?.title).toBe('officer');
+    expect(visibleOfficers[0].roles).toBeDefined(); // Verifica che il ruolo sia caricato dal QueryBuilder
+    expect(visibleOfficers[0].roles[0].title).toBe('officer');
   });
 
   it('dovrebbe trovare un ufficiale per email', async () => {
@@ -125,7 +131,7 @@ describe('MunicipalityOfficerRepository (integration)', () => {
     expect(foundOfficer).not.toBeNull();
     expect(foundOfficer?.username).toBe('john.doe');
     // findByEmail non carica il ruolo per default (findOneBy), quindi non dovrebbe esserci
-    expect(foundOfficer?.role).toBeUndefined();
+    expect(foundOfficer?.roles).toBeUndefined();
   });
 
   it('dovrebbe trovare un ufficiale inesistente per username come null', async () => {
@@ -141,18 +147,18 @@ describe('MunicipalityOfficerRepository (integration)', () => {
   it('dovrebbe aggiornare un ufficiale esistente', async () => {
     regularOfficer.first_name = 'Jonathan';
     regularOfficer.email = 'jonathan.doe@example.com';
-    regularOfficer.role = adminRole; // Cambia anche il ruolo
+    regularOfficer.roles = [adminRole]; // Cambia anche il ruolo
 
     const updatedOfficer = await municipalityOfficerRepository.update(regularOfficer);
 
     expect(updatedOfficer.first_name).toBe('Jonathan');
     expect(updatedOfficer.email).toBe('jonathan.doe@example.com');
-    expect(updatedOfficer.role?.id).toBe(adminRole.id); // Verifica il nuovo ruolo
+    expect(updatedOfficer.roles[0].id).toBe(adminRole.id); // Verifica il nuovo ruolo
 
     const foundOfficer = await municipalityOfficerRepository.findByUsername('john.doe');
     expect(foundOfficer?.first_name).toBe('Jonathan');
     expect(foundOfficer?.email).toBe('jonathan.doe@example.com');
-    expect(foundOfficer?.role?.title).toBe('admin');
+    expect(foundOfficer?.roles[0].title).toBe('admin');
   });
 
   // Test per i vincoli di unicità (username ed email)
@@ -163,7 +169,8 @@ describe('MunicipalityOfficerRepository (integration)', () => {
     duplicateOfficer.password = 'pass';
     duplicateOfficer.first_name = 'Dup';
     duplicateOfficer.last_name = 'Licato';
-    duplicateOfficer.role = officerRole;
+    duplicateOfficer.external = false;
+    duplicateOfficer.roles = [officerRole];
 
     await expect(municipalityOfficerRepository.add(duplicateOfficer)).rejects.toThrow();
   });
@@ -175,7 +182,8 @@ describe('MunicipalityOfficerRepository (integration)', () => {
     duplicateOfficer.password = 'pass';
     duplicateOfficer.first_name = 'Dup';
     duplicateOfficer.last_name = 'Licato';
-    duplicateOfficer.role = officerRole;
+    duplicateOfficer.external = false;
+    duplicateOfficer.roles = [officerRole];
 
     await expect(municipalityOfficerRepository.add(duplicateOfficer)).rejects.toThrow();
   });

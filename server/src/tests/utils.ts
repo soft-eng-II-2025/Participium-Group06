@@ -187,7 +187,7 @@ export async function createTestAdmin(ds: DataSource): Promise<MunicipalityOffic
         first_name: 'Admin',
         last_name: 'Admin',
         external: false,
-        role: adminRole,
+        roles: [adminRole],
         reports: [],
         leadReports: []
     });
@@ -205,7 +205,7 @@ export async function createTestOrganizationOfficer(ds: DataSource): Promise<Mun
         first_name: 'Org',
         last_name: 'Officer',
         external: false,
-        role: orgOfficerRole,
+        roles: [orgOfficerRole],
         reports: [],
         leadReports: []
     });
@@ -227,7 +227,7 @@ export async function createTestLeadOfficer(ds: DataSource): Promise<Municipalit
         first_name: 'Lead',
         last_name: 'Officer',
         external: false,
-        role: leadOfficerRole,
+        roles: [leadOfficerRole],
         reports: [],
         leadReports: []
     });
@@ -249,7 +249,7 @@ export async function createTestMunicipalityOfficer(ds: DataSource): Promise<Mun
         first_name: 'Tech',
         last_name: 'Officer',
         external: false,
-        role: officerRole,
+        roles: [officerRole],
         reports: [],
         leadReports: []
     });
@@ -271,7 +271,7 @@ export async function createTestExternalMunicipalityOfficer(ds: DataSource): Pro
         first_name: 'External',
         last_name: 'Officer',
         external: true,
-        role: officerRole,
+        roles: [officerRole],
         reports: [],
         leadReports: []
     });
@@ -307,6 +307,7 @@ export async function createTestReport(ds: DataSource): Promise<Report> {
         photos: [],
         chats: [],
         leadOfficer: lead,
+        anonymous: false,
     });
     await reportRepo.save(report);
     return report;
@@ -330,7 +331,8 @@ export async function createBasicReport(
     category: Category,
     lead: MunicipalityOfficer,
     external: MunicipalityOfficer,
-    status: StatusType
+    status: StatusType,
+    anonym: boolean
 ): Promise<Report> {
 
     const reportRepo = ds.getRepository(Report);
@@ -348,6 +350,7 @@ export async function createBasicReport(
         photos: [],
         chats: [],
         leadOfficer: lead,
+        anonymous: anonym,
     });
     await reportRepo.save(report);
     return report;
@@ -452,11 +455,11 @@ export function mockTechLeadDAO(): MunicipalityOfficer {
     techLead.first_name = 'Mock';
     techLead.last_name = 'TechLead';
     techLead.external = false;
-    techLead.role = {
+    techLead.roles = [{
         id: 1,
         title: 'TECH_LEAD_INFRASTRUCTURE',
         label: 'Tech Lead, Infrastructure',
-    } as Role;
+    } as Role];
     return techLead;
 }
 
@@ -471,11 +474,11 @@ export function mockTechAgentDAO(): MunicipalityOfficer {
     techAgent.first_name = 'Mock';
     techAgent.last_name = 'TechAgent';
     techAgent.external = false;
-    techAgent.role = {
+    techAgent.roles = [{
         id: 2,
         title: 'TECH_AGENT_INFRASTRUCTURE',
         label: 'Tech Agent, Infrastructure',
-    } as Role;
+    } as Role];
 
     return techAgent;
 }
@@ -509,7 +512,7 @@ export function mockOfficerResponseDTO(isLead: boolean = false): MunicipalityOff
     dto.first_name = isLead ? 'Mock' : 'Tech';
     dto.last_name = isLead ? 'TechLead' : 'Agent';
     dto.external = false;
-    dto.role = isLead ? 'Tech Lead, Infrastructure' : 'Tech Agent, Infrastructure';
+    dto.roles = [isLead ? 'Tech Lead, Infrastructure' : 'Tech Agent, Infrastructure'];
     return dto;
 }
 
@@ -547,6 +550,6 @@ export function mockReportResponseDTO(
     dto.createdAt = new Date();
     dto.user = user;
     dto.chats = chats;
-
+    dto.anonymous = false;
     return dto;
 }

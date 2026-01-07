@@ -203,7 +203,8 @@ describe('userController (Integration Tests - DB in Memory)', () => {
 
         it('dovrebbe restituire un array vuoto se non ci sono categorie', async () => {
             // Pulisci le categorie create nel beforeEach per questo test
-            await categoryRepository.query(`DELETE FROM "category";`);
+            // Pulisci le categorie usando TRUNCATE CASCADE per rimuovere anche eventuali report referenziati
+            await categoryRepository.query(`TRUNCATE TABLE "category" RESTART IDENTITY CASCADE;`);
             const categoriesDTOs = await userController.getAllCategories();
             expect(categoriesDTOs).toBeDefined();
             expect(categoriesDTOs).toHaveLength(0);

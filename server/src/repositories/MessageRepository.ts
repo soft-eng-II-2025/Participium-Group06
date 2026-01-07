@@ -14,7 +14,7 @@ export class MessageRepository {
      */
     async findAll(): Promise<Message[]> {
         return this.ormRepository.find({
-            relations: ["user", "municipality_officer"],
+            relations: ["chat"],
             order: { created_at: "ASC" },
         });
     }
@@ -41,10 +41,10 @@ export class MessageRepository {
                     report: {
                         user: true,
                         officer: {
-                            role: true
+                            roles: true
                         },
                         leadOfficer: {
-                            role: true
+                            roles: true
                         }
                     }
                 }

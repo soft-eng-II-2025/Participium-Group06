@@ -88,6 +88,7 @@ const UserReportsPage: React.FC = () => {
                 reportId={selectedReport.id}
                 chatId={selectedReport.chats?.find(c => c.type === chatMode)?.id}
                 chatMode={chatMode!}
+                currentRole="USER"
                 closeChat={() => toggleChatOpen()}
               />
             )}

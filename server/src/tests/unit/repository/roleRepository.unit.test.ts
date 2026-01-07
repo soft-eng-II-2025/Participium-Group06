@@ -2,6 +2,7 @@
 import { RoleRepository } from "../../../repositories/RoleRepository";
 import { Role } from "../../../models/Role";
 import { Category } from "../../../models/Category";
+import { In } from "typeorm";
 
 // Mock of TypeORM repository
 const mockOrmRepository = {
@@ -40,7 +41,7 @@ describe("RoleRepository - Unit Test (Mock ORM)", () => {
     id: 1,
     title: "TECH_AGENT_INFRASTRUCTURE",
     label: "Tech Agent, Infrastructure",
-    municipalityOfficer: [],
+    municipalityOfficers: [],
     categories: [mockCategory1],
   } as Role;
 
@@ -48,7 +49,7 @@ describe("RoleRepository - Unit Test (Mock ORM)", () => {
     id: 2,
     title: "ADMIN",
     label: "Administrator",
-    municipalityOfficer: [],
+    municipalityOfficers: [],
     categories: [],
   } as Role;
 
@@ -56,7 +57,7 @@ describe("RoleRepository - Unit Test (Mock ORM)", () => {
     id: 3,
     title: "SUPER ADMIN",
     label: "Super Administrator",
-    municipalityOfficer: [],
+    municipalityOfficers: [],
     categories: [],
   } as Role;
 
@@ -64,7 +65,7 @@ describe("RoleRepository - Unit Test (Mock ORM)", () => {
     id: 4,
     title: "TECH_LEAD_INFRASTRUCTURE",
     label: "Tech Lead, Infrastructure",
-    municipalityOfficer: [],
+    municipalityOfficers: [],
     categories: [mockCategory1, mockCategory2],
   } as Role;
 
@@ -344,7 +345,7 @@ describe("RoleRepository - Unit Test (Mock ORM)", () => {
 
     await roleRepository.replaceRoleCategories(1, [2]);
 
-    expect(mockCategoryRepository.findBy).toHaveBeenCalledWith({ id: [2] });
+    expect(mockCategoryRepository.findBy).toHaveBeenCalledWith({ id: In([2]) });
     expect(roleWithCategories.categories).toEqual([mockCategory2]);
     expect(mockOrmRepository.save).toHaveBeenCalled();
   });

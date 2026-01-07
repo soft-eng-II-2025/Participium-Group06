@@ -43,7 +43,7 @@ describe("ChatRepository - Unit Test (Mock ORM)", () => {
     last_name: "Test",
     external: false,
     companyName: null,
-    role: { id: 1, title: "TECH_AGENT", label: "Tech Agent" } as any,
+    roles: [{ id: 1, title: "TECH_AGENT", label: "Tech Agent" } as any],
     reports: [],
     leadReports: [],
   } as MunicipalityOfficer;
@@ -57,7 +57,7 @@ describe("ChatRepository - Unit Test (Mock ORM)", () => {
     last_name: "Officer",
     external: false,
     companyName: null,
-    role: { id: 2, title: "TECH_LEAD", label: "Tech Lead" } as any,
+    roles: [{ id: 2, title: "TECH_LEAD", label: "Tech Lead" } as any],
     reports: [],
     leadReports: [],
   } as MunicipalityOfficer;
@@ -77,6 +77,7 @@ describe("ChatRepository - Unit Test (Mock ORM)", () => {
     category: { id: 1, name: "Water" } as any,
     photos: [],
     chats: [],
+    anonymous: false,
   } as Report;
 
   const mockMessage: Message = {
@@ -136,7 +137,7 @@ describe("ChatRepository - Unit Test (Mock ORM)", () => {
     expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("chat.report", "report");
     expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("report.user", "user");
     expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("report.officer", "officer");
-    expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("officer.role", "officerRole");
+    expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("officer.roles", "officerRoles");
     expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("report.leadOfficer", "leadOfficer");
     expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("chat.messages", "messages");
     expect(mockQueryBuilder.where).toHaveBeenCalledWith("chat.id = :id", { id: 20 });

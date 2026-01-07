@@ -46,10 +46,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       "first_name" VARCHAR NOT NULL,
       "last_name" VARCHAR NOT NULL,
       "external" BOOLEAN NOT NULL,
-      "companyName" VARCHAR,
-      "role" INT,
-      CONSTRAINT "FK_municipality_officer_role"
-        FOREIGN KEY ("role") REFERENCES "role"("id")
+      "companyName" VARCHAR
     )`);
 
     await queryRunner.query(`CREATE TABLE "app_user" (
@@ -88,6 +85,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       "description" VARCHAR NOT NULL,
       "status" "status_type_enum" NOT NULL,
       "explanation" VARCHAR NOT NULL,
+      "anonymous" BOOLEAN NOT NULL DEFAULT FALSE,
       "officerId" INT,
       "userId" INT,
       "categoryId" INT,
@@ -120,6 +118,17 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
         FOREIGN KEY ("role_id") REFERENCES "role"("id") ON DELETE CASCADE,
       CONSTRAINT "FK_role_categories_category"
         FOREIGN KEY ("category_id") REFERENCES "category"("id") ON DELETE CASCADE
+    )`);
+
+    // 3. M2M join table role <-> MunicipalityOfficer
+    await queryRunner.query(`CREATE TABLE "municipality_officer_roles" (
+      "municipality_officer_id" INT NOT NULL,
+      "role_id" INT NOT NULL,
+      PRIMARY KEY ("role_id","municipality_officer_id"),
+      CONSTRAINT "FK_role_municipality_officer_role"
+        FOREIGN KEY ("role_id") REFERENCES "role"("id") ON DELETE CASCADE,
+      CONSTRAINT "FK_role_municipality_officer_municipality_officer"
+        FOREIGN KEY ("municipality_officer_id") REFERENCES "municipality_officer"("id") ON DELETE CASCADE
     )`);
 
     await queryRunner.query(`CREATE TABLE "chat" (
@@ -218,11 +227,11 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
     // 9. Admin officer
     await queryRunner.query(`
       INSERT INTO "municipality_officer"
-        ("id","username","email","password","first_name","last_name","external", "companyName", "role")
+        ("id","username","email","password","first_name","last_name","external", "companyName")
       VALUES
         (1,'admin','admin@participium.local',
         '$argon2id$v=19$m=65536,t=3,p=1$6FOS86yBc3WowYzkpdqonQ$fuBmKGHx8IRs15LrImF8/baI15mxyfvGnTkUNyVDd6g',
-        'System','Admin',false,NULL,1)
+        'System','Admin',false,NULL)
       ON CONFLICT ("id") DO NOTHING
     `);
 
@@ -243,7 +252,7 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       VALUES
         (1,'mariorossi','mariorossi@gmail.com',
          '$argon2id$v=19$m=4096,t=3,p=1$ZDhqdjZ2ZGNrNncwMDAwMA$hryoiCqybaoJH7lBn8Me3NOYwCtbZNkvbFURyX4Upj8',
-         'Mario','Rossi',NULL,NULL,true, true),
+         'Mario','Rossi',NULL,'liviogalanti',true, true),
         (2,'luigibianchi','luigibianchi2@gmail.com',
          '$argon2id$v=19$m=4096,t=3,p=1$dHp0bno3dWZ5czkwMDAwMA$XuFcn2bP7v/PNr6Mg/23muTkC+lTpio39VjQCnVlWI0',
          'Luigi','Bianchi',NULL,NULL,true, true),
@@ -290,52 +299,71 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
       -- agent_buildings password in chiaro: AgentBuildings1!
       -- external password in chiaro: external
       INSERT INTO "municipality_officer"
-        ("id","username","email","password","first_name","last_name","external","companyName","role")
+        ("id","username","email","password","first_name","last_name","external","companyName")
       VALUES
         (2,'org_officer','maria.rossi@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$MXQ5aHF2aG5vNmYwMDAwMA$xwEPRsmhAk4323jDh9Jf1laD9BxtD6wKee06uEAhPC8',
-         'Maria','Rossi',false,NULL,2),
+         'Maria','Rossi',false,NULL),
         (3,'lead_infra','giovanni.bianchi@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$d3l4eXJhczNjazAwMDAwMA$BoCWTDKLvtbZ+kzeyMeqyTyioSpGeZsSiaMnuwL9Chs',
-         'Giovanni','Bianchi',false,NULL,3),
+         'Giovanni','Bianchi',false,NULL),
         (4,'agent_infra','anna.verdi@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$cWF0b25kYjh2eDAwMDAwMA$apQMX9qx9rlc7O3aApOmkZHOG5iU0fTGDnn5K8A4f7k',
-         'Anna','Verdi',false,NULL,4),
+         'Anna','Verdi',false,NULL),
         (5,'lead_mobility','paolo.galli@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$NWx6N2U5MWwyMjcwMDAwMA$WKvR9cEs92cFuEAa4shZQVEWLIQWbAHGq9PFQaB3McY',
-         'Paolo','Galli',false,NULL,5),
+         'Paolo','Galli',false,NULL),
         (6,'agent_mobility','elena.ferrari@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$NjB3dTduY2IxdjIwMDAwMA$DKTu4q1d9uih9KSTYjwfOydPWdhi2/svvde0dZFgv6Q',
-         'Elena','Ferrari',false,NULL,6),
+         'Elena','Ferrari',false,NULL),
         (7,'lead_green','marco.russo@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$dmdxY2FzdXJhYTgwMDAwMA$STgY4pc4dSUaVeMpkhqizIMIY19+h1+L8Jy91sSMAiU',
-         'Marco','Russo',false,NULL,7),
+         'Marco','Russo',false,NULL),
         (8,'agent_green','sara.esposito@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$eml3cjV4cWwwemYwMDAwMA$zMrriiNvqXPn3c1OjuvDJqW40NKil2HO7HC28SZON30',
-         'Sara','Esposito',false,NULL,8),
+         'Sara','Esposito',false,NULL),
         (9,'lead_waste','luca.martini@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$dnJuajAybGVscWUwMDAwMA$bDRZDRurlvGmVoEHgmi1gnqHk3YazVMe0s75HWNfRrU',
-         'Luca','Martini',false,NULL,9),
+         'Luca','Martini',false,NULL),
         (10,'agent_waste','francesca.romano@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$NXljMmRpOG81bnQwMDAwMA$b2ARlYEp0fEqCaV075vNunWZjnpGYbnnsScHc+ydppk',
-         'Francesca','Romano',false,NULL,10),
+         'Francesca','Romano',false,NULL),
         (11,'lead_energy','davide.conti@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$aWl4NDJkM3pqZjkwMDAwMA$Ju94deagaCHPsEJmgRXmG9tAFYFx0mBbLWh/NV5myYs',
-         'Davide','Conti',false,NULL,11),
+         'Davide','Conti',false,NULL),
         (12,'agent_energy','chiara.ricci@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$emNzdnV3ZDR5Y2UwMDAwMA$gY6E0cr/UnIOEzGc9p7Shz75hO7lnketKTzc9LEEDTg',
-         'Chiara','Ricci',false,NULL,12),
+         'Chiara','Ricci',false,NULL),
         (13,'lead_buildings','alessandro.gallo@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$aWl3bTU4MHJxdGwwMDAwMA$/lpZZnQnbgU0UpPcGV8vg2bTsyZeIaqN+uEuB/nuDQg',
-         'Alessandro','Gallo',false,NULL,13),
+         'Alessandro','Gallo',false,NULL),
         (14,'agent_buildings','federica.moretti@participium.local',
          '$argon2id$v=19$m=4096,t=3,p=1$cTNpaGhscjN4dnQwMDAwMA$EawaCPGuYrZKzo0ftbnaBMrq1D4ymmSp4TUsUK63Nec',
-         'Federica','Moretti',false,NULL,14),
+         'Federica','Moretti',false,NULL),
         (15,'external','daniele.scrua@gtt.com',
         '$argon2id$v=19$m=65536,t=3,p=1$VTZwOGREVW82TjJldWg5OQ$93lZipNlcgkt0qcA2jsgPohxTOsu0dz0C41JhvmBnFE',
-        'Daniele','Scrua',true,'GTT - Gruppo Trasporti Torinese',6)
+        'Daniele','Scrua',true,'GTT - Gruppo Trasporti Torinese')
       ON CONFLICT ("id") DO NOTHING
     `);
+
+    await queryRunner.query(`
+      INSERT INTO "municipality_officer_roles" ("municipality_officer_id","role_id") VALUES
+      (1,1),
+      (2,2),
+      (3,3),
+      (4,4),
+      (5,5),
+      (6,6),
+      (7,7),
+      (8,8),
+      (9,9),
+      (10,10),
+      (11,11),
+      (12,12),
+      (13,13),
+      (14,14),
+      (15,6)
+      `);
 
     // Allineamento sequence municipality_officer
     await queryRunner.query(`SELECT setval(
@@ -346,32 +374,32 @@ export class InitSchemaAndSeedData1710000000000 implements MigrationInterface {
 
     // 10. Report Torino (25) – status vari ma mai "Rejected", explanation = ''
     await queryRunner.query(`INSERT INTO "report"
-      ("id","longitude","latitude","title","description","status","explanation","officerId","userId","categoryId","lead_officer_id") VALUES
-  (1,7.6869,45.0703,'Sewer Blockage in City Center','Sewer drain blocked in the city center.','In Progress','',9,1,3,null),
-  (2,7.6780,45.0710,'Damaged Bench in Piazza Statuto','Broken bench in Piazza Statuto.','Pending Approval','',7,2,8,null),
-  (3,7.6820,45.0740,'Non-Working Streetlight on Via Garibaldi','Streetlight not working on Via Garibaldi.','Assigned','',null,3,4,null),
-  (4,7.6905,45.0665,'Faulty Public Lighting in San Salvario','Faulty public lighting in the San Salvario area.','In Progress','',11,4,4,null),
-  (5,7.7000,45.0675,'Broken Traffic Light on Corso Vittorio','Broken traffic light at the Corso Vittorio intersection.','Pending Approval','',5,5,6,null),
-  (6,7.7020,45.0730,'Broken Fire Hydrant in Vanchiglia','Fire hydrant broken in the Vanchiglia area.','Assigned','',null,6,1,null),
-  (7,7.6815,45.0650,'Uneven Pavement on Crocetta Sidewalk','Uneven pavement on the sidewalk in Crocetta.','In Progress','',3,7,7,null),
-  (8,7.6880,45.0750,'Damaged Pedestrian Crossing Sign','Damaged pedestrian crossing sign.','Pending Approval','',5,7,6,null),
-  (9,7.6750,45.0680,'Broken Slide in Mirafiori Nord Playground','Slide in the playground damaged in Mirafiori Nord.','Assigned','',null,9,8,null),
-  (10,7.6920,45.0690,'Damaged Road Barrier in Borgo Po','Road barrier damaged in Borgo Po.','In Progress','',3,10,7,null),
-  (11,7.6840,45.0725,'Illegible Road Sign in Dora Riparia','Road sign unreadable in Dora Riparia.','Assigned','',null,1,6,null),
-  (12,7.6800,45.0770,'Debris on the Roadway in Cit Turin','Debris on the roadway in Cit Turin.','Pending Approval','',4,2,7,null),
-  (13,7.6990,45.0720,'Fallen Road Sign in Aurora','Road sign fallen in Aurora.','In Progress','',5,3,6,null),
-  (18,7.6980,45.0660,'Overflowing Street Bin in Santa Rita','Street bin overflowing in Santa Rita.','In Progress','',9,8,5,null),
-  (19,7.6830,45.0698,'Broken Swing in Pozzo Strada Playground','Swing broken in the playground in Pozzo Strada.','Assigned','',7,9,8,null),
-  (20,7.6890,45.0715,'Poor Road Conditions in Barriera di Milano','Poor road conditions in Barriera di Milano.','In Progress','',3,10,7,null),
-  (21,7.6910,45.0760,'Large Pothole on Road in Rebaudengo','Large pothole on the road in Rebaudengo.','Pending Approval','',3,1,7,null),
-  (22,7.6775,45.0708,'Flooded Street After Rain in Parella','Street flooded after heavy rain in Parella.','In Progress','',9,2,3,null),
-  (23,7.6955,45.0685,'Lighting Outage in Crocetta','Several streetlights out in Crocetta.','Assigned','',11,3,4,null),
-  (14,7.6765,45.0735,'Fallen Tree Branch in Valentino Park','A tree branch has fallen in Valentino Park.','Assigned','',7,4,8,null),
-  (15,7.6875,45.0670,'Flooding Due to Clogged Sewer in Porta Nuova','Flooding caused by a clogged sewer in Porta Nuova.','In Progress','',9,5,3,null),
-  (16,7.6935,45.0745,'Graffiti on Public Wall in Vanchiglietta','Graffiti on a public wall in Vanchiglietta.','Pending Approval','',13,6,9,null),
-  (17,7.7040,45.0695,'Low Water Pressure in Madonna del Pilone','Low water pressure in the Madonna del Pilone area.','Assigned','',null,7,1,null),
-  (24,7.7060,45.0718,'Trash Scattered in Public Area in Cavoretto','Trash scattered in a public area in Cavoretto.','In Progress','',9,4,5,null),
-  (25,7.6855,45.0738,'Water Leak on Roadway in Lingotto','Water leaking onto the roadway in Lingotto.','Resolved','',3,5,1,null)
+      ("id","longitude","latitude","title","description","status","explanation","officerId","userId","categoryId","lead_officer_id","anonymous") VALUES
+  (1,7.6869,45.0703,'Sewer Blockage in City Center','Sewer drain blocked in the city center.','In Progress','',10,1,3,null,false),
+  (2,7.6780,45.0710,'Damaged Bench in Piazza Statuto','Broken bench in Piazza Statuto.','Pending Approval','',null,2,8,null,false),
+  (3,7.6820,45.0740,'Non-Working Streetlight on Via Garibaldi','Streetlight not working on Via Garibaldi.','Assigned','',null,4,4,null,false),
+  (4,7.6905,45.0665,'Faulty Public Lighting in San Salvario','Faulty public lighting in the San Salvario area.','In Progress','',12,4,4,null,false),
+  (5,7.7000,45.0675,'Broken Traffic Light on Corso Vittorio','Broken traffic light at the Corso Vittorio intersection.','Pending Approval','',null,5,6,null,false),
+  (6,7.7020,45.0730,'Broken Fire Hydrant in Vanchiglia','Fire hydrant broken in the Vanchiglia area.','Assigned','',null,6,1,null,false),
+  (7,7.6815,45.0650,'Uneven Pavement on Crocetta Sidewalk','Uneven pavement on the sidewalk in Crocetta.','In Progress','',4,7,7,null,false),
+  (8,7.6880,45.0750,'Damaged Pedestrian Crossing Sign','Damaged pedestrian crossing sign.','Pending Approval','',null,7,6,null,false),
+  (9,7.6750,45.0680,'Broken Slide in Mirafiori Nord Playground','Slide in the playground damaged in Mirafiori Nord.','Assigned','',null,10,8,null,false),
+  (10,7.6920,45.0690,'Damaged Road Barrier in Borgo Po','Road barrier damaged in Borgo Po.','In Progress','',4,10,7,null,false),
+  (11,7.6840,45.0725,'Illegible Road Sign in Dora Riparia','Road sign unreadable in Dora Riparia.','Assigned','',null,1,6,null,false),
+  (12,7.6800,45.0770,'Debris on the Roadway in Cit Turin','Debris on the roadway in Cit Turin.','Pending Approval','',null,2,7,null,false),
+  (13,7.6990,45.0720,'Fallen Road Sign in Aurora','Road sign fallen in Aurora.','In Progress','',6,3,6,null,false),
+  (18,7.6980,45.0660,'Overflowing Street Bin in Santa Rita','Street bin overflowing in Santa Rita.','In Progress','',10,8,5,null,false),
+  (19,7.6830,45.0698,'Broken Swing in Pozzo Strada Playground','Swing broken in the playground in Pozzo Strada.','Assigned','',8,9,8,null,false),
+  (20,7.6890,45.0715,'Poor Road Conditions in Barriera di Milano','Poor road conditions in Barriera di Milano.','In Progress','',4,10,7,null,false),
+  (21,7.6910,45.0760,'Large Pothole on Road in Rebaudengo','Large pothole on the road in Rebaudengo.','Pending Approval','',null,1,7,null,false),
+  (22,7.6775,45.0708,'Flooded Street After Rain in Parella','Street flooded after heavy rain in Parella.','In Progress','',10,2,3,null,false),
+  (23,7.6955,45.0685,'Lighting Outage in Crocetta','Several streetlights out in Crocetta.','Assigned','',12,3,4,null,false),
+  (14,7.6765,45.0735,'Fallen Tree Branch in Valentino Park','A tree branch has fallen in Valentino Park.','Assigned','',8,4,8,null,false),
+  (15,7.6875,45.0670,'Flooding Due to Clogged Sewer in Porta Nuova','Flooding caused by a clogged sewer in Porta Nuova.','In Progress','',10,5,3,null,false),
+  (16,7.6935,45.0745,'Graffiti on Public Wall in Vanchiglietta','Graffiti on a public wall in Vanchiglietta.','Pending Approval','',null,6,9,null,false),
+  (17,7.7040,45.0695,'Low Water Pressure in Madonna del Pilone','Low water pressure in the Madonna del Pilone area.','Assigned','',null,7,1,null,false),
+  (24,7.7060,45.0718,'Trash Scattered in Public Area in Cavoretto','Trash scattered in a public area in Cavoretto.','In Progress','',10,4,5,null,false),
+  (25,7.6855,45.0738,'Water Leak on Roadway in Lingotto','Water leaking onto the roadway in Lingotto.','Resolved','',4,5,1,null,false)
 `);
 
 

@@ -71,7 +71,8 @@ sections:
 
 - What lessons did you learn (both positive and negative) in this sprint?
 
-  - We learned that if we stay toghether as a team we can work through any difficultys
+  - We learned that if we stay toghether as a team we can work through any difficulties
+  - With practice we got better at estimating tasks.
 
 - Which improvement goals set in the previous retrospective were you able to achieve?
 
@@ -83,9 +84,9 @@ sections:
 
 - Improvement goals for the next sprint and how to achieve them (technical tasks, team coordination, etc.)
   - We should try to do the planning as soon as the retrospective is over
-  - The reviewers should be a little bit more available so the code don't taske tto much time to be accepted
+  - The reviewers should be a little bit more available so the new changes don't take too much time to be accepted
 
 
 - One thing you are proud of as a Team!!
-  - Despite the diffculty we faced, we managed to have the work done
-  - We got better at estimating tasks.
+  - Despite the difficulties we faced, we managed to have the work done.
+  
